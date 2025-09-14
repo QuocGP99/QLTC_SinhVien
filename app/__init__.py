@@ -2,6 +2,7 @@ from flask import Flask
 from .config import Config
 from .extensions import db, migrate
 from .models import register_models
+from .routes import register_blueprints
 
 def create_app(config_class: type[Config] | None = None) -> Flask:
     app = Flask(__name__, instance_relative_config=True)
@@ -18,18 +19,15 @@ def create_app(config_class: type[Config] | None = None) -> Flask:
     migrate.init_app(app, db)
 
     #import models để Alembic thấy metadata
-    register_models(db)
+    register_models()
+    register_blueprints(app)
+
+    @app.get("/healthz")
+    def healthz():
+        return {"status": "ok"}, 200
     
-    if config_class is None:
-        config_class = Config
-    app.config.from_object(config_class)
-    
-    db.init_app(app)
-    migrate.init_app(app, db)
-    
-    register_models(db)
-    
-    with app.app_context():
-        from . import routes  # Import routes to register them with the app
+    @app.get("/")
+    def index():
+        return {"message": "Backend is running", "docs": ["/healthz", "/api/expenses"]}, 200
     
     return app
