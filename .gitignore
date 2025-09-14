@@ -1,0 +1,43 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+
+# Virtual environment
+.venv/
+env/
+venv/
+ENV/
+
+# Environment variables
+.env
+
+# Flask instance folder (db, uploads…)
+instance/
+*.db
+*.sqlite3
+
+# Migrations cache
+migrations/versions/*.pyc
+
+# VS Code settings
+.vscode/
+*.code-workspace
+
+# Logs
+*.log
+
+# Test / coverage
+.coverage
+htmlcov/
+.tox/
+pytest_cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Jupyter / IPython
+.ipynb_checkpoints/
