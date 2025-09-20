@@ -4,6 +4,7 @@ from sqlalchemy.sql import func
 class Expense(db.Model):
     __tablename__ = "expenses"
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     amount = db.Column(db.Float, nullable=False)
     date = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     note = db.Column(db.String(255))

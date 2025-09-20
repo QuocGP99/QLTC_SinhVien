@@ -14,4 +14,9 @@ class Config:
         "sqlite:///" + DB_PATH.replace(os.sep, "/")
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+# cấu hình JWT
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-jwt-secret")
+    JWT_TOKEN_LOCATION = ["headers", "cookies"]
+    JWT_ACCESS_TOKEN_EXPIRES = 3600  # 1 hour
+    JWT_REFRESH_TOKEN_EXPIRES = 60*60*24*7  #7days
 
