@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-hero" style="background-image:url('{{ url_for('static', filename='img/auth-side.jpg') }}')"></div>
+  <div class="auth-form">
+    <div class="auth-card card shadow-sm border-0"><div class="card-body p-4 p-md-5">
+      <h1 class="h4 mb-1">Welcome Back!</h1>
+      <p class="text-muted mb-4">Track your finance with <strong>SVFinance</strong>.</p>
+
+      <form method="post" action="/login">
+        <div class="mb-3"><label class="form-label">Email</label>
+          <input name="email" type="email" class="form-control" required></div>
+        <div class="mb-2"><label class="form-label">Password</label>
+          <div class="input-group">
+            <input name="password" id="loginPass" type="password" class="form-control" required>
+            <button class="btn btn-outline-secondary" type="button" id="toggleLoginPass"><i class="bi bi-eye"></i></button>
+          </div>
+        </div>
+        <div class="d-flex justify-content-between mb-3">
+          <div class="form-check"><input class="form-check-input" type="checkbox" id="remember">
+            <label class="form-check-label" for="remember">Remember me</label></div>
+          <a href="#" class="small">Forgot Password?</a>
+        </div>
+        <button class="btn btn-primary w-100 mb-2" type="submit">Sign In</button>
+        <button class="btn btn-dark w-100" type="button"><i class="bi bi-google me-2"></i>Continue with Google</button>
+      </form>
+
+      <div class="text-center mt-3">
+        <span class="text-muted">New to SVFinance?</span> <a href="/register">Create an account</a>
+      </div>
+    </div></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('toggleLoginPass')?.addEventListener('click', ()=>{
+  const ip = document.getElementById('loginPass');
+  ip.type = ip.type === 'password' ? 'text' : 'password';
+});
+</script>
+{% endblock %}

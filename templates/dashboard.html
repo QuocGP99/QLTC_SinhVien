@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<style>
+  .kpi-card { border:0; border-radius:16px; color:#fff; }
+  .kpi-green  { background: linear-gradient(135deg,#22c55e,#16a34a); }
+  .kpi-blue   { background: linear-gradient(135deg,#3b82f6,#2563eb); }
+  .kpi-purple { background: linear-gradient(135deg,#a855f7,#7c3aed); }
+  .kpi-orange { background: linear-gradient(135deg,#f97316,#ea580c); }
+  .kpi-value  { font-size:1.4rem; font-weight:700; }
+  .pill { font-size:.75rem; padding:.25rem .5rem; border-radius:999px; }
+  .card-rounded { border-radius:16px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<h1 class="h4 fw-semibold">Bảng điều khiển tài chính</h1>
+<p class="text-muted">Theo dõi chi tiêu sinh viên với góc nhìn từ AI.</p>
+
+<!-- KPI -->
+<div class="row g-3 mb-3">
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card kpi-card kpi-green">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="small opacity-75">Số dư tổng</div>
+            <div id="kpiBalance" class="kpi-value">₫2.847.500</div>
+            <div class="small opacity-75">+2.1% so với tháng trước</div>
+          </div>
+          <i class="bi bi-wallet2 fs-2 opacity-75"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card kpi-card kpi-blue">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="small opacity-75">Đã chi tháng này</div>
+            <div id="kpiSpent" class="kpi-value">₫1.254.300</div>
+            <div class="small opacity-75">68.7% hạn mức</div>
+          </div>
+          <i class="bi bi-graph-up fs-2 opacity-75"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card kpi-card kpi-purple">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="small opacity-75">Mục tiêu tiết kiệm</div>
+            <div id="kpiSaving" class="kpi-value">₫1.247.800</div>
+            <div class="small opacity-75">25% của ₫5.000.000</div>
+          </div>
+          <i class="bi bi-piggy-bank fs-2 opacity-75"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card kpi-card kpi-orange">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="small opacity-75">Điểm AI</div>
+            <div id="kpiAiScore" class="kpi-value">8.2/10</div>
+            <div class="small opacity-75">Sức khỏe tài chính tốt</div>
+          </div>
+          <i class="bi bi-lightbulb fs-2 opacity-75"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick actions -->
+<div class="mb-3 d-flex gap-2">
+  <button class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Thêm giao dịch</button>
+  <button class="btn btn-outline-secondary">Quản lý ngân sách</button>
+  <button class="btn btn-outline-secondary">Đặt mục tiêu tiết kiệm</button>
+</div>
+
+<div class="row g-3">
+  <!-- Charts -->
+  <div class="col-lg-7">
+    <div class="card card-rounded shadow-sm mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="fw-semibold">Phân tích chi tiêu <span class="text-muted small">5 tháng gần đây</span></div>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-7">
+            <canvas id="spendTrend" height="140"></canvas>
+          </div>
+          <div class="col-md-5">
+            <canvas id="categoryPie" height="160"></canvas>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <div class="fw-semibold small mb-2">Chi tiết theo danh mục</div>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <tbody id="categoryTable">
+                <!-- JS render -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Insights -->
+  <div class="col-lg-5">
+    <div class="card card-rounded shadow-sm mb-3">
+      <div class="card-body">
+        <div class="fw-semibold mb-2">Gợi ý từ AI</div>
+
+        <div class="p-3 rounded-3 mb-2 border" style="background:#fff7ed;">
+          <div class="d-flex justify-content-between">
+            <div class="fw-semibold">Chi cho ăn uống cao</div>
+            <span class="pill bg-danger-subtle text-danger-emphasis">cao</span>
+          </div>
+          <div class="small text-muted">Bạn chi nhiều hơn 23% so với tháng trước. Nên nấu ăn tại nhà.</div>
+          <div class="small text-primary mt-1">Tiềm năng tiết kiệm: ₫150.000/tháng</div>
+        </div>
+
+        <div class="p-3 rounded-3 mb-2 border" style="background:#ecfeff;">
+          <div class="d-flex justify-content-between">
+            <div class="fw-semibold">Tối ưu di chuyển</div>
+            <span class="pill bg-success-subtle text-success-emphasis">thấp</span>
+          </div>
+          <div class="small text-muted">Cân nhắc đi xe buýt/thẻ tháng.</div>
+          <div class="small text-primary mt-1">Tiềm năng: ₫80.000/tháng</div>
+        </div>
+
+        <div class="p-3 rounded-3 mb-2 border" style="background:#faf5ff;">
+          <div class="d-flex justify-content-between">
+            <div class="fw-semibold">Tiết kiệm giáo trình</div>
+            <span class="pill bg-warning-subtle text-warning-emphasis">trung bình</span>
+          </div>
+          <div class="small text-muted">Thuê/mua lại sách cũ để giảm chi phí.</div>
+          <div class="small text-primary mt-1">Tiềm năng: ₫120.000/tháng</div>
+        </div>
+
+        <div class="p-3 rounded-3 border">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-semibold">Điểm sức khỏe tài chính</div>
+              <div class="small text-muted">Giữ thói quen tốt để đạt 9.0</div>
+            </div>
+            <div class="fs-4 fw-bold text-primary">8.2/10</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom row: recent, budget, savings -->
+  <div class="col-lg-4">
+    <div class="card card-rounded shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="fw-semibold">Giao dịch gần đây</div>
+          <button class="btn btn-sm btn-outline-secondary">Xem tất cả</button>
+        </div>
+        <div id="recentList" class="vstack gap-2">
+          <!-- JS render -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card card-rounded shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="fw-semibold">Tổng quan ngân sách</div>
+          <span class="text-muted small"><i class="bi bi-gear"></i></span>
+        </div>
+        <div class="small text-muted mb-1">Ngân sách tháng</div>
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="fw-semibold">₫1.254.000 / ₫1.800.000</div>
+          <div class="small text-muted">69.7% sử dụng</div>
+        </div>
+        <div class="progress my-2" style="height:10px;">
+          <div class="progress-bar bg-primary" style="width:69.7%"></div>
+        </div>
+
+        <div class="mt-3">
+          <div class="fw-semibold small mb-2">Phân bổ theo danh mục</div>
+          <div id="budgetList" class="vstack gap-1">
+            <!-- JS render -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card card-rounded shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="fw-semibold">Mục tiêu tiết kiệm</div>
+          <button class="btn btn-sm btn-outline-secondary">Thêm mục tiêu</button>
+        </div>
+        <div class="small text-muted mb-1">Tiến độ tổng</div>
+        <div class="progress mb-2" style="height:10px;">
+          <div class="progress-bar bg-success" style="width:37.4%"></div>
+        </div>
+        <div class="small">₫1.497.000 / ₫4.000.000</div>
+
+        <div class="mt-3 vstack gap-2" id="savingsGoals">
+          <!-- JS render -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+  // ====== DEMO DATA (có thể thay bằng API sau) ======
+  const months = ["01","02","03","04","05"];
+  const spend = [1450000, 1200000, 980000, 1500000, 1100000];
+  const categories = [
+    {name:"Ăn uống", value:36, color:"#60a5fa"},
+    {name:"Di chuyển", value:22, color:"#34d399"},
+    {name:"Giáo trình", value:18, color:"#fbbf24"},
+    {name:"Giải trí", value:14, color:"#f472b6"},
+    {name:"Nhà trọ", value:10, color:"#94a3b8"}
+  ];
+  const recent = [
+    {desc:"Starbucks Coffee", date:"15/01", category:"Ăn uống", amount:49500},
+    {desc:"Bus Pass Monthly", date:"14/01", category:"Di chuyển", amount:750000},
+    {desc:"Physics Textbook", date:"13/01", category:"Giáo trình", amount:899900},
+  ];
+  const budgets = [
+    {name:"Ăn uống", used:450000, limit:800000},
+    {name:"Di chuyển", used:280000, limit:400000},
+    {name:"Giáo trình", used:200000, limit:600000},
+    {name:"Giải trí", used:180000, limit:300000},
+    {name:"Nhà trọ", used:144000, limit:200000},
+  ];
+  const goals = [
+    {name:"Laptop mới", current: 6500000, target: 15000000},
+    {name:"Học tiếng Anh", current: 1200000, target: 4000000},
+  ];
+
+  // ====== Charts ======
+  const ctxBar = document.getElementById('spendTrend');
+  new Chart(ctxBar, {
+    type: 'bar',
+    data: {
+      labels: months.map(m => `Th ${m}`),
+      datasets: [{ label: 'Chi tiêu (₫)', data: spend }]
+    },
+    options: { responsive:true, plugins:{legend:{display:false}} }
+  });
+
+  const ctxPie = document.getElementById('categoryPie');
+  new Chart(ctxPie, {
+    type: 'pie',
+    data: {
+      labels: categories.map(c=>c.name),
+      datasets: [{ data: categories.map(c=>c.value) }]
+    },
+    options:{ responsive:true, plugins:{legend:{position:'bottom'}} }
+  });
+
+  // ====== Bảng chi tiết danh mục ======
+  const tbl = document.getElementById('categoryTable');
+  categories.forEach((c,idx)=>{
+    const amt = [450000,280000,200000,180000,144000][idx];
+    tbl.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td class="text-nowrap"><span class="badge rounded-pill" style="background:${c.color};">&nbsp;</span> ${c.name}</td>
+        <td class="text-end">₫${amt.toLocaleString('vi-VN')}</td>
+      </tr>
+    `);
+  });
+
+  // ====== Recent list ======
+  const list = document.getElementById('recentList');
+  recent.forEach(r=>{
+    list.insertAdjacentHTML('beforeend', `
+      <div class="d-flex justify-content-between align-items-center border rounded-3 px-3 py-2">
+        <div>
+          <div class="fw-semibold">${r.desc}</div>
+          <div class="small text-muted">${r.category} • ${r.date}</div>
+        </div>
+        <div class="fw-semibold text-danger">₫${r.amount.toLocaleString('vi-VN')}</div>
+      </div>
+    `);
+  });
+
+  // ====== Budget list ======
+  const bl = document.getElementById('budgetList');
+  budgets.forEach(b=>{
+    const pct = Math.min(100, Math.round(b.used/b.limit*100));
+    bl.insertAdjacentHTML('beforeend', `
+      <div>
+        <div class="d-flex justify-content-between small">
+          <span>${b.name}</span>
+          <span>₫${b.used.toLocaleString('vi-VN')} / ₫${b.limit.toLocaleString('vi-VN')}</span>
+        </div>
+        <div class="progress" style="height:8px;">
+          <div class="progress-bar ${pct>=100?'bg-danger':pct>=80?'bg-warning':'bg-success'}" style="width:${pct}%"></div>
+        </div>
+      </div>
+    `);
+  });
+
+  // ====== Savings goals ======
+  const sg = document.getElementById('savingsGoals');
+  goals.forEach(g=>{
+    const pct = Math.min(100, Math.round(g.current/g.target*100));
+    sg.insertAdjacentHTML('beforeend', `
+      <div class="border rounded-3 p-2">
+        <div class="d-flex justify-content-between">
+          <div class="fw-semibold">${g.name}</div>
+          <div class="small">${pct}%</div>
+        </div>
+        <div class="progress my-1" style="height:8px;">
+          <div class="progress-bar" style="width:${pct}%"></div>
+        </div>
+        <div class="small">₫${g.current.toLocaleString('vi-VN')} / ₫${g.target.toLocaleString('vi-VN')}</div>
+      </div>
+    `);
+  });
+
+})();
+</script>
+{% endblock %}

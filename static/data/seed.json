@@ -1,0 +1,26 @@
+{
+  "categories": ["Ăn uống", "Di chuyển", "Giáo trình"],
+  "expenses": [
+    {
+      "desc": "Starbucks Coffee",
+      "date": "2024-01-15",
+      "amount": 49500,
+      "category": "Ăn uống",
+      "method": "Thẻ tín dụng"
+    },
+    {
+      "desc": "Bus Pass Monthly",
+      "date": "2024-01-14",
+      "amount": 750000,
+      "category": "Di chuyển",
+      "method": "Thẻ ghi nợ"
+    },
+    {
+      "desc": "Physics Textbook",
+      "date": "2024-01-13",
+      "amount": 899900,
+      "category": "Giáo trình",
+      "method": "Thẻ tín dụng"
+    }
+  ]
+}
