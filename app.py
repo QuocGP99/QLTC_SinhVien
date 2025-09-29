@@ -46,7 +46,19 @@ def register():
 @app.route("/expenses")
 def expenses():
     return render_template("transactions/list.html", page_title="Chi tiêu")
+@app.route("/budgets")
+def budgets():
+    return render_template("budgets.html", page_title="Ngân sách")
+@app.route("/savings")
+def savings():
+    return render_template("savings.html", page_title="Mục tiêu tiết kiệm")
+@app.route("/reports")
+def reports():
+    return render_template("reports.html", page_title="Báo cáo")
 
+@app.route("/settings")
+def settings():
+    return render_template("settings.html", page_title="Cài đặt")
 if __name__ == "__main__":
     print(">>> app.py loaded from:", __file__)
     app.run(debug=True)

@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<style>
+  .card-rounded{ border-radius:16px }
+  .kpi {border:0;border-radius:16px;background:#fff}
+  .kpi .val{font-size:1.35rem;font-weight:700}
+  .progress{ height:10px }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="h4 fw-semibold">Báo cáo</h1>
+<p class="text-muted mb-3">Tổng hợp, phân tích và xuất dữ liệu chi tiêu của bạn.</p>
+
+<!-- Bộ lọc -->
+<div class="card card-rounded shadow-sm mb-3">
+  <div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">Từ ngày</label>
+        <input type="date" id="fromDate" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Đến ngày</label>
+        <input type="date" id="toDate" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Danh mục</label>
+        <select id="filterCat" class="form-select">
+          <option value="">Tất cả</option>
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button class="btn btn-primary w-100" id="btnApply"><i class="bi bi-funnel me-1"></i> Áp dụng</button>
+        <div class="dropstart">
+          <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-download"></i> Xuất</button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" id="exportCsv">Xuất CSV</a></li>
+            <li><a class="dropdown-item" href="#" id="printPdf">In / Lưu PDF</a></li>
+            <li><a class="dropdown-item" href="#" id="saveCharts">Tải ảnh biểu đồ</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KPI -->
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card kpi shadow-sm">
+      <div class="card-body">
+        <div class="text-muted small">Tổng chi</div>
+        <div id="kpiTotal" class="val text-danger">₫0</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card kpi shadow-sm">
+      <div class="card-body">
+        <div class="text-muted small">Số giao dịch</div>
+        <div id="kpiCount" class="val">0</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card kpi shadow-sm">
+      <div class="card-body">
+        <div class="text-muted small">Trung bình/ngày</div>
+        <div id="kpiDaily" class="val text-primary">₫0</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Biểu đồ -->
+<div class="row g-3 mb-3">
+  <div class="col-lg-6">
+    <div class="card card-rounded shadow-sm">
+      <div class="card-body">
+        <div class="fw-semibold mb-2">Xu hướng chi theo ngày</div>
+        <canvas id="lineDaily" height="150"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card card-rounded shadow-sm">
+      <div class="card-body">
+        <div class="fw-semibold mb-2">Cơ cấu theo danh mục</div>
+        <canvas id="pieCat" height="150"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card card-rounded shadow-sm mb-3">
+  <div class="card-body">
+    <div class="fw-semibold mb-2">So sánh theo tháng</div>
+    <canvas id="barMonthly" height="120"></canvas>
+  </div>
+</div>
+
+<!-- Bảng giao dịch -->
+<div class="card card-rounded shadow-sm">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div class="fw-semibold">Giao dịch</div>
+      <div class="text-muted small" id="rangeLabel"></div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>Ngày</th>
+            <th>Mô tả</th>
+            <th>Danh mục</th>
+            <th>Phương thức</th>
+            <th class="text-end">Số tiền</th>
+          </tr>
+        </thead>
+        <tbody id="txTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+// ===== Demo data (sau nối API thay bằng fetch BASE_API_URL) =====
+const CATS = ["Ăn uống","Di chuyển","Giáo trình","Giải trí","Nhà trọ"];
+const rnd = (min,max)=>Math.floor(Math.random()*(max-min+1))+min;
+const txSeed = (()=>{ // 3 tháng gần đây: tạo 150 giao dịch ngẫu nhiên
+  const arr=[]; const today = new Date();
+  for(let i=0;i<150;i++){
+    const d = new Date(today); d.setDate(d.getDate()-rnd(0,85));
+    arr.push({
+      date: d.toISOString().slice(0,10),
+      desc: ["Cafe","Bữa trưa","Xe buýt","Sách","Phim","Thuê trọ"][rnd(0,5)],
+      category: CATS[rnd(0,4)],
+      method: ["Tiền mặt","Thẻ ghi nợ","Thẻ tín dụng"][rnd(0,2)],
+      amount: rnd(20000, 400000)
+    });
+  }
+  return arr.sort((a,b)=>a.date.localeCompare(b.date));
+})();
+
+let chart1, chart2, chart3;
+const money = n => (n??0).toLocaleString('vi-VN',{style:'currency',currency:'VND',maximumFractionDigits:0});
+
+function initFilters(){
+  const cat = document.getElementById('filterCat');
+  CATS.forEach(c=>cat.insertAdjacentHTML('beforeend', `<option>${c}</option>`));
+  const to = new Date();
+  const from = new Date(); from.setDate(to.getDate()-30);
+  document.getElementById('fromDate').value = from.toISOString().slice(0,10);
+  document.getElementById('toDate').value   = to.toISOString().slice(0,10);
+}
+
+function apply(){
+  const from = document.getElementById('fromDate').value;
+  const to   = document.getElementById('toDate').value;
+  const cat  = document.getElementById('filterCat').value;
+  const filtered = txSeed.filter(t => t.date>=from && t.date<=to && (!cat || t.category===cat));
+
+  // KPI
+  const total = filtered.reduce((s,x)=>s+x.amount,0);
+  document.getElementById('kpiTotal').textContent = money(total);
+  document.getElementById('kpiCount').textContent = filtered.length;
+  const days = Math.max(1, (new Date(to)-new Date(from))/86400000+1);
+  document.getElementById('kpiDaily').textContent = money(total/days);
+  document.getElementById('rangeLabel').textContent = `Từ ${from} đến ${to} (${filtered.length} giao dịch)`;
+
+  // Bảng
+  const tb = document.getElementById('txTable'); tb.innerHTML="";
+  filtered.slice().reverse().forEach(r=>{
+    tb.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td>${new Date(r.date).toLocaleDateString('vi-VN')}</td>
+        <td>${r.desc}</td>
+        <td>${r.category}</td>
+        <td>${r.method}</td>
+        <td class="text-end text-danger fw-semibold">${money(r.amount)}</td>
+      </tr>
+    `);
+  });
+
+  // Dữ liệu biểu đồ
+  const byDay = {};
+  filtered.forEach(r=>{ byDay[r.date]=(byDay[r.date]||0)+r.amount; });
+  const daysSorted = Object.keys(byDay).sort((a,b)=>a.localeCompare(b));
+
+  const byCat = {};
+  filtered.forEach(r=>{ byCat[r.category]=(byCat[r.category]||0)+r.amount; });
+
+  const byMonth = {};
+  filtered.forEach(r=>{
+    const m = r.date.slice(0,7);
+    byMonth[m]=(byMonth[m]||0)+r.amount;
+  });
+
+  // Charts
+  const make = (ctx, conf)=>{
+    if (ctx._chartInstance) { ctx._chartInstance.destroy(); }
+    const ch = new Chart(ctx, conf); ctx._chartInstance = ch; return ch;
+  };
+  chart1 = make(document.getElementById('lineDaily'), {
+    type:'line',
+    data:{ labels: daysSorted.map(d=>new Date(d).toLocaleDateString('vi-VN')),
+           datasets:[{label:'Chi tiêu (₫)', data:daysSorted.map(d=>byDay[d]), fill:false, tension:.25}] },
+    options:{responsive:true, plugins:{legend:{display:false}}}
+  });
+  chart2 = make(document.getElementById('pieCat'), {
+    type:'pie',
+    data:{ labels:Object.keys(byCat), datasets:[{ data:Object.values(byCat)}] },
+    options:{responsive:true, plugins:{legend:{position:'bottom'}}}
+  });
+  chart3 = make(document.getElementById('barMonthly'), {
+    type:'bar',
+    data:{ labels:Object.keys(byMonth), datasets:[{label:'Chi tiêu theo tháng (₫)', data:Object.values(byMonth)}] },
+    options:{responsive:true, plugins:{legend:{display:false}}}
+  });
+
+  // Export CSV
+  document.getElementById('exportCsv').onclick = (e)=>{
+    e.preventDefault();
+    const rows = [["date","desc","category","method","amount"]]
+      .concat(filtered.map(r=>[r.date,r.desc,r.category,r.method,r.amount]));
+    const csv = rows.map(r=>r.map(x=>`"${String(x).replaceAll('"','""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `report_${from}_to_${to}.csv`; a.click();
+  };
+  document.getElementById('printPdf').onclick = (e)=>{ e.preventDefault(); window.print(); };
+  document.getElementById('saveCharts').onclick = (e)=>{
+    e.preventDefault();
+    [chart1,chart2,chart3].forEach((c,i)=>{
+      const a = document.createElement('a');
+      a.href = c.toBase64Image(); a.download = `chart_${i+1}.png`; a.click();
+    });
+  };
+}
+
+document.getElementById('btnApply').addEventListener('click', apply);
+initFilters(); apply();
+</script>
+{% endblock %}

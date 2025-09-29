@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<style>
+  .card-rounded{ border-radius:16px }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="h4 fw-semibold">Cài đặt</h1>
+<p class="text-muted mb-3">Quản lý hồ sơ, tuỳ chọn ứng dụng, thông báo và tích hợp.</p>
+
+<div class="row g-3">
+  <!-- Hồ sơ -->
+  <div class="col-lg-6">
+    <div class="card card-rounded shadow-sm">
+      <div class="card-body">
+        <div class="fw-semibold mb-2">Hồ sơ cá nhân</div>
+        <form id="profileForm" class="vstack gap-2">
+          <div class="row g-2">
+            <div class="col-md-6">
+              <label class="form-label">Họ tên</label>
+              <input class="form-control" name="fullName" placeholder="Nguyễn Văn A">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" name="email" placeholder="you@email.com">
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Ảnh đại diện (URL)</label>
+            <input class="form-control" name="avatar" placeholder="https://...">
+          </div>
+          <button class="btn btn-primary align-self-start mt-2">Lưu hồ sơ</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tuỳ chọn -->
+  <div class="col-lg-6">
+    <div class="card card-rounded shadow-sm">
+      <div class="card-body">
+        <div class="fw-semibold mb-2">Tuỳ chọn ứng dụng</div>
+        <form id="prefsForm" class="row g-2">
+          <div class="col-md-4">
+            <label class="form-label">Ngôn ngữ</label>
+            <select class="form-select" name="lang">
+              <option value="vi">Tiếng Việt</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Tiền tệ</label>
+            <select class="form-select" name="currency">
+              <option value="VND">VND</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Giao diện</label>
+            <select class="form-select" name="theme">
+              <option value="light">Sáng</option>
+              <option value="dark">Tối</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <div class="form-check form-switch mt-2">
+              <input class="form-check-input" type="checkbox" id="compactMode" name="compact">
+              <label class="form-check-label" for="compactMode">Chế độ bảng biểu gọn</label>
+            </div>
+          </div>
+          <div class="col-12">
+            <button class="btn btn-primary">Lưu tuỳ chọn</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Thông báo -->
+  <div class="col-lg-6">
+    <div class="card card-rounded shadow-sm">
+      <div class="card-body">
+        <div class="fw-semibold mb-2">Thông báo</div>
+        <form id="notifyForm" class="vstack gap-2">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="n1" name="emailTx">
+            <label class="form-check-label" for="n1">Email khi có giao dịch lớn</label>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="n2" name="budgetAlert">
+            <label class="form-check-label" for="n2">Cảnh báo vượt ngân sách</label>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="n3" name="savingReminder">
+            <label class="form-check-label" for="n3">Nhắc góp mục tiêu hàng tháng</label>
+          </div>
+          <button class="btn btn-primary align-self-start">Lưu thông báo</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tích hợp / API -->
+  <div class="col-lg-6">
+    <div class="card card-rounded shadow-sm">
+      <div class="card-body">
+        <div class="fw-semibold mb-2">Tích hợp & AI</div>
+        <form id="integrForm" class="vstack gap-2">
+          <div>
+            <label class="form-label">BASE_API_URL</label>
+            <input class="form-control" name="apiUrl" placeholder="http://127.0.0.1:8000/api">
+          </div>
+          <div class="row g-2">
+            <div class="col-md-4">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="ff1" name="ai_classify">
+                <label class="form-check-label" for="ff1">AI phân loại chi</label>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="ff2" name="ai_suggest">
+                <label class="form-check-label" for="ff2">AI gợi ý tiết kiệm</label>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="ff3" name="charts">
+                <label class="form-check-label" for="ff3">Bật biểu đồ</label>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary align-self-start">Lưu tích hợp</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Đổi mật khẩu (demo) -->
+  <div class="col-lg-6">
+    <div class="card card-rounded shadow-sm">
+      <div class="card-body">
+        <div class="fw-semibold mb-2">Đổi mật khẩu</div>
+        <form id="pwdForm" class="row g-2">
+          <div class="col-md-4">
+            <label class="form-label">Mật khẩu hiện tại</label>
+            <input type="password" name="old" class="form-control" required minlength="6">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Mật khẩu mới</label>
+            <input type="password" name="new1" class="form-control" required minlength="6">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Nhập lại</label>
+            <input type="password" name="new2" class="form-control" required minlength="6">
+          </div>
+          <div class="col-12">
+            <button class="btn btn-primary">Đổi mật khẩu</button>
+          </div>
+        </form>
+        <div class="small text-muted mt-2">* Demo: chỉ kiểm tra trùng khớp và độ dài, không gọi API.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
+  <div id="setToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-body">Đã lưu cài đặt.</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const TKEY = "sf_settings_v1";
+const showToast = (msg)=>{
+  const el=document.getElementById('setToast'); el.querySelector('.toast-body').textContent=msg;
+  new bootstrap.Toast(el,{delay:1500}).show();
+};
+const load = ()=> JSON.parse(localStorage.getItem(TKEY)||"{}");
+const save = (obj)=>{ localStorage.setItem(TKEY, JSON.stringify(obj)); showToast("Đã lưu cài đặt."); };
+
+function applyTheme(theme){
+  document.documentElement.setAttribute("data-bs-theme", theme==="dark" ? "dark" : "light");
+}
+
+(function(){
+  const st = load();
+
+  // ===== Hồ sơ =====
+  const pf = document.getElementById('profileForm');
+  pf.fullName.value = st.fullName||"";
+  pf.email.value    = st.email||"";
+  pf.avatar.value   = st.avatar||"";
+  pf.addEventListener('submit', (e)=>{ e.preventDefault();
+    Object.assign(st, Object.fromEntries(new FormData(pf).entries()));
+    save(st);
+  });
+
+  // ===== Tuỳ chọn =====
+  const pr = document.getElementById('prefsForm');
+  pr.lang.value     = st.lang||"vi";
+  pr.currency.value = st.currency||"VND";
+  pr.theme.value    = st.theme||"light";
+  pr.compact.checked= !!st.compact;
+  applyTheme(pr.theme.value);
+  pr.addEventListener('submit',(e)=>{ e.preventDefault();
+    Object.assign(st, Object.fromEntries(new FormData(pr).entries()), {compact: pr.compact.checked});
+    applyTheme(st.theme); save(st);
+  });
+
+  // ===== Thông báo =====
+  const nf = document.getElementById('notifyForm');
+  nf.emailTx.checked     = !!st.emailTx;
+  nf.budgetAlert.checked = !!st.budgetAlert;
+  nf.savingReminder.checked = !!st.savingReminder;
+  nf.addEventListener('submit',(e)=>{ e.preventDefault();
+    st.emailTx = nf.emailTx.checked; st.budgetAlert = nf.budgetAlert.checked; st.savingReminder = nf.savingReminder.checked;
+    save(st);
+  });
+
+  // ===== Tích hợp / AI =====
+  const it = document.getElementById('integrForm');
+  it.apiUrl.value  = st.apiUrl||"";
+  it.ai_classify.checked = !!st.ai_classify;
+  it.ai_suggest.checked  = !!st.ai_suggest;
+  it.charts.checked      = st.charts ?? true;
+  it.addEventListener('submit',(e)=>{ e.preventDefault();
+    st.apiUrl = it.apiUrl.value; st.ai_classify = it.ai_classify.checked; st.ai_suggest = it.ai_suggest.checked; st.charts = it.charts.checked;
+    // Có thể expose global config cho FE khác dùng
+    window.APP_CONFIG = { BASE_API_URL: st.apiUrl, FEATURE_FLAGS: { ai_classify: st.ai_classify, ai_suggest: st.ai_suggest, charts: st.charts } };
+    save(st);
+  });
+
+  // ===== Đổi mật khẩu (demo) =====
+  const pw = document.getElementById('pwdForm');
+  pw.addEventListener('submit',(e)=>{ e.preventDefault();
+    const f = Object.fromEntries(new FormData(pw).entries());
+    if(f.new1 !== f.new2){ alert("Mật khẩu nhập lại không khớp."); return; }
+    if((f.new1||"").length < 6){ alert("Mật khẩu mới tối thiểu 6 ký tự."); return; }
+    showToast("Đổi mật khẩu (demo) thành công.");
+    pw.reset();
+  });
+})();
+</script>
+{% endblock %}
