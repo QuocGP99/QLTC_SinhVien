@@ -1,0 +1,42 @@
+<!-- Expense Form Modal -->
+<div class="modal fade" id="expenseFormModal" tabindex="-1" aria-labelledby="expenseFormModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="expenseFormModalLabel">Thêm chi tiêu</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="expenseForm">
+          <input type="hidden" id="expenseId" name="id">
+          
+          <div class="mb-3">
+            <label for="amount" class="form-label">Số tiền</label>
+            <input type="number" class="form-control" id="amount" name="amount" step="0.01" required>
+          </div>
+          
+          <div class="mb-3">
+            <label for="category" class="form-label">Danh mục</label>
+            <select class="form-select" id="category" name="category" required>
+              <option value="">Chọn danh mục</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="description" class="form-label">Mô tả</label>
+            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+          </div>
+          
+          <div class="mb-3">
+            <label for="date" class="form-label">Ngày</label>
+            <input type="date" class="form-control" id="date" name="date" required>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-primary" id="saveExpenseBtn">Lưu</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,116 @@
+/* admin.css - Admin panel specific styles */
+
+.admin-sidebar {
+  background-color: var(--bs-dark);
+  min-height: 100vh;
+}
+
+.admin-sidebar .nav-link {
+  color: rgba(255, 255, 255, 0.8);
+  padding: 0.75rem 1rem;
+  transition: all 0.3s;
+}
+
+.admin-sidebar .nav-link:hover {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.admin-sidebar .nav-link.active {
+  color: #fff;
+  background-color: var(--bs-primary);
+}
+
+.admin-header {
+  background-color: #fff;
+  border-bottom: 1px solid #dee2e6;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.admin-stats-card {
+  border-left: 4px solid var(--bs-primary);
+  transition: transform 0.2s;
+}
+
+.admin-stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.admin-table {
+  font-size: 0.9rem;
+}
+
+.admin-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+.admin-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.admin-badge {
+  font-size: 0.75rem;
+  padding: 0.35em 0.65em;
+}
+
+.admin-action-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* System logs */
+.system-logs {
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1rem;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', monospace;
+}
+
+.system-logs .log-entry {
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.system-logs .log-error {
+  color: #f48771;
+}
+
+.system-logs .log-warning {
+  color: #dcdcaa;
+}
+
+.system-logs .log-info {
+  color: #4ec9b0;
+}
+
+.system-logs .log-debug {
+  color: #9cdcfe;
+}
+
+/* Feature flags */
+.feature-flag-item {
+  padding: 0.75rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.feature-flag-item:last-child {
+  border-bottom: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-sidebar {
+    min-height: auto;
+  }
+  
+  .admin-table {
+    font-size: 0.8rem;
+  }
+}

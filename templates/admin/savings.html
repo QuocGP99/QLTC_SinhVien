@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Savings{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <h2 class="mb-4">Quản lý Tiết kiệm (Admin)</h2>
+
+  <!-- Savings Table -->
+  <div class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover" id="adminSavingsTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>User</th>
+              <th>Tên mục tiêu</th>
+              <th>Mục tiêu</th>
+              <th>Hiện tại</th>
+              <th>Tiến độ</th>
+              <th>Hạn chót</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody id="adminSavingsTableBody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

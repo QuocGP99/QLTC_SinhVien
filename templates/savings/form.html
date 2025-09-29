@@ -1,0 +1,45 @@
+<!-- Savings Goal Form Modal -->
+<div class="modal fade" id="savingFormModal" tabindex="-1" aria-labelledby="savingFormModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="savingFormModalLabel">Thêm mục tiêu tiết kiệm</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="savingForm">
+          <input type="hidden" id="savingId" name="id">
+          
+          <div class="mb-3">
+            <label for="savingName" class="form-label">Tên mục tiêu</label>
+            <input type="text" class="form-control" id="savingName" name="name" required>
+          </div>
+          
+          <div class="mb-3">
+            <label for="savingTarget" class="form-label">Số tiền mục tiêu</label>
+            <input type="number" class="form-control" id="savingTarget" name="target_amount" step="0.01" required>
+          </div>
+          
+          <div class="mb-3">
+            <label for="savingCurrent" class="form-label">Số tiền hiện tại</label>
+            <input type="number" class="form-control" id="savingCurrent" name="current_amount" step="0.01" value="0">
+          </div>
+          
+          <div class="mb-3">
+            <label for="savingDeadline" class="form-label">Hạn chót</label>
+            <input type="date" class="form-control" id="savingDeadline" name="deadline">
+          </div>
+          
+          <div class="mb-3">
+            <label for="savingDescription" class="form-label">Mô tả</label>
+            <textarea class="form-control" id="savingDescription" name="description" rows="3"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-primary" id="saveSavingBtn">Lưu</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}System Settings{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <h2 class="mb-4">Cài đặt Hệ thống</h2>
+
+  <!-- System Health -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h5>System Health</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3">
+              <p><strong>API Status:</strong> <span id="apiStatus" class="badge bg-success">Online</span></p>
+            </div>
+            <div class="col-md-3">
+              <p><strong>Database:</strong> <span id="dbStatus" class="badge bg-success">Connected</span></p>
+            </div>
+            <div class="col-md-3">
+              <p><strong>Cache:</strong> <span id="cacheStatus" class="badge bg-success">Active</span></p>
+            </div>
+            <div class="col-md-3">
+              <p><strong>Uptime:</strong> <span id="uptime">--</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feature Flags -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h5>Feature Flags</h5>
+        </div>
+        <div class="card-body">
+          <div id="featureFlags">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Logs -->
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>System Logs</h5>
+          <button class="btn btn-sm btn-secondary" id="refreshLogsBtn">Refresh</button>
+        </div>
+        <div class="card-body">
+          <div id="systemLogs" style="max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 0.9em;">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

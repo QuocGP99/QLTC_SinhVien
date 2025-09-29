@@ -104,15 +104,27 @@ const Expenses = (() => {
   }
 
   async function init(opts){
-    if(opts?.seedUrl){
+    // Mock data cho demo
+    const mockCategories = ['Ăn uống', 'Di chuyển', 'Giải trí', 'Mua sắm', 'Học tập', 'Sức khỏe'];
+    const mockExpenses = [
+      { date: '2025-09-28', category: 'Ăn uống', desc: 'Cơm trưa', amount: 50000, method: 'Tiền mặt' },
+      { date: '2025-09-27', category: 'Di chuyển', desc: 'Xe bus', amount: 15000, method: 'Tiền mặt' },
+      { date: '2025-09-26', category: 'Giải trí', desc: 'Xem phim', amount: 120000, method: 'Thẻ' },
+      { date: '2025-09-25', category: 'Ăn uống', desc: 'Coffee', amount: 45000, method: 'Tiền mặt' },
+      { date: '2025-09-24', category: 'Mua sắm', desc: 'Quần áo', amount: 350000, method: 'Thẻ' },
+      { date: '2025-09-23', category: 'Ăn uống', desc: 'Nhà hàng', amount: 200000, method: 'Thẻ' },
+      { date: '2025-09-22', category: 'Di chuyển', desc: 'Grab', amount: 85000, method: 'Ví điện tử' },
+      { date: '2025-09-21', category: 'Học tập', desc: 'Sách', amount: 150000, method: 'Tiền mặt' },
+    ];
+    
+    if (opts?.seedUrl){
       const data = await loadSeed(opts.seedUrl);
-      state.categories = data.categories || ["Ăn uống","Di chuyển","Giáo trình","Giải trí","Khác"];
+      state.categories = data.categories || mockCategories;
       state.expenses   = (data.expenses || []).map(x=>({...x, method: x.method || "Tiền mặt"}));
-    } else if (opts?.loadFromApi){
-      const month = new Date().toISOString().slice(0,7);
-      const data = await API.get(`/expenses?month=${month}`);
-      state.expenses = data.items || [];
-      state.categories = data.categories || [...new Set(state.expenses.map(x=>x.category))];
+    } else {
+      // Sử dụng mock data
+      state.expenses = mockExpenses;
+      state.categories = mockCategories;
     }
     buildCategoryMenu(); setupForm(); applyFilter();
   }

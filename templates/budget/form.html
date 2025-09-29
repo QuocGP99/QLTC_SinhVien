@@ -1,0 +1,46 @@
+<!-- Budget Form Modal -->
+<div class="modal fade" id="budgetFormModal" tabindex="-1" aria-labelledby="budgetFormModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="budgetFormModalLabel">Thêm ngân sách</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="budgetForm">
+          <input type="hidden" id="budgetId" name="id">
+          
+          <div class="mb-3">
+            <label for="budgetCategory" class="form-label">Danh mục</label>
+            <select class="form-select" id="budgetCategory" name="category" required>
+              <option value="">Chọn danh mục</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="budgetAmount" class="form-label">Số tiền</label>
+            <input type="number" class="form-control" id="budgetAmount" name="amount" step="0.01" required>
+          </div>
+          
+          <div class="mb-3">
+            <label for="budgetPeriod" class="form-label">Kỳ hạn</label>
+            <select class="form-select" id="budgetPeriod" name="period" required>
+              <option value="monthly">Hàng tháng</option>
+              <option value="quarterly">Hàng quý</option>
+              <option value="yearly">Hàng năm</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="budgetStartDate" class="form-label">Ngày bắt đầu</label>
+            <input type="date" class="form-control" id="budgetStartDate" name="start_date" required>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-primary" id="saveBudgetBtn">Lưu</button>
+      </div>
+    </div>
+  </div>
+</div>

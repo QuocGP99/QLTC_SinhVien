@@ -1,0 +1,35 @@
+{% extends "base_auth.html" %}
+
+{% block title %}Quên mật khẩu{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow">
+        <div class="card-body p-4">
+          <h3 class="text-center mb-4">Quên mật khẩu</h3>
+          <p class="text-muted text-center mb-4">Nhập email của bạn để nhận link đặt lại mật khẩu</p>
+          
+          <form id="forgotForm">
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100">Gửi link đặt lại</button>
+          </form>
+          
+          <div class="text-center mt-3">
+            <a href="{{ url_for('login') }}">Quay lại đăng nhập</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}
