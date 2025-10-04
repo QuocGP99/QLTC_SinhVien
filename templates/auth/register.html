@@ -1,0 +1,35 @@
+{% extends 'base_auth.html' %}
+{% block head %}<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-hero" style="background-image:url('{{ url_for('static', filename='img/auth-side.jpg') }}')"></div>
+  <div class="auth-form">
+    <div class="auth-card card shadow-sm border-0"><div class="card-body p-4 p-md-5">
+      <h1 class="h4 mb-1">Create an account</h1>
+      <p class="text-muted mb-4">Provide your details.</p>
+      <form method="post" action="/register">
+        <div class="mb-3"><label class="form-label">Your name</label><input name="name" class="form-control" required></div>
+        <div class="mb-3"><label class="form-label">Email</label><input name="email" type="email" class="form-control" required></div>
+        <div class="mb-2"><label class="form-label">Password</label>
+          <div class="input-group">
+            <input name="password" id="regPass" type="password" class="form-control" minlength="6" required>
+            <button class="btn btn-outline-secondary" type="button" id="toggleRegPass"><i class="bi bi-eye"></i></button>
+          </div>
+        </div>
+        <p class="small text-muted">By signing up I agree to the <a href="#">terms</a> & <a href="#">privacy</a>.</p>
+        <button class="btn btn-primary w-100 mb-2">Create An Account</button>
+        <button class="btn btn-dark w-100" type="button"><i class="bi bi-google me-2"></i>Register with Google</button>
+      </form>
+      <div class="text-center mt-3"><span class="text-muted">Already a Member?</span> <a href="/login">Sign In</a></div>
+    </div></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('toggleRegPass')?.addEventListener('click', ()=>{
+  const ip = document.getElementById('regPass');
+  ip.type = ip.type === 'password' ? 'text' : 'password';
+});
+</script>
+{% endblock %}
