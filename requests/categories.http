@@ -1,0 +1,13 @@
+### LIST CATEGORIES
+GET {{baseUrl}}/api/categories
+Authorization: Bearer {{access_token}}
+
+### CREATE CATEGORY (optional)
+POST {{baseUrl}}/api/categories
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "name": "Ăn uống",
+  "type": "expense"
+}

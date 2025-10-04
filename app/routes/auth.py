@@ -57,8 +57,8 @@ def register():
     user.set_password(password)
     db.session.add(user); db.session.commit()
 
-    access = create_access_token(identity=str(user.id), additional_claims={"typ": "access"}, expires_delta=timedelta(hours=24))
-    refresh = create_refresh_token(identity=str(user.id), additional_claims={"typ": "refresh"}, expires_delta=timedelta(days=7))
+    access = create_access_token(identity=str(user.id))
+    refresh = create_refresh_token(identity=str(user.id))
     return ok({"user": user.to_public(),
                "access_token": access, "refresh_token": refresh, "token_type": "Bearer"}, 201)
     
@@ -73,9 +73,8 @@ def login():
     if not user or not user.check_password(password):
         return fail("Sai email hoặc mật khẩu", 401)
 
-    exp_seconds = 60*60*24 if remember else None #mac dinh config
-    access = create_access_token(identity=str(user.id), additional_claims={"typ": "access"}, expires_delta=timedelta(seconds=exp_seconds))
-    refresh = create_refresh_token(identity=str(user.id), additional_claims={"typ": "refresh"}, expires_delta=timedelta(days=7))
+    access = create_access_token(identity=str(user.id))
+    refresh = create_refresh_token(identity=str(user.id))
     return ok({"user": user.to_public(),
                "access_token": access, "refresh_token": refresh, "token_type": "Bearer"})
 

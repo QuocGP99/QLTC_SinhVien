@@ -1,0 +1,18 @@
+@local
+
+### LIST EXPENSES
+GET {{baseUrl}}/api/expenses
+Authorization: Bearer {{"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1OTU2ODEzNywianRpIjoiZTBlZTc4ZWUtMzE0OS00NDg4LWFiMjMtZTJlMDM4MTY2NTI3IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjEiLCJuYmYiOjE3NTk1NjgxMzcsImNzcmYiOiJlMWQ4YzAxMC0zMmEyLTRmMmMtOTBkYi0yYjMyNmMxZjZkNzAifQ.G1oPgX9CbC0dqIGcIAqhqXXk_gfqkMBhET4aeL5NDGg"}}
+
+### CREATE EXPENSE
+POST {{baseUrl}}/api/expenses
+Content-Type: application/json
+Authorization: Bearer {{"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1OTU2ODEzNywianRpIjoiZTBlZTc4ZWUtMzE0OS00NDg4LWFiMjMtZTJlMDM4MTY2NTI3IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjEiLCJuYmYiOjE3NTk1NjgxMzcsImNzcmYiOiJlMWQ4YzAxMC0zMmEyLTRmMmMtOTBkYi0yYjMyNmMxZjZkNzAifQ.G1oPgX9CbC0dqIGcIAqhqXXk_gfqkMBhET4aeL5NDGg"}}
+
+{
+  "amount": 25000,
+  "date": "2025-10-04T09:00:00",
+  "note": "Uống cafe",
+  "payment_method": "Tiền mặt",
+  "category_id": 1
+}

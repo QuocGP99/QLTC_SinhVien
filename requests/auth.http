@@ -1,0 +1,18 @@
+@local
+
+### LOGIN  → đặt tên cho request để dùng dữ liệu phản hồi
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "demo@gmail.com",
+  "password": "Demo@123"
+}
+
+### LƯU TOKEN TỰ ĐỘNG (REST Client magic)
+@access_token = {{login.response.body.access_token}}
+
+### KIỂM TRA TOKEN (chỉ để test)
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{access_token}}
