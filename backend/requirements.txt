@@ -1,0 +1,37 @@
+# --- Flask core ---
+Flask==3.0.3
+Werkzeug==3.0.3
+itsdangerous==2.2.0
+click==8.1.7
+
+# --- Database & Migrations ---
+Flask-SQLAlchemy==3.1.1
+SQLAlchemy==2.0.36
+Flask-Migrate==4.0.7
+alembic==1.13.3
+
+# --- Auth & Security ---
+Flask-JWT-Extended==4.6.0
+Flask-Bcrypt==1.0.1
+passlib==1.7.4   # nếu có code cũ dùng passlib
+PyJWT==2.8.0
+
+# --- Utilities ---
+Flask-Caching==2.3.0
+Flask-Cors==4.0.1
+python-dotenv==1.0.1
+python-dateutil==2.9.0.post0
+pytz==2024.2
+
+# --- Data validation / serialization (tùy chọn) ---
+marshmallow==3.21.3
+
+# --- Testing / Dev tools ---
+pytest==8.3.2
+requests==2.32.3
+
+# --- Optional: nếu cần Excel/CSV export ---
+openpyxl==3.1.5
+
+# --- Optional: nếu dùng AI Panel hoặc phân tích sau này ---
+pandas==2.2.3

@@ -1,7 +1,7 @@
 # app/routes/dashboard_api.py
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.services.dashboard_service import get_month_summary
+from ..services.dashboard_service import get_month_summary
 from datetime import datetime
 import pytz
 

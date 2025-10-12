@@ -32,3 +32,7 @@ def logout():
     # Với AJAX, token lưu ở localStorage, nên chỉ cần điều hướng về /login.
     # JS trên trang dashboard sẽ clear localStorage khi bấm Đăng xuất.
     return redirect(url_for("web.login"))
+
+@bp.get("/expenses")
+def expenses_page():
+    return render_template("expenses/list.html", BASE_API_URL=_api_base(), title="Expenses")

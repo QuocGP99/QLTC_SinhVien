@@ -5,8 +5,8 @@ from dateutil.relativedelta import relativedelta
 import math
 import pytz
 from sqlalchemy import func
-from app.extensions import db
-from app.models import Expense, Budget, Category, SavingsGoal
+from ..extensions import db
+from ..models import Expense, Budget, Category, SavingsGoal
 
 TZ = pytz.timezone("Asia/Bangkok")
 

@@ -19,11 +19,13 @@ class Expense(db.Model):
     def to_dict(self):
         return {
             "id": self.id,
-            "amount": self.amount,
-            "date": self.date.isoformat(),
+            "amount": float(self.amount) if self.amount is not None else None,
+            "date": self.date.isoformat() if self.date else None,
+            "occurred_on": self.date.date().isoformat() if self.date else None,
             "note": self.note,
             "payment_method": self.payment_method,
             "category_id": self.category_id,
             "user_id": self.user_id,
-            "category": self.category.name if self.category else None
+            "category_name": self.category.name if self.category else None,
+            "user_id": self.user_id,
         }

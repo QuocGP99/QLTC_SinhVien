@@ -1,10 +1,10 @@
 from flask import Flask
 #webp
 from .web import bp as web_bp
-from app.routes.auth import bp as auth_bp
-from app.routes.expenses import bp as expenses_bp
-from app.routes.categories import bp as categories_bp
-from app.routes.budgets import bp as budgets_bp 
+from .auth import bp as auth_bp
+from .expenses import bp as expenses_bp
+from .categories import bp as categories_bp
+from .budgets import bp as budgets_bp 
 from .savings_goals import bp as goals_bp
 from .dashboard_api import bp as dashboard_api_bp
 

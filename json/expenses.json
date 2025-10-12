@@ -1,0 +1,211 @@
+{
+  "info": {
+    "name": "SVFinance - Auth & Expenses",
+    "_postman_id": "6f4e3c0a-2222-4c33-bbbb-222222222222",
+    "description": "Bộ request kiểm thử Auth + Categories + Expenses (CRUD + filter).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Gắn Authorization cho mọi request nếu có token",
+          "const token = pm.environment.get('access_token');",
+          "if (token) {",
+          "  pm.request.headers.add({ key: 'Authorization', value: `Bearer ${token}` });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Auth - Register (optional)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"abc1234\",\n  \"full_name\": \"Tester\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Auth - Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"abc1234\",\n  \"remember\": true\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login OK', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.access_token).to.be.a('string');",
+                  "  pm.environment.set('access_token', json.access_token);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Auth - Me",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/auth/me"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Categories - List",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/categories"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Categories OK', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "  // Nếu muốn tự động set category_id theo tên:",
+                  "  // const target = (json.items || []).find(x => x.name === 'Ăn uống');",
+                  "  // if (target) pm.environment.set('category_id', String(target.id));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Expenses",
+      "item": [
+        {
+          "name": "Expenses - Create",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/expenses",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 45000,\n  \"category_id\": {{category_id}},\n  \"occurred_on\": \"{{test_occurred_on}}\",\n  \"note\": \"Ăn trưa\",\n  \"payment_method\": \"Tiền mặt\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Create OK', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.expense).to.be.an('object');",
+                  "  const id = json.expense.id;",
+                  "  pm.environment.set('expense_id', String(id));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Expenses - List (all)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/expenses"
+          },
+          "response": []
+        },
+        {
+          "name": "Expenses - List (by month)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/expenses?month=2025-10&page=1&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "expenses"],
+              "query": [
+                { "key": "month", "value": "2025-10" },
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "10" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Expenses - List (by category_id)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/expenses?category_id={{category_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Expenses - Detail",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/expenses/{{expense_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Expenses - Update",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/expenses/{{expense_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 55000,\n  \"note\": \"Ăn trưa + cafe\",\n  \"payment_method\": \"Thẻ\",\n  \"occurred_on\": \"{{test_occurred_on}}\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Expenses - Delete",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/expenses/{{expense_id}}"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

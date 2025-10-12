@@ -3,15 +3,24 @@ from flask_jwt_extended import jwt_required
 from ..extensions import db
 from ..models.category import Category
 
-bp = Blueprint("categories", __name__)
+bp = Blueprint("categories", __name__, url_prefix="/api/categories")
+
+def ok(data = None, code = 200):
+    base = {"success": True}
+    if isinstance (data, dict): base.update(data)
+    return jsonify(base), code
+
+def fail(msg = "Bad request", code = 400):
+    return jsonify({"success": False, "message": msg}), code
 
 @bp.get("/")
 def list_categories():
     """Trả toàn bộ categories, sort theo tên"""
     cats = Category.query.order_by(Category.name.asc()).all()
     items = [{"id": c.id, "name": c.name, "type": c.type} for c in cats]
-    return jsonify(items), 200
-
+    return jsonify({"success": True, "items": [
+        {"id": c.id, "name": c.name} for c in cats
+    ]}), 200
 @bp.post("/")
 @jwt_required()
 def create_category():
@@ -38,4 +47,4 @@ def create_category():
     db.session.add(c)
     db.session.commit()
 
-    return jsonify({"id": c.id, "name": c.name, "type": c.type}), 201
+    return jsonify({"category": {"id": c.id, "name": c.name, "type": getattr(c, "type", None)}}), 201

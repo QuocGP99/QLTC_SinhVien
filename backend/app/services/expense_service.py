@@ -102,7 +102,7 @@ def create_expense(user_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
     note = data.get("note", "") or ""
     payment_method = data.get("payment_method", "Tiền mặt") or "Tiền mặt"
 
-    date_str = data.get("date")
+    date_str = data.get("date") or data.get("occurred_on")
     dt = _parse_date_str(date_str) if date_str else datetime.now()
 
     e = Expense(
@@ -139,8 +139,9 @@ def update_expense(user_id: int, expense_id: int, data: Dict[str, Any]) -> Dict[
         except (TypeError, ValueError):
             raise ServiceError("amount không hợp lệ", 400)
 
-    if "date" in data:
-        e.date = _parse_date_str(data["date"]) or e.date
+    if "date" in data or "occurred_on" in data:
+        date_str = data.get("date") or data.get("occurred_on")
+        e.date = _parse_date_str(date_str) or e.date
 
     if "note" in data:
         e.note = data.get("note") or ""
