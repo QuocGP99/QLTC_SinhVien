@@ -18,10 +18,11 @@
         </p>
 
         <!-- Quan trọng: action trỏ API login -->
+        {% set API = BASE_API_URL|default('', true) %}
         <form
           id="loginForm"
           method="post"
-          action="{{ api_base }}/api/auth/login"
+          action="{{ API if API else '/api' }}/auth/login"
         >
           <div class="mb-3">
             <label class="form-label">Email</label>

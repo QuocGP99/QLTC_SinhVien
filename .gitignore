@@ -1,3 +1,7 @@
+# ===============================
+# 🔹 PYTHON / FLASK BACKEND
+# ===============================
+
 # Python cache
 __pycache__/
 *.pyc
@@ -10,34 +14,56 @@ __pycache__/
 env/
 venv/
 ENV/
+backend/venv/
+backend/env/
+backend/.venv/
 
-# Environment variables
-.env
-
-# Flask instance folder (db, uploads…)
+# Flask instance folder (SQLite DB, uploads…)
 instance/
+backend/instance/
 *.db
 *.sqlite3
 
-# Migrations cache
-migrations/versions/*.pyc
+# Environment variables
+.env
+backend/.env
 
-# VS Code settings
-.vscode/
-*.code-workspace
+# Alembic / Migrations cache
+migrations/versions/*.pyc
+backend/migrations/versions/*.pyc
 
 # Logs
 *.log
 
-# Test / coverage
+# ===============================
+# 🔹 FRONTEND (Bootstrap / static)
+# ===============================
+frontend/node_modules/
+frontend/dist/
+frontend/.cache/
+frontend/.DS_Store
+
+# ===============================
+# 🔹 VS Code / Editors
+# ===============================
+.vscode/
+*.code-workspace
+
+# ===============================
+# 🔹 Tests / coverage
+# ===============================
 .coverage
 htmlcov/
 .tox/
 pytest_cache/
 
-# OS files
+# ===============================
+# 🔹 OS Files
+# ===============================
 .DS_Store
 Thumbs.db
 
-# Jupyter / IPython
+# ===============================
+# 🔹 Jupyter / IPython
+# ===============================
 .ipynb_checkpoints/
