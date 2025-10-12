@@ -1,0 +1,73 @@
+<nav class="navbar navbar-expand-lg bg-white border-bottom">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-semibold" href="/">SVFinance</a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#topNav"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="topNav">
+      <ul class="navbar-nav ms-auto align-items-center">
+        <li class="nav-item me-3">
+          <span class="badge text-bg-secondary">
+            AI {{ 'On' if 'ai' in FEATURE_FLAGS else 'Off' }}</span
+          >
+        </li>
+        <li class="nav-item">
+          <!-- Placeholder sẽ được JS thay đổi -->
+          <a id="navAuth" class="nav-link" href="/login">Đăng nhập</a>
+
+          <script>
+            (function updateNavbarAuth() {
+              const token = localStorage.getItem("access_token");
+              const navAuth = document.getElementById("navAuth");
+
+              if (!navAuth) return;
+
+              if (token) {
+                // Có token => hiện xin chào user
+                try {
+                  const user = JSON.parse(localStorage.getItem("user") || "{}");
+                  const name =
+                    user.full_name ||
+                    user.name ||
+                    user.email?.split("@")[0] ||
+                    "User";
+                  navAuth.textContent = `Xin chào, ${name}`;
+                  navAuth.href = "/dashboard";
+                  navAuth.classList.add("fw-semibold");
+                } catch (e) {
+                  console.warn("Không đọc được user:", e);
+                }
+              } else {
+                // Chưa đăng nhập
+                navAuth.textContent = "Đăng nhập";
+                navAuth.href = "/login";
+              }
+            })();
+          </script>
+          <!-- logout -->
+          <a id="navLogout" class="nav-link d-none" href="#">Đăng xuất</a>
+          <script>
+            (function setupLogout() {
+              const btn = document.getElementById("navLogout");
+              const token = localStorage.getItem("access_token");
+              if (!btn) return;
+              if (token) btn.classList.remove("d-none");
+
+              btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                // Xoá token & user
+                localStorage.clear();
+                window.location.href = "/login";
+              });
+            })();
+          </script>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

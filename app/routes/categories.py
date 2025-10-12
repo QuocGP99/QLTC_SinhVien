@@ -5,14 +5,14 @@ from ..models.category import Category
 
 bp = Blueprint("categories", __name__)
 
-@bp.get("")
+@bp.get("/")
 def list_categories():
     """Trả toàn bộ categories, sort theo tên"""
     cats = Category.query.order_by(Category.name.asc()).all()
     items = [{"id": c.id, "name": c.name, "type": c.type} for c in cats]
     return jsonify(items), 200
 
-@bp.post("")
+@bp.post("/")
 @jwt_required()
 def create_category():
     """Tạo category mới (yêu cầu login)"""

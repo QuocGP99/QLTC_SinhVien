@@ -1,5 +1,4 @@
 from ..extensions import db
-from passlib.hash import bcrypt
 from sqlalchemy.sql import func
 from werkzeug.security import generate_password_hash, check_password_hash
 

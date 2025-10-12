@@ -11,12 +11,29 @@ class Config:
 
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "DATABASE_URL",
-        "sqlite:///" + DB_PATH.replace(os.sep, "/")
+        f"sqlite:///{DB_PATH.replace('\\', '/')}"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-# cấu hình JWT
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-jwt-secret")
-    JWT_TOKEN_LOCATION = ["headers", "cookies"]
-    JWT_ACCESS_TOKEN_EXPIRES = 3600  # 1 hour
-    JWT_REFRESH_TOKEN_EXPIRES = 60*60*24*7  #7days
 
+    # --- JWT ---
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-jwt-secret")
+
+    # Cho phép đọc token cả từ header và cookie
+    JWT_TOKEN_LOCATION = ["headers", "cookies"]
+
+    # Thời hạn (giữ như bạn đang để)
+    JWT_ACCESS_TOKEN_EXPIRES = 3600                 # 1h
+    JWT_REFRESH_TOKEN_EXPIRES = 60 * 60 * 24 * 7    # 7 ngày
+
+    # Cấu hình cookie (DEV)
+    JWT_COOKIE_SECURE = False        # Để True khi deploy HTTPS
+    JWT_COOKIE_SAMESITE = "Lax"      # "Lax" là hợp lý cho app cùng domain
+    JWT_COOKIE_CSRF_PROTECT = False  # Bật True ở production + thêm CSRF token
+
+    # (tuỳ chọn) đổi tên cookie cho gọn
+    JWT_ACCESS_COOKIE_NAME = "access_token"
+    JWT_REFRESH_COOKIE_NAME = "refresh_token"
+
+    # (tuỳ chọn) phạm vi đường dẫn cookie; '/' để dùng cho cả / và /api
+    JWT_ACCESS_COOKIE_PATH = "/"
+    JWT_REFRESH_COOKIE_PATH = "/"

@@ -1,0 +1,137 @@
+{
+  "info": {
+    "name": "QLTC_SinhVien",
+    "_postman_id": "qltc-sinhvien-col",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{access_token}}", "type": "string" } ] },
+  "item": [
+    {
+      "name": "Healthz",
+      "request": { "method": "GET", "url": { "raw": "{{base_url}}/healthz" } }
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{api_url}}/auth/register" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test2@example.com\",\n  \"full_name\": \"Test User 2\",\n  \"password\": \"abc123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login (sets tokens)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{api_url}}/auth/login" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test2@example.com\",\n  \"password\": \"abc123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let json = {};\n",
+                  "try { json = pm.response.json(); } catch (e) {}\n",
+                  "if (json && json.access_token) { pm.environment.set('access_token', json.access_token); }\n",
+                  "if (json && json.refresh_token) { pm.environment.set('refresh_token', json.refresh_token); }\n",
+                  "pm.test('Login 200/201', function () { pm.expect([200,201]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Whoami",
+          "request": { "method": "GET", "url": { "raw": "{{api_url}}/auth/me" } }
+        },
+        {
+          "name": "Refresh (sets new access_token)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{refresh_token}}", "type": "string" } ] },
+            "method": "POST",
+            "url": { "raw": "{{api_url}}/auth/refresh" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}\n",
+                  "if (json && json.access_token) { pm.environment.set('access_token', json.access_token); }\n",
+                  "pm.test('Refresh 200', function () { pm.expect(pm.response.code).to.eql(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": { "method": "POST", "url": { "raw": "{{api_url}}/auth/logout" } }
+        }
+      ]
+    },
+    {
+      "name": "Budgets",
+      "item": [
+        {
+          "name": "List budgets (with stats)",
+          "request": { "method": "GET", "url": { "raw": "{{api_url}}/budgets?month={{month}}" } }
+        },
+        {
+          "name": "Create/Upsert 1 budget",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{api_url}}/budgets" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_id\": 1,\n  \"amount\": 500000,\n  \"month\": \"{{month}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create/Upsert many budgets",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{api_url}}/budgets" },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  { \"category_id\": 2, \"amount\": 800000, \"month\": \"{{month}}\" },\n  { \"category_id\": 3, \"amount\": 1200000, \"month\": \"{{month}}\" }\n]"
+            }
+          }
+        },
+        {
+          "name": "Summary month",
+          "request": { "method": "GET", "url": { "raw": "{{api_url}}/budgets/summary?month={{month}}" } }
+        },
+        {
+          "name": "Update budget (id param)",
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{api_url}}/budgets/1" },
+            "body": { "mode": "raw", "raw": "{ \"amount\": 2000000 }" }
+          }
+        },
+        {
+          "name": "Delete budget (id param)",
+          "request": { "method": "DELETE", "url": { "raw": "{{api_url}}/budgets/1" } }
+        }
+      ]
+    }
+  ]
+}

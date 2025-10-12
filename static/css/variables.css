@@ -1,0 +1,8 @@
+:root {
+  --brand: #3b82f6;
+  --brand-ink: #0b1736;
+}
+.btn-primary {
+  --bs-btn-bg: var(--brand);
+  --bs-btn-border-color: var(--brand);
+}
