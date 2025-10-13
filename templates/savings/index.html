@@ -1,51 +1,61 @@
 {% extends "base.html" %}
-
 {% block title %}Mục tiêu tiết kiệm{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid py-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Mục tiêu Tiết kiệm</h2>
-    <button class="btn btn-primary" id="addSavingBtn">
+    <h2 class="mb-0">Mục tiêu tiết kiệm</h2>
+    <button class="btn btn-success" id="newGoalBtn">
       <i class="bi bi-plus-circle"></i> Thêm mục tiêu
     </button>
   </div>
 
-  <!-- Savings Overview -->
-  <div class="row mb-4">
-    <div class="col-md-4">
-      <div class="card">
+  <!-- KPI cards -->
+  <div class="row g-4 mb-3">
+    <div class="col-lg-4">
+      <div class="card kpi kpi-green shadow-sm">
         <div class="card-body">
-          <h6 class="text-muted">Tổng mục tiêu</h6>
-          <h3 id="totalGoals">0</h3>
+          <div class="kpi-title">Tổng đã tiết kiệm</div>
+          <div class="kpi-value" id="totalSaved">0₫</div>
+          <div class="kpi-sub" id="savedPercent">0% của tổng mục tiêu</div>
         </div>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="card">
+    <div class="col-lg-4">
+      <div class="card kpi kpi-blue shadow-sm">
         <div class="card-body">
-          <h6 class="text-muted">Đã tiết kiệm</h6>
-          <h3 id="totalSaved">0 ₫</h3>
+          <div class="kpi-title">Tổng mục tiêu</div>
+          <div class="kpi-value" id="totalTarget">0₫</div>
+          <div class="kpi-sub" id="activeGoals">0 mục tiêu đang theo dõi</div>
         </div>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="card">
+    <div class="col-lg-4">
+      <div class="card kpi kpi-purple shadow-sm">
         <div class="card-body">
-          <h6 class="text-muted">Mục tiêu tổng</h6>
-          <h3 id="totalTarget">0 ₫</h3>
+          <div class="kpi-title">Đóng góp hàng tháng</div>
+          <div class="kpi-value" id="monthlyCommitment">0₫</div>
+          <div class="kpi-sub">Tổng đóng góp mỗi tháng</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Savings Goals List -->
-  <div class="row" id="savingsList">
-    <!-- Populated by JS -->
+  <!-- Goal list -->
+  <div class="row g-4" id="savingsList">
+    <!-- JS sẽ render các card mục tiêu vào đây -->
   </div>
 </div>
+
+<!-- Modal tạo/sửa -->
+{% include "savings/form.html" %}
+
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/savings.js') }}"></script>
+  <script>
+    // Cho phép JS biết base API
+    window.BASE_API_URL = window.BASE_API_URL || "{{ BASE_API_URL if BASE_API_URL is defined else '/api' }}";
+  </script>
+  <script src="{{ url_for('static', filename='js/savings.js') }}"></script>
 {% endblock %}

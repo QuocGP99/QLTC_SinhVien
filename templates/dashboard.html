@@ -265,25 +265,7 @@
   ];
 
   // ====== Charts ======
-  const ctxBar = document.getElementById('spendTrend');
-  new Chart(ctxBar, {
-    type: 'bar',
-    data: {
-      labels: months.map(m => `Th ${m}`),
-      datasets: [{ label: 'Chi tiêu (₫)', data: spend }]
-    },
-    options: { responsive:true, plugins:{legend:{display:false}} }
-  });
-
-  const ctxPie = document.getElementById('categoryPie');
-  new Chart(ctxPie, {
-    type: 'pie',
-    data: {
-      labels: categories.map(c=>c.name),
-      datasets: [{ data: categories.map(c=>c.value) }]
-    },
-    options:{ responsive:true, plugins:{legend:{position:'bottom'}} }
-  });
+  
 
   // ====== Bảng chi tiết danh mục ======
   const tbl = document.getElementById('categoryTable');

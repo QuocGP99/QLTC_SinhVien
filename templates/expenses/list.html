@@ -1,83 +1,134 @@
 {% extends "base.html" %}
-
 {% block title %}Chi tiêu{% endblock %}
 
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+  .page-wrap{max-width:980px;margin:0 auto;}
+  .kpi-card .value{font-weight:700;font-size:1.2rem;color:#6f42c1}
+  .expense-card{border:1px solid #edf0f5;border-radius:10px;margin-bottom:.75rem}
+  .expense-card .amount{color:#d0333a;font-weight:600}
+  .badge-soft{background:#f6f7fb;border:1px solid #e8ebf2;color:#6b7280;font-weight:500}
+  .toolbar .btn{border-radius:10px}
+  .filter-icon{color:#6b7280}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Quản lý Chi tiêu</h2>
-    <button class="btn btn-primary" id="addExpenseBtn">
-      <i class="bi bi-plus-circle"></i> Thêm chi tiêu
-    </button>
+<div class="py-4 page-wrap">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h4 class="mb-1">Theo dõi chi tiêu</h4>
+      <div class="text-muted small">Quản lý và theo dõi chi tiêu hằng ngày</div>
+    </div>
+    <div class="toolbar">
+      <button id="addExpenseBtn" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Thêm chi tiêu
+      </button>
+    </div>
   </div>
 
-  <!-- Filters -->
-  <div class="card mb-4">
+  <!-- KPI -->
+  <div class="row g-3 kpi-card mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Tổng chi tháng này</div>
+          <div id="kpiTotal" class="value">0 ₫</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Số giao dịch</div>
+          <div id="kpiCount" class="value">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Trung bình mỗi giao dịch</div>
+          <div id="kpiAvg" class="value">0 ₫</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent + Filter -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white d-flex align-items-center justify-content-between">
+      <div class="fw-semibold">Chi tiêu gần đây</div>
+
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-funnel filter-icon"></i>
+        <div class="dropdown">
+          <button class="btn btn-light btn-sm dropdown-toggle" id="categoryFilterBtn" data-bs-toggle="dropdown">
+            Tất cả danh mục
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" id="categoryMenu" style="min-width:220px">
+            <li><a class="dropdown-item active" data-value="">Tất cả danh mục</a></li>
+            <!-- các danh mục sẽ được js thêm vào -->
+          </ul>
+        </div>
+      </div>
+    </div>
+
     <div class="card-body">
-      <div class="row g-3">
-        <div class="col-md-3">
-          <input type="date" class="form-control" id="filterStartDate" placeholder="Từ ngày">
+      <div id="txList"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal Thêm / Sửa -->
+<div class="modal fade" id="txModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" id="txForm">
+      <div class="modal-header">
+        <h5 class="modal-title" id="txModalTitle">Thêm chi tiêu mới</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Mô tả *</label>
+          <input class="form-control" name="desc" placeholder="vd: Ăn trưa ở căn tin" required>
         </div>
-        <div class="col-md-3">
-          <input type="date" class="form-control" id="filterEndDate" placeholder="Đến ngày">
+        <div class="mb-3">
+          <label class="form-label">Số tiền *</label>
+          <input type="number" class="form-control" name="amount" min="0" step="1000" value="0" required>
         </div>
-        <div class="col-md-3">
-          <select class="form-select" id="filterCategory">
-            <option value="">Tất cả danh mục</option>
+        <div class="mb-3">
+          <label class="form-label">Danh mục *</label>
+          <select class="form-select" name="category" required></select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Ngày</label>
+          <input type="date" class="form-control" name="date" required>
+        </div>
+        <div class="mb-1">
+          <label class="form-label">Phương thức</label>
+          <select class="form-select" name="method">
+            <option>Tiền mặt</option>
+            <option>Thẻ</option>
+            <option>Ví điện tử</option>
+            <option>Khác</option>
           </select>
         </div>
-        <div class="col-md-3">
-          <button class="btn btn-secondary w-100" id="filterBtn">Lọc</button>
-        </div>
       </div>
-    </div>
-  </div>
-
-  <!-- Expenses Table -->
-  <div class="card">
-    <div class="card-body">
-      <div class="table-responsive">
-        <table class="table table-hover" id="expensesTable">
-          <thead>
-            <tr>
-              <th>Ngày</th>
-              <th>Danh mục</th>
-              <th>Mô tả</th>
-              <th>Số tiền</th>
-              <th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody id="expensesTableBody">
-            <!-- Populated by JS -->
-          </tbody>
-        </table>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Hủy</button>
+        <button class="btn btn-primary" type="submit">Lưu chi tiêu</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Charts -->
-  <div class="row mt-4">
-    <div class="col-md-6">
-      <div class="card">
-        <div class="card-header">Chi tiêu theo danh mục</div>
-        <div class="card-body">
-          <canvas id="expensesPieChart"></canvas>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-6">
-      <div class="card">
-        <div class="card-header">Xu hướng chi tiêu</div>
-        <div class="card-body">
-          <canvas id="expensesLineChart"></canvas>
-        </div>
-      </div>
-    </div>
+    </form>
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
 <script src="{{ url_for('static', filename='js/expenses.js') }}"></script>
+<script>Expenses.init();</script>
 {% endblock %}

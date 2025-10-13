@@ -1,45 +1,66 @@
-<!-- Savings Goal Form Modal -->
-<div class="modal fade" id="savingFormModal" tabindex="-1" aria-labelledby="savingFormModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+<div class="modal fade" id="goalModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="savingFormModalLabel">Thêm mục tiêu tiết kiệm</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title" id="goalModalTitle">Tạo mục tiêu tiết kiệm mới</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
       </div>
       <div class="modal-body">
-        <form id="savingForm">
-          <input type="hidden" id="savingId" name="id">
-          
+        <form id="goalForm">
+          <input type="hidden" name="id" />
           <div class="mb-3">
-            <label for="savingName" class="form-label">Tên mục tiêu</label>
-            <input type="text" class="form-control" id="savingName" name="name" required>
+            <label class="form-label">Tiêu đề mục tiêu *</label>
+            <input type="text" class="form-control" name="title" placeholder="vd. Quỹ khẩn cấp" required>
           </div>
-          
           <div class="mb-3">
-            <label for="savingTarget" class="form-label">Số tiền mục tiêu</label>
-            <input type="number" class="form-control" id="savingTarget" name="target_amount" step="0.01" required>
+            <label class="form-label">Mô tả</label>
+            <input type="text" class="form-control" name="description" placeholder="vd. 3 tháng chi phí dự phòng">
           </div>
-          
-          <div class="mb-3">
-            <label for="savingCurrent" class="form-label">Số tiền hiện tại</label>
-            <input type="number" class="form-control" id="savingCurrent" name="current_amount" step="0.01" value="0">
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Số tiền mục tiêu *</label>
+              <input type="number" class="form-control" name="target_amount" min="0" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Đã tiết kiệm</label>
+              <input type="number" class="form-control" name="current_amount" min="0" value="0">
+            </div>
           </div>
-          
-          <div class="mb-3">
-            <label for="savingDeadline" class="form-label">Hạn chót</label>
-            <input type="date" class="form-control" id="savingDeadline" name="deadline">
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Danh mục</label>
+              <select class="form-select" name="category">
+                <option value="">Chọn danh mục</option>
+                <option value="emergency">Khẩn cấp</option>
+                <option value="tech">Đồ công nghệ</option>
+                <option value="travel">Du lịch</option>
+                <option value="gift">Quà tặng</option>
+                <option value="other">Khác</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Mức độ ưu tiên</label>
+              <select class="form-select" name="priority">
+                <option value="low">Thấp</option>
+                <option value="medium" selected>Trung bình</option>
+                <option value="high">Cao</option>
+              </select>
+            </div>
           </div>
-          
-          <div class="mb-3">
-            <label for="savingDescription" class="form-label">Mô tả</label>
-            <textarea class="form-control" id="savingDescription" name="description" rows="3"></textarea>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Ngày hoàn thành</label>
+              <input type="date" class="form-control" name="target_date">
+            </div>
+            <div class="col-md-6 mb-0">
+              <label class="form-label">Đóng góp hàng tháng</label>
+              <input type="number" class="form-control" name="monthly_contribution" min="0" value="0">
+            </div>
           </div>
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-        <button type="button" class="btn btn-primary" id="saveSavingBtn">Lưu</button>
-      </div>
-    </div>
-  </div>
-</div>
+        <button class="btn btn-light"
