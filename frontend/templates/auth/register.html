@@ -3,26 +3,24 @@
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
 />
-{% endblock %} {% block content %}
+{% endblock %} {% block content %} {% set API = BASE_API_URL|default('', true)
+%}
 <div class="auth-page">
   <div
     class="auth-hero"
-    style="background-image:url('{{ url_for('static', filename='img/auth-side.jpg') }}')"
+    style="background-image:url('{{ url_for('static', filename='img/auth-side.png') }}')"
   ></div>
+
   <div class="auth-form">
     <div class="auth-card card shadow-sm border-0">
       <div class="card-body p-4 p-md-5">
-        <h1 class="h4 mb-1">Create an account</h1>
-        <p class="text-muted mb-4">Provide your details.</p>
+        <h1 class="h4 mb-1">Tạo tài khoản</h1>
+        <p class="text-muted mb-4">Mô tả thông tin của bạn</p>
 
         <!-- FORM -->
-        <form
-          id="registerForm"
-          method="post"
-          action="{{ api_base }}/api/auth/register"
-        >
+        <form id="registerForm" method="post">
           <div class="mb-3">
-            <label class="form-label">Your name</label>
+            <label class="form-label">Tên của bạn</label>
             <input name="full_name" class="form-control" required />
           </div>
 
@@ -32,7 +30,7 @@
           </div>
 
           <div class="mb-2">
-            <label class="form-label">Password</label>
+            <label class="form-label">Nhập mật khẩu</label>
             <div class="input-group">
               <input
                 name="password"
@@ -52,93 +50,194 @@
             </div>
           </div>
 
+          <div class="mb-3">
+            <label class="form-label">Nhập lại mật khẩu</label>
+            <div class="input-group">
+              <input
+                name="confirm_password"
+                id="regPass2"
+                type="password"
+                class="form-control"
+                minlength="6"
+                required
+              />
+              <button
+                class="btn btn-outline-secondary"
+                type="button"
+                id="toggleRegPass2"
+              >
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+          </div>
+
           <!-- Chỗ hiển thị thông báo -->
           <div id="msg" class="mt-3" style="display: none"></div>
 
           <p class="small text-muted mt-2">
-            By signing up I agree to the <a href="#">terms</a> &
-            <a href="#">privacy</a>.
+            Bằng cách đăng ký, tôi đồng ý với <a href="#">các điều khoản</a> &
+            <a href="#">quyền riêng tư</a>.
           </p>
 
           <button id="btnSubmit" class="btn btn-primary w-100 mb-2">
-            Create An Account
+            Tạo tài khoản
           </button>
-          <button class="btn btn-dark w-100" type="button">
-            <i class="bi bi-google me-2"></i>Register with Google
+
+          <!-- Giữ NGUYÊN nút Google của bạn -->
+          <button class="btn btn-dark w-100" type="button" id="btnGoogle">
+            <i class="bi bi-google me-2"></i>Đăng ký với Google
           </button>
         </form>
 
         <div class="text-center mt-3">
-          <span class="text-muted">Already a Member?</span>
-          <a href="/login">Sign In</a>
+          <span class="text-muted">Đã có tài khoản?</span>
+          <a href="/login">Đăng nhập</a>
         </div>
       </div>
     </div>
   </div>
 </div>
 {% endblock %} {% block scripts %}
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  // Toggle hiển thị mật khẩu
-  document.getElementById("toggleRegPass")?.addEventListener("click", () => {
-    const ip = document.getElementById("regPass");
-    ip.type = ip.type === "password" ? "text" : "password";
-  });
+  const API_BASE = "{{ API }}";
+  const GOOGLE_CLIENT_ID = "{{ GOOGLE_CLIENT_ID|default('', true) }}"; // truyền từ web.py
 
-  // AJAX submit
-  const form = document.getElementById("registerForm");
-  const btn = document.getElementById("btnSubmit");
+  // Toggle hiển/ẩn mật khẩu
+  const bindToggle = (inputId, btnId) => {
+    document.getElementById(btnId)?.addEventListener("click", () => {
+      const ip = document.getElementById(inputId);
+      ip.type = ip.type === "password" ? "text" : "password";
+    });
+  };
+  bindToggle("regPass", "toggleRegPass");
+  bindToggle("regPass2", "toggleRegPass2");
+
+  // Hiển thị thông báo
   const msg = document.getElementById("msg");
-
   function showMsg(text, ok = false) {
     msg.style.display = "block";
     msg.className = "mt-3 alert " + (ok ? "alert-success" : "alert-danger");
     msg.textContent = text;
   }
 
+  // Submit đăng ký thường
+  const form = document.getElementById("registerForm");
+  const btn = document.getElementById("btnSubmit");
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    // Gom dữ liệu
     const fd = new FormData(form);
     const payload = {
       full_name: fd.get("full_name"),
       email: fd.get("email"),
       password: fd.get("password"),
+      confirm_password: fd.get("confirm_password"),
     };
 
-    // Disable nút khi đang gửi
+    if (payload.password !== payload.confirm_password) {
+      showMsg("Mật khẩu nhập lại không khớp");
+      return;
+    }
+
     btn.disabled = true;
     const oldText = btn.textContent;
     btn.textContent = "Đang tạo tài khoản...";
 
     try {
-      const resp = await fetch(form.action, {
+      const resp = await fetch((API_BASE || "") + "/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
       const data = await resp.json().catch(() => ({}));
-
       if (!resp.ok || !data.success) {
-        showMsg(
-          data.message || `Đăng ký thất bại (HTTP ${resp.status})`,
-          false
-        );
+        showMsg(data.message || `Đăng ký thất bại (HTTP ${resp.status})`);
       } else {
-        showMsg("Đăng ký thành công! Vui lòng đăng nhập.", true);
-        // chuyển sau 1 giây
-        setTimeout(() => {
-          window.location.href = "/login";
-        }, 1000);
+        const redirectUrl = data.redirect || data.redirect_url;
+        // Nếu backend trả redirect_url -> sang trang OTP
+        if (redirectUrl) {
+          // Lưu lại email phòng khi cần
+          localStorage.setItem("pending_email", payload.email);
+          window.location.href = redirectUrl;
+        } else if (data.access_token) {
+          // Trường hợp backend vẫn trả token (không yêu cầu OTP)
+          localStorage.setItem("access_token", data.access_token);
+          if (data.user)
+            localStorage.setItem("user", JSON.stringify(data.user));
+          window.location.href = "/dashboard";
+        } else {
+          // Fallback cũ
+          showMsg("Đăng ký thành công! Đang chuyển...", true);
+          setTimeout(() => (window.location.href = "/login"), 800);
+        }
       }
     } catch (err) {
       console.error(err);
-      showMsg("Không thể kết nối tới máy chủ. Thử lại sau.", false);
+      showMsg("Không thể kết nối tới máy chủ. Thử lại sau.");
     } finally {
       btn.disabled = false;
       btn.textContent = oldText;
     }
+  });
+
+  // ==== Google Sign-In (giữ nguyên button, mở One Tap/ Popup khi click) ====
+  let googleReady = false;
+  let googleInitialized = false;
+
+  // Khởi tạo GIS (không render button mặc định)
+  window.addEventListener("load", () => {
+    googleReady = true;
+    if (!GOOGLE_CLIENT_ID) return;
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: async ({ credential }) => {
+        try {
+          const resp = await fetch((API_BASE || "") + "/api/auth/google", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ credential }),
+          });
+          const data = await resp.json();
+          if (!data.success)
+            return showMsg(data.message || "Google Sign-in thất bại");
+
+          // Nếu backend yêu cầu OTP cho tài khoản Google mới:
+          const redirectUrl = data.redirect || data.redirect_url;
+          if (redirectUrl) {
+            // Email có thể lấy từ id_token ở backend; ở FE ta không chắc chắn nên bỏ qua
+            window.location.href = redirectUrl;
+            return;
+          }
+          localStorage.setItem("access_token", data.access_token || "");
+          if (data.user)
+            localStorage.setItem("user", JSON.stringify(data.user));
+          window.location.href = "/dashboard";
+        } catch (e) {
+          console.error(e);
+          showMsg("Lỗi Google Sign-in");
+        }
+      },
+      ux_mode: "popup", // dùng popup thay vì redirect
+      use_fedcm_for_prompt: true, // hỗ trợ FedCM (trình duyệt mới)
+    });
+    googleInitialized = true;
+  });
+
+  // Khi bấm nút Google của BẠN -> gọi prompt để lấy credential
+  document.getElementById("btnGoogle")?.addEventListener("click", () => {
+    if (!GOOGLE_CLIENT_ID) {
+      showMsg("Chưa cấu hình GOOGLE_CLIENT_ID trên server.");
+      return;
+    }
+    if (!googleReady || !googleInitialized || !window.google?.accounts?.id) {
+      showMsg("Google chưa sẵn sàng, thử lại trong giây lát.");
+      return;
+    }
+    // Gọi prompt: hiển thị One Tap / tài khoản để user chọn, rồi callback nhận credential
+    google.accounts.id.prompt(); // popup One Tap; credential trả về qua callback ở initialize
   });
 </script>
 {% endblock %}

@@ -4,10 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}SVFinance{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
+
+    <!-- App styles -->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/variables.css') }}"
@@ -16,17 +20,34 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/app.css') }}"
     />
+
     {% block head %}{% endblock %}
   </head>
   <body class="auth-layout">
     {% block content %}{% endblock %}
 
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Cấu hình toàn cục cho frontend -->
     <script>
-      window.BASE_API_URL = "{{ BASE_API_URL }}";
+      // Giữ lại biến cũ (nếu nơi nào đó vẫn dùng)
+      window.BASE_API_URL = "{{ BASE_API_URL|default('', true) }}";
+
+      // Cấu hình mới cho auth.js và các JS khác
+      window.APP_CONFIG = {
+        apiBase: "{{ BASE_API_URL|default('', true) }}", // "" = same-origin
+        googleClientId: "{{ GOOGLE_CLIENT_ID|default('', true) }}", // truyền từ web.py
+      };
     </script>
+
+    <!-- Google Identity Services (nút Google custom sẽ gọi popup/One Tap) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- App scripts -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+
     {% block scripts %}{% endblock %}
   </body>
 </html>

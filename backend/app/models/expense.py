@@ -1,31 +1,40 @@
-from ..extensions import db
-from sqlalchemy.sql import func
+# backend/app/models/expense.py
+from __future__ import annotations
+from sqlalchemy import ForeignKey, CheckConstraint, Index
+from sqlalchemy.orm import relationship
+from . import BaseModel, db
 
-class Expense(db.Model):
+class Expense(BaseModel):
     __tablename__ = "expenses"
+    __table_args__ = (
+        CheckConstraint("amount > 0", name="ck_expense_amount_pos"),
+        Index("idx_expenses_user_spent", "user_id", "spent_at"),
+        Index("idx_expenses_user_category", "user_id", "category_id"),
+    )
 
-    id      = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    user_id = db.Column(
+        db.Integer,
+        ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    category_id = db.Column(
+        db.Integer,
+        ForeignKey("categories.id", onupdate="CASCADE", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    payment_method_id = db.Column(
+        db.Integer,
+        ForeignKey("payment_methods.id", onupdate="CASCADE", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
-    amount  = db.Column(db.Float, nullable=False)
-    date    = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
-    note    = db.Column(db.String(255))
-    payment_method = db.Column(db.String(50), nullable=False) # e.g., 'cash', 'credit_card', etc.
+    amount = db.Column(db.Numeric(12, 2), nullable=False)
+    spent_at = db.Column(db.Date, nullable=False, index=True)
+    note = db.Column(db.Text)
 
-    category_id    = db.Column(db.Integer, db.ForeignKey("categories.id"), nullable=False, index=True)
-
-    category = db.relationship("Category", back_populates="expenses")
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "amount": float(self.amount) if self.amount is not None else None,
-            "date": self.date.isoformat() if self.date else None,
-            "occurred_on": self.date.date().isoformat() if self.date else None,
-            "note": self.note,
-            "payment_method": self.payment_method,
-            "category_id": self.category_id,
-            "user_id": self.user_id,
-            "category_name": self.category.name if self.category else None,
-            "user_id": self.user_id,
-        }
+    user = relationship("User", back_populates="expenses")
+    category = relationship("Category", back_populates="expenses")
+    payment_method = relationship("PaymentMethod", back_populates="expenses")

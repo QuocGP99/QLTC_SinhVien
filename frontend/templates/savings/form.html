@@ -1,0 +1,154 @@
+<!-- Modal Tạo/Sửa Mục tiêu Tiết kiệm -->
+<div class="modal fade" id="goalModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="goalModalTitle">
+          Tạo mục tiêu tiết kiệm mới
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Đóng"
+        ></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="goalForm">
+          <input type="hidden" name="id" />
+
+          <div class="mb-3">
+            <label class="form-label">Tiêu đề mục tiêu *</label>
+            <input
+              type="text"
+              class="form-control"
+              name="name"
+              placeholder="vd. Quỹ khẩn cấp"
+              required
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Mô tả</label>
+            <input
+              type="text"
+              class="form-control"
+              name="description"
+              placeholder="vd. 3 tháng chi phí dự phòng"
+            />
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Số tiền mục tiêu *</label>
+              <input
+                type="number"
+                class="form-control"
+                name="target_amount"
+                min="0"
+                required
+              />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Đã tiết kiệm</label>
+              <input
+                type="number"
+                class="form-control"
+                name="current_amount"
+                min="0"
+                value="0"
+              />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Danh mục</label>
+              <select class="form-select" name="category">
+                <option value="">Chọn danh mục</option>
+                <option value="emergency">Khẩn cấp</option>
+                <option value="tech">Đồ công nghệ</option>
+                <option value="travel">Du lịch</option>
+                <option value="gift">Quà tặng</option>
+                <option value="housing">Nhà ở</option>
+                <option value="transportation">Di chuyển</option>
+                <option value="personal">Cá nhân</option>
+                <option value="other">Khác</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Mức độ ưu tiên</label>
+              <select class="form-select" name="priority">
+                <option value="low">Thấp</option>
+                <option value="medium" selected>Trung bình</option>
+                <option value="high">Cao</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Ngày hoàn thành</label>
+              <input type="date" class="form-control" name="deadline" />
+            </div>
+            <div class="col-md-6 mb-0">
+              <label class="form-label">Đóng góp hàng tháng</label>
+              <input
+                type="number"
+                class="form-control"
+                name="monthly_contribution"
+                min="0"
+                value="0"
+              />
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+        <button class="btn btn-primary" type="submit" form="goalForm">
+          Lưu
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chỉ form.html xử lý “icon cho danh mục” để tách biệt với trang chính -->
+<script>
+  (() => {
+    // Bản đồ giá trị -> icon + nhãn
+    const CAT_META = {
+      emergency: { icon: "🧯", label: "Khẩn cấp" },
+      tech: { icon: "💻", label: "Đồ công nghệ" },
+      travel: { icon: "✈️", label: "Du lịch" },
+      gift: { icon: "🎁", label: "Quà tặng" },
+      housing: { icon: "🏠", label: "Nhà ở" },
+      transportation: { icon: "🚌", label: "Di chuyển" },
+      personal: { icon: "🧑", label: "Cá nhân" },
+      other: { icon: "🔖", label: "Khác" },
+    };
+
+    const modal = document.getElementById("goalModal");
+
+    function decorateCategorySelect() {
+      const sel = modal?.querySelector('select[name="category"]');
+      if (!sel) return;
+      [...sel.options].forEach((op) => {
+        if (!op.value) {
+          op.textContent = "Chọn danh mục";
+          return;
+        }
+        const meta = CAT_META[op.value];
+        if (meta) op.textContent = `${meta.icon} ${meta.label}`;
+      });
+    }
+
+    // Trang điểm mỗi khi modal mở (và một lần khi trang đã load)
+    modal?.addEventListener("shown.bs.modal", decorateCategorySelect);
+    if (document.readyState !== "loading") decorateCategorySelect();
+    else document.addEventListener("DOMContentLoaded", decorateCategorySelect);
+  })();
+</script>

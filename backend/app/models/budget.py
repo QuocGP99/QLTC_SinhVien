@@ -1,34 +1,56 @@
+# backend/app/models/budget.py
 from __future__ import annotations
-from dataclasses import dataclass
-from datetime import date
-from sqlalchemy import UniqueConstraint, Index, func
-from ..extensions import db
+from sqlalchemy import ForeignKey, UniqueConstraint, CheckConstraint, Index
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.hybrid import hybrid_property
+from . import BaseModel, db
 
-@dataclass
-class Budget(db.Model):  # nếu không dùng BaseModel, để db.Model là đủ
+class Budget(BaseModel):
     __tablename__ = "budgets"
-    id: int = db.Column(db.Integer, primary_key=True)
-
-    user_id: int = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    category_id: int = db.Column(db.Integer, db.ForeignKey("categories.id"), nullable=False)
-
-    # YYYY-MM cho mỗi tháng (dễ unique + query); nếu muốn kiểu Date, giữ là ngày 1 trong tháng
-    month: str = db.Column(db.String(7), nullable=False)  # "2025-09"
-
-    amount: float = db.Column(db.Float, nullable=False)   # hạn mức
-
-    created_at = db.Column(db.DateTime, server_default=func.now())
-    updated_at = db.Column(db.DateTime, server_default=func.now(), onupdate=func.now())
-
     __table_args__ = (
-        UniqueConstraint('user_id', 'category_id', 'month', name='uq_budget_user_cat_month'),
-        Index('ix_budget_user_month', 'user_id', 'month'),
-        Index('ix_budget_cat_month', 'category_id', 'month'),
+        UniqueConstraint("user_id", "category_id", "period_year", "period_month",
+                         name="uq_budget_user_cat_year_month"),
+        CheckConstraint("period_month BETWEEN 1 AND 12", name="ck_budget_month_1_12"),
+        CheckConstraint("limit_amount > 0", name="ck_budget_limit_pos"),
+        Index("idx_budgets_user_period", "user_id", "period_year", "period_month"),
     )
 
-    user = db.relationship("User", backref=db.backref("budgets", lazy="dynamic"))
-    category = db.relationship("Category", backref=db.backref("budgets", lazy="dynamic"))
+    user_id = db.Column(
+        db.Integer,
+        ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    category_id = db.Column(
+        db.Integer,
+        ForeignKey("categories.id", onupdate="CASCADE", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
 
-    @staticmethod
-    def month_key(d: date) -> str:
-        return f"{d.year:04d}-{d.month:02d}"
+    period_year = db.Column(db.Integer, nullable=False)
+    period_month = db.Column(db.Integer, nullable=False)
+    limit_amount = db.Column(db.Numeric(12, 2), nullable=False)
+    note = db.Column(db.Text)
+
+    user = relationship("User", back_populates="budgets")
+    category = relationship("Category")
+
+    # ---- alias 'limit' cho FE (đọc/ghi)
+    @hybrid_property
+    def limit(self):
+        return float(self.limit_amount or 0)
+
+    @limit.setter
+    def limit(self, value):
+        self.limit_amount = value
+
+    # ---- chuẩn hoá data trả cho FE
+    def to_dict(self, spent: float = 0.0) -> dict:
+        return {
+            "id": self.id,
+            "category_id": self.category_id,
+            "category": self.category.name if self.category else None,
+            "limit": float(self.limit_amount or 0),
+            "spent": float(spent or 0),
+        }

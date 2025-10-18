@@ -1,0 +1,305 @@
+{% extends 'base_auth.html' %} {% block title %}Quản trị người dùng{% endblock
+%} {% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h5 mb-0">Quản trị người dùng</h1>
+    <div>
+      <button class="btn btn-primary" id="btnOpenCreate">
+        <i class="bi bi-plus-lg me-1"></i> Thêm người dùng
+      </button>
+    </div>
+  </div>
+
+  <div class="input-group mb-3">
+    <input
+      id="search"
+      class="form-control"
+      placeholder="Tìm theo email / họ tên..."
+    />
+    <button class="btn btn-outline-secondary" id="btnSearch">
+      <i class="bi bi-search"></i>
+    </button>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Email</th>
+          <th>Họ tên</th>
+          <th>Role</th>
+          <th>Hành động</th>
+        </tr>
+      </thead>
+      <tbody id="tblBody"></tbody>
+    </table>
+  </div>
+
+  <nav class="mt-2">
+    <ul class="pagination pagination-sm" id="pager"></ul>
+  </nav>
+</div>
+
+<!-- Modal tạo/sửa -->
+<div class="modal fade" id="userModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form class="modal-content" id="userForm">
+      <div class="modal-header">
+        <h5 class="modal-title" id="userModalTitle">Thêm người dùng</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="formMode" value="create" />
+        <input type="hidden" id="editId" />
+        <div class="mb-2">
+          <label class="form-label">Email</label>
+          <input id="f_email" type="email" class="form-control" required />
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Họ tên</label>
+          <input id="f_fullname" class="form-control" />
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Role</label>
+          <select id="f_role" class="form-select">
+            <option value="user">user</option>
+            <option value="admin">admin</option>
+          </select>
+        </div>
+        <div class="mb-2" id="rowPassword">
+          <label class="form-label">Mật khẩu</label>
+          <input
+            id="f_password"
+            type="password"
+            class="form-control"
+            minlength="6"
+          />
+          <div class="form-text">Tối thiểu 6 ký tự. (Bắt buộc khi tạo mới)</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Huỷ</button>
+        <button class="btn btn-primary" id="btnSave">Lưu</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  // ===== Guard: chỉ admin mới vào =====
+  (function guard() {
+    const u = JSON.parse(localStorage.getItem("user") || "null");
+    const t = localStorage.getItem("access_token");
+    if (!u || !t) return location.replace("/admin");
+    if (u.role !== "admin") {
+      alert("Bạn không có quyền truy cập trang admin.");
+      return location.replace("/dashboard");
+    }
+  })();
+
+  const API = "{{ BASE_API_URL|default('', true) }}";
+  const token = localStorage.getItem("access_token") || "";
+  const headers = () => ({
+    "Content-Type": "application/json",
+    Authorization: "Bearer " + token,
+  });
+
+  // ===== List / Search / Paging =====
+  let page = 1,
+    pageSize = 10,
+    currentSearch = "";
+  async function loadUsers() {
+    const url =
+      (API || "") +
+      `/api/admin/users?search=${encodeURIComponent(
+        currentSearch
+      )}&page=${page}&page_size=${pageSize}`;
+    const resp = await fetch(url, { headers: headers() });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.message || "Load users failed");
+
+    const tb = document.getElementById("tblBody");
+    tb.innerHTML = "";
+    (data.items || []).forEach((u) => {
+      tb.insertAdjacentHTML(
+        "beforeend",
+        `
+        <tr>
+          <td>${u.id}</td>
+          <td>${u.email}</td>
+          <td>${u.full_name || ""}</td>
+          <td><span class="badge ${
+            u.role === "admin" ? "bg-warning text-dark" : "bg-secondary"
+          }">${u.role}</span></td>
+          <td class="text-nowrap">
+            <button class="btn btn-sm btn-outline-primary me-1" onclick="openEdit(${
+              u.id
+            }, '${u.email.replace(/'/g, "&#39;")}', '${(
+          u.full_name || ""
+        ).replace(/'/g, "&#39;")}', '${u.role}')">
+              <i class="bi bi-pencil"></i> Sửa
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="delUser(${
+              u.id
+            })">
+              <i class="bi bi-trash"></i> Xoá
+            </button>
+          </td>
+        </tr>
+      `
+      );
+    });
+
+    // pager
+    const total = data.total || 0,
+      pages = Math.max(1, Math.ceil(total / pageSize));
+    const pg = document.getElementById("pager");
+    pg.innerHTML = "";
+    for (let i = 1; i <= pages; i++) {
+      pg.insertAdjacentHTML(
+        "beforeend",
+        `
+        <li class="page-item ${i === page ? "active" : ""}">
+          <a class="page-link" href="#" onclick="gotoPage(${i});return false;">${i}</a>
+        </li>
+      `
+      );
+    }
+  }
+  window.gotoPage = (p) => {
+    page = p;
+    loadUsers().catch(console.error);
+  };
+
+  const searchInput = document.getElementById("search");
+  const doSearch = () => {
+    currentSearch = searchInput.value.trim();
+    page = 1;
+    loadUsers().catch(console.error);
+  };
+
+  document.getElementById("btnSearch").addEventListener("click", doSearch);
+
+  searchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      doSearch();
+    }
+  });
+
+  let debounceTimer;
+  searchInput.addEventListener("input", () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(doSearch, 350); // gõ dừng 350ms thì tìm
+  });
+
+  // ===== Modal Create / Edit =====
+  const modalEl = document.getElementById("userModal");
+  const bsModal = new bootstrap.Modal(modalEl);
+
+  document.getElementById("btnOpenCreate").addEventListener("click", () => {
+    document.getElementById("userModalTitle").textContent = "Thêm người dùng";
+    document.getElementById("formMode").value = "create";
+    document.getElementById("editId").value = "";
+    document.getElementById("f_email").value = "";
+    document.getElementById("f_fullname").value = "";
+    document.getElementById("f_role").value = "user";
+    document.getElementById("f_password").value = "";
+    document.getElementById("rowPassword").style.display = "";
+    bsModal.show();
+  });
+
+  window.openEdit = (id, email, fullname, role) => {
+    document.getElementById("userModalTitle").textContent = "Sửa người dùng";
+    document.getElementById("formMode").value = "edit";
+    document.getElementById("editId").value = id;
+    document.getElementById("f_email").value = email; // không cho sửa email (đơn giản)
+    document.getElementById("f_email").disabled = true;
+    document.getElementById("f_fullname").value = fullname || "";
+    document.getElementById("f_role").value = role;
+    document.getElementById("rowPassword").style.display = "none";
+    bsModal.show();
+  };
+
+  document.getElementById("userForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const mode = document.getElementById("formMode").value;
+    const id = document.getElementById("editId").value;
+    const body = {
+      email: document.getElementById("f_email").value.trim(),
+      full_name: document.getElementById("f_fullname").value.trim(),
+      role: document.getElementById("f_role").value,
+    };
+
+    try {
+      if (mode === "create") {
+        const pw = document.getElementById("f_password").value;
+        if (!pw || pw.length < 6) {
+          alert("Mật khẩu tối thiểu 6 ký tự");
+          return;
+        }
+        body.password = pw;
+        const resp = await fetch((API || "") + "/api/admin/users", {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify(body),
+        });
+        const data = await resp.json();
+        if (!data.success) throw new Error(data.message);
+      } else {
+        const resp = await fetch((API || "") + `/api/admin/users/${id}`, {
+          method: "PATCH",
+          headers: headers(),
+          body: JSON.stringify({ full_name: body.full_name, role: body.role }),
+        });
+        const data = await resp.json();
+        if (!data.success) throw new Error(data.message);
+      }
+      bsModal.hide();
+      await loadUsers();
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Lỗi lưu dữ liệu");
+    } finally {
+      document.getElementById("f_email").disabled = false;
+    }
+  });
+
+  // Reset password (tuỳ chọn: có thể thêm nút riêng)
+  window.resetPassword = async (id) => {
+    const pw = prompt("Nhập mật khẩu mới (>=6 ký tự):");
+    if (!pw) return;
+    const resp = await fetch(
+      (API || "") + `/api/admin/users/${id}/reset_password`,
+      {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ password: pw }),
+      }
+    );
+    const data = await resp.json();
+    if (!data.success) return alert(data.message || "Lỗi");
+    alert("Đã đặt lại mật khẩu");
+  };
+
+  // Delete
+  window.delUser = async (id) => {
+    if (!confirm("Xoá người dùng này?")) return;
+    const resp = await fetch((API || "") + `/api/admin/users/${id}`, {
+      method: "DELETE",
+      headers: headers(),
+    });
+    const data = await resp.json();
+    if (!data.success) return alert(data.message || "Lỗi xoá");
+    await loadUsers();
+  };
+
+  // init
+  loadUsers().catch(console.error);
+</script>
+{% endblock %}

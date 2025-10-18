@@ -1,0 +1,96 @@
+{% extends "base.html" %} {% block title %}Ngân sách{% endblock %} {% block head
+%}
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+/>
+<style>
+  .kpi-card {
+    border: 0;
+    border-radius: 16px;
+    color: #fff;
+  }
+  .kpi-blue {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  }
+  .kpi-red {
+    background: linear-gradient(135deg, #f43f5e, #e11d48);
+  }
+  .kpi-green {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+  }
+  .kpi-value {
+    font-size: 1.35rem;
+    font-weight: 700;
+  }
+  .muted-on-dark {
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .card-rounded {
+    border-radius: 14px;
+  }
+  .budget-card .action-btn {
+    cursor: pointer;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="container-fluid py-4">
+  <!-- Tiêu đề + nút -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h2 class="mb-0">Quản lý Ngân sách</h2>
+      <div class="text-muted">
+        Tạo hạn mức theo danh mục và theo dõi mức sử dụng
+      </div>
+    </div>
+    <button class="btn btn-primary" id="btnAddBudget">
+      <i class="bi bi-plus-circle me-1"></i> Thêm ngân sách
+    </button>
+  </div>
+
+  <!-- KPI -->
+  <div class="row g-3 mb-3">
+    <div class="col-lg-4">
+      <div class="card kpi-card kpi-blue shadow-sm h-100">
+        <div class="card-body">
+          <div class="small muted-on-dark">Tổng ngân sách tháng</div>
+          <div id="kpiTotal" class="kpi-value">0 đ</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card kpi-card kpi-red shadow-sm h-100">
+        <div class="card-body">
+          <div class="small muted-on-dark">Đã chi</div>
+          <div id="kpiSpent" class="kpi-value">0 đ</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card kpi-card kpi-green shadow-sm h-100">
+        <div class="card-body">
+          <div class="small muted-on-dark">Còn lại</div>
+          <div id="kpiRemain" class="kpi-value">0 đ</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Danh sách -->
+  <div class="card card-rounded border-0 shadow-sm">
+    <div class="card-body">
+      <div class="fw-semibold mb-2">Danh mục ngân sách</div>
+      <div id="categoryList" class="vstack gap-3">
+        <!-- JS sẽ render -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal tạo/sửa -->
+{% include 'budget/form.html' %} {% endblock %} {% block scripts %}
+<script src="{{ url_for('static', filename='js/budgets.js') }}"></script>
+<script>
+  window.addEventListener("DOMContentLoaded", () => BudgetPage.init());
+</script>
+{% endblock %}

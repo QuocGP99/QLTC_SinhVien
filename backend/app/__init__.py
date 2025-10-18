@@ -1,39 +1,34 @@
-# app/__init__.py
+# backend/app/__init__.py
 import os
 from pathlib import Path
 from flask import Flask
+from dotenv import load_dotenv  # ▶ đọc .env sớm
 from .config import Config
-from .extensions import db, migrate, cache, jwt
+from .extensions import db, migrate, cache, jwt, mail
 from .routes import register_blueprints
-# from .routes.auth import bp as auth_bp
-# from .routes.web import bp as web_bp
+from datetime import datetime
 
-APP_FILE   = Path(__file__).resolve()
-BACKEND_DIR = APP_FILE.parents[1]     # .../backend
-ROOT_DIR    = APP_FILE.parents[2]     # .../QLTC_SinhVien
+
+# ── Paths
+APP_FILE     = Path(__file__).resolve()
+BACKEND_DIR  = APP_FILE.parents[1]       # .../backend
+ROOT_DIR     = APP_FILE.parents[2]       # .../QLTC_SinhVien
 TEMPLATES_DIR = ROOT_DIR / "frontend" / "templates"
 STATIC_DIR    = ROOT_DIR / "frontend" / "static"
 INSTANCE_DIR  = BACKEND_DIR / "instance"   # .../backend/instance
 
-# BASE_DIR = Path(__file__).resolve().parent.parent
-# TEMPLATES_DIR = (BASE_DIR / "templates").as_posix()
-# STATIC_DIR    = (BASE_DIR / "static").as_posix()
-# INSTANCE_DIR  = (BASE_DIR / "instance")
-
 def register_models():
-    """
-    Import tất cả models để SQLAlchemy metadata được load,
-    giúp 'flask db migrate' phát hiện bảng/column.
-    """
     from .models.user import User
     from .models.category import Category
     from .models.expense import Expense
-    # nếu có các model khác, import thêm ở đây:
-    # from .models.expense import Expense
-    # from .models.xxx import Yyy
+    from .models.budget import Budget
+    from .models.saving import SavingsGoal
     return True
 
 def create_app(config_class: type[Config] | None = None):
+    # ▶ nạp .env sớm để os.getenv(...) có giá trị
+    load_dotenv()
+
     app = Flask(
         __name__,
         instance_path=INSTANCE_DIR.as_posix(),
@@ -42,35 +37,54 @@ def create_app(config_class: type[Config] | None = None):
         static_folder=STATIC_DIR.as_posix(),
     )
 
+    # Base config từ class (đọc mặc định & các ENV mà Config có xử lý)
     app.config.from_object(config_class or Config)
 
     # Đảm bảo instance/ tồn tại
     INSTANCE_DIR.mkdir(parents=True, exist_ok=True)
 
-    # DB URI tuyệt đối (nếu ENV chưa override)
-    db_path = (INSTANCE_DIR / "app.db").as_posix()
-    app.config.setdefault("SQLALCHEMY_DATABASE_URI", f"sqlite:///{db_path}")
+    # ▶ Ưu tiên DATABASE_URL từ .env, nếu không có thì rơi về file trong backend/instance/app.db
+    env_db_url = os.getenv("DATABASE_URL")
+    if env_db_url:
+        app.config["SQLALCHEMY_DATABASE_URI"] = env_db_url
+    else:
+        db_path = (INSTANCE_DIR / "app.db").as_posix()
+        app.config.setdefault("SQLALCHEMY_DATABASE_URI", f"sqlite:///{db_path}")
+
     app.config.setdefault("SQLALCHEMY_TRACK_MODIFICATIONS", False)
 
-    # SECRET_KEY cho session (và JWT đã có trong config)
+    # SECRET_KEY cho session (JWT key set riêng trong Config/.env)
     app.secret_key = app.config.get("SECRET_KEY") or "dev-secret-change-me"
 
-    # Init extensions
+    # ▶ Cache: chỉ init nếu có cấu hình để tránh warning
+    cache_type = os.getenv("CACHE_TYPE")
+    if cache_type:
+        app.config["CACHE_TYPE"] = cache_type
+        app.config["CACHE_DEFAULT_TIMEOUT"] = int(os.getenv("CACHE_DEFAULT_TIMEOUT", "300"))
+        cache.init_app(app)
+
+    # Init DB/JWT
     db.init_app(app)
-    cache.init_app(app)
     jwt.init_app(app)
 
-    # Import models TRƯỚC khi init migrate để Alembic thấy metadata
+    # Import models trước khi init migrate để Alembic thấy metadata
     register_models()
-    migrate.init_app(app, db)
+
+    # ▶ Cố định thư mục migrations ở backend/migrations (đỡ phải -d mỗi lần)
+    migrate.init_app(app, db, directory=(BACKEND_DIR / "migrations").as_posix())
+
+    mail.init_app(app) # Initialize Flask-Mail
 
     # Blueprints
     register_blueprints(app)
-    # app.register_blueprint(auth_bp)  # /api/auth/...
-    # app.register_blueprint(web_bp)   # /login, /register, /dashboard
+    app.jinja_env.globals['now'] = datetime.now
 
     @app.get("/healthz")
-    def healthz():
-        return {"status": "ok", "db": app.config["SQLALCHEMY_DATABASE_URI"]}, 200
+    def health_check():
+        return {
+            "status": "ok",
+            "db": app.config.get("SQLALCHEMY_DATABASE_URI"),
+            "cache": app.config.get("CACHE_TYPE", "disabled")
+        }, 200
 
     return app

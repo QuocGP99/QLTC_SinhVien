@@ -265,7 +265,8 @@
   </div>
 </div>
 
-{% endblock %} {% block scripts %}
+<!-- ⬇️ include modal form để có sẵn trong DOM -->
+{% include 'expenses/form.html' %} {% endblock %} {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
   (function () {
@@ -341,14 +342,12 @@
       const amt = [450000, 280000, 200000, 180000, 144000][idx];
       tbl.insertAdjacentHTML(
         "beforeend",
-        `
-      <tr>
-        <td class="text-nowrap"><span class="badge rounded-pill" style="background:${
-          c.color
-        };">&nbsp;</span> ${c.name}</td>
-        <td class="text-end">₫${amt.toLocaleString("vi-VN")}</td>
-      </tr>
-    `
+        `<tr>
+          <td class="text-nowrap"><span class="badge rounded-pill" style="background:${
+            c.color
+          };">&nbsp;</span> ${c.name}</td>
+          <td class="text-end">₫${amt.toLocaleString("vi-VN")}</td>
+        </tr>`
       );
     });
 
@@ -357,17 +356,15 @@
     recent.forEach((r) => {
       list.insertAdjacentHTML(
         "beforeend",
-        `
-      <div class="d-flex justify-content-between align-items-center border rounded-3 px-3 py-2">
-        <div>
-          <div class="fw-semibold">${r.desc}</div>
-          <div class="small text-muted">${r.category} • ${r.date}</div>
-        </div>
-        <div class="fw-semibold text-danger">₫${r.amount.toLocaleString(
-          "vi-VN"
-        )}</div>
-      </div>
-    `
+        `<div class="d-flex justify-content-between align-items-center border rounded-3 px-3 py-2">
+          <div>
+            <div class="fw-semibold">${r.desc}</div>
+            <div class="small text-muted">${r.category} • ${r.date}</div>
+          </div>
+          <div class="fw-semibold text-danger">₫${r.amount.toLocaleString(
+            "vi-VN"
+          )}</div>
+        </div>`
       );
     });
 
@@ -377,21 +374,19 @@
       const pct = Math.min(100, Math.round((b.used / b.limit) * 100));
       bl.insertAdjacentHTML(
         "beforeend",
-        `
-      <div>
-        <div class="d-flex justify-content-between small">
-          <span>${b.name}</span>
-          <span>₫${b.used.toLocaleString("vi-VN")} / ₫${b.limit.toLocaleString(
-          "vi-VN"
-        )}</span>
-        </div>
-        <div class="progress" style="height:8px;">
-          <div class="progress-bar ${
-            pct >= 100 ? "bg-danger" : pct >= 80 ? "bg-warning" : "bg-success"
-          }" style="width:${pct}%"></div>
-        </div>
-      </div>
-    `
+        `<div>
+          <div class="d-flex justify-content-between small">
+            <span>${b.name}</span>
+            <span>₫${b.used.toLocaleString(
+              "vi-VN"
+            )} / ₫${b.limit.toLocaleString("vi-VN")}</span>
+          </div>
+          <div class="progress" style="height:8px;">
+            <div class="progress-bar ${
+              pct >= 100 ? "bg-danger" : pct >= 80 ? "bg-warning" : "bg-success"
+            }" style="width:${pct}%"></div>
+          </div>
+        </div>`
       );
     });
 
@@ -401,22 +396,36 @@
       const pct = Math.min(100, Math.round((g.current / g.target) * 100));
       sg.insertAdjacentHTML(
         "beforeend",
-        `
-      <div class="border rounded-3 p-2">
-        <div class="d-flex justify-content-between">
-          <div class="fw-semibold">${g.name}</div>
-          <div class="small">${pct}%</div>
-        </div>
-        <div class="progress my-1" style="height:8px;">
-          <div class="progress-bar" style="width:${pct}%"></div>
-        </div>
-        <div class="small">₫${g.current.toLocaleString(
-          "vi-VN"
-        )} / ₫${g.target.toLocaleString("vi-VN")}</div>
-      </div>
-    `
+        `<div class="border rounded-3 p-2">
+          <div class="d-flex justify-content-between">
+            <div class="fw-semibold">${g.name}</div>
+            <div class="small">${pct}%</div>
+          </div>
+          <div class="progress my-1" style="height:8px;">
+            <div class="progress-bar" style="width:${pct}%"></div>
+          </div>
+          <div class="small">₫${g.current.toLocaleString(
+            "vi-VN"
+          )} / ₫${g.target.toLocaleString("vi-VN")}</div>
+        </div>`
       );
     });
+
+    // ====== OPEN MODAL: "Thêm giao dịch" ======
+    const quickAddBtn = document.querySelector(
+      ".mb-3.d-flex.gap-2 > .btn.btn-primary"
+    );
+    const modalEl = document.getElementById("expenseModal");
+    if (quickAddBtn && modalEl && window.bootstrap) {
+      const modal = new bootstrap.Modal(modalEl);
+      quickAddBtn.addEventListener("click", () => modal.show());
+      modalEl.addEventListener("shown.bs.modal", () => {
+        modalEl.querySelector('input[name="desc"]')?.focus();
+      });
+      modalEl.addEventListener("hidden.bs.modal", () => {
+        document.getElementById("expenseForm")?.reset();
+      });
+    }
   })();
 </script>
 {% endblock %}

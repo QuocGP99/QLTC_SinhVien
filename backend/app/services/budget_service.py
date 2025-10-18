@@ -22,6 +22,7 @@ def _expense_date_col():
     return func.date(Expense.spent_at)
 
 def spend_used(user_id: int, category_id: int, yyyy_mm: str) -> float:
+    category_id = int(category_id)
     start, end = _month_bounds(yyyy_mm)
     date_col = _expense_date_col()
     q = (
@@ -55,6 +56,10 @@ def budget_stats_row(b: Budget) -> dict:
         "status": status
     }
 
+    row["spent"] = row["used"]
+    row["budget_amount"] = row["amount"]
+    return row
+
 def month_summary(user_id: int, yyyy_mm: str) -> dict:
     # Tổng hợp toàn tháng (tổng hạn mức, tổng đã dùng, %)
     budgets = Budget.query.filter_by(user_id=user_id, month=yyyy_mm).all()
@@ -76,3 +81,12 @@ def month_summary(user_id: int, yyyy_mm: str) -> dict:
         "status": status,
         "count_categories": len(budgets)
     }
+
+    s["total_amount"] = s["total_budget"]
+    s["spent"] = s["total_used"]
+    s["remaining"] = s["total_remaining"]
+    return s
+
+
+
+

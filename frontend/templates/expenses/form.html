@@ -33,8 +33,15 @@
             />
           </div>
           <div class="mb-3">
-            <label class="form-label">Danh mục *</label>
-            <select name="category" class="form-select" required>
+            <label class="form-label"
+              >Danh mục <span class="text-danger">*</span></label
+            >
+            <select
+              name="category"
+              id="expensesCategory"
+              class="form-select"
+              required
+            >
               <option value="">-- Chọn danh mục --</option>
               <option>Ăn uống</option>
               <option>Di chuyển</option>
@@ -42,16 +49,12 @@
               <option>Mua sắm</option>
               <option>Học tập</option>
               <option>Sức khỏe</option>
+              <option>Nhà ở</option>
             </select>
           </div>
           <div class="mb-3">
             <label class="form-label">Ngày</label>
-            <input
-              type="date"
-              name="date"
-              class="form-control"
-              value="{{ '%Y-%m-%d'|format_date }}"
-            />
+            <input type="date" name="date" class="form-control" />
           </div>
           <div class="mb-3">
             <label class="form-label">Phương thức thanh toán</label>

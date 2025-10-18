@@ -1,0 +1,7 @@
+SVFinance - Ma xac thuc OTP
+
+Xin chao {{ email }},
+Ma cua ban: {{ code }}
+Hieu luc: {{ ttl_min }} phut.
+
+Neu ban khong yeu cau, vui long bo qua email nay.

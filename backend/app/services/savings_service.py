@@ -1,6 +1,6 @@
 from decimal import Decimal, ROUND_UP
 from datetime import date
-from ..models.savings_goal import SavingsGoal
+from ..models.saving import SavingsGoal
 from ..extensions import db
 
 class GoalAdvice:

@@ -3,33 +3,55 @@
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
 />
-{% endblock %} {% block content %}
+{% endblock %} {% block content %} {% set API = BASE_API_URL|default('', true)
+%}
 <div class="auth-page">
   <div
     class="auth-hero"
-    style="background-image:url('{{ url_for('static', filename='img/auth-side.jpg') }}')"
+    style="background-image:url('{{ url_for('static', filename='img/auth-side.png') }}')"
   ></div>
+
   <div class="auth-form">
     <div class="auth-card card shadow-sm border-0">
       <div class="card-body p-4 p-md-5">
-        <h1 class="h4 mb-1">Welcome Back!</h1>
-        <p class="text-muted mb-4">
-          Track your finance with <strong>SVFinance</strong>.
+        <h1 class="h4 mb-1">
+          {% if ADMIN_MODE %}Đăng nhập Quản trị{% else %}Chào mừng bạn trở
+          lại!{% endif %}
+        </h1>
+        <p class="text-muted mb-2">
+          {% if ADMIN_MODE %} Đây là
+          <strong>trang đăng nhập dành cho Admin</strong>. Vui lòng sử dụng tài
+          khoản có quyền quản trị. {% else %} Theo dõi tài chính cá nhân của bạn
+          với <strong>SVFinance</strong>. {% endif %}
         </p>
+        {% if ADMIN_MODE %}
+        <div class="mb-3">
+          <span class="badge rounded-pill text-bg-warning">
+            <i class="bi bi-shield-lock me-1"></i> Admin Only
+          </span>
+        </div>
+        {% endif %}
 
-        <!-- Quan trọng: action trỏ API login -->
-        {% set API = BASE_API_URL|default('', true) %}
+        <!-- action: API login -->
         <form
           id="loginForm"
           method="post"
           action="{{ API if API else '/api' }}/auth/login"
         >
+          <!-- Gửi mode về server: admin/user -->
+          <input
+            type="hidden"
+            name="mode"
+            value="{{ 'admin' if ADMIN_MODE else 'user' }}"
+          />
+
           <div class="mb-3">
-            <label class="form-label">Email</label>
+            <label class="form-label">Nhập Email</label>
             <input name="email" type="email" class="form-control" required />
           </div>
+
           <div class="mb-2">
-            <label class="form-label">Password</label>
+            <label class="form-label">Nhập mật khẩu</label>
             <div class="input-group">
               <input
                 name="password"
@@ -47,15 +69,18 @@
               </button>
             </div>
           </div>
+
           <div class="d-flex justify-content-between mb-3">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" id="remember" />
-              <label class="form-check-label" for="remember">Remember me</label>
+              <label class="form-check-label" for="remember"
+                >Ghi nhớ mật khẩu</label
+              >
             </div>
-            <a href="#" class="small">Forgot Password?</a>
+            <a href="#" class="small">Bạn quên mật khẩu?</a>
           </div>
 
-          <!-- chỗ hiển thị thông báo -->
+          <!-- Thông báo -->
           <div id="msg" class="mt-3" style="display: none"></div>
 
           <button
@@ -63,48 +88,73 @@
             class="btn btn-primary w-100 mb-2"
             type="submit"
           >
-            Sign In
+            {% if ADMIN_MODE %}Đăng nhập Admin{% else %}Đăng nhập{% endif %}
           </button>
-          <button class="btn btn-dark w-100" type="button">
-            <i class="bi bi-google me-2"></i>Continue with Google
+
+          <!-- Nút Google: ẩn khi ADMIN_MODE -->
+          <button
+            class="btn btn-dark w-100 {% if ADMIN_MODE %}d-none{% endif %}"
+            type="button"
+            id="btnGoogle"
+          >
+            <i class="bi bi-google me-2"></i>Tiếp tục với Google
           </button>
         </form>
 
+        {% if not ADMIN_MODE %}
         <div class="text-center mt-3">
-          <span class="text-muted">New to SVFinance?</span>
-          <a href="/register">Create an account</a>
+          <span class="text-muted">Bạn chưa có tài khoản?</span>
+          <a href="/register">Tạo tài khoản</a>
         </div>
+        {% endif %}
       </div>
     </div>
   </div>
 </div>
 {% endblock %} {% block scripts %}
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
+  const API_BASE = "{{ API }}";
+  const GOOGLE_CLIENT_ID = "{{ GOOGLE_CLIENT_ID|default('', true) }}";
+  const ADMIN_MODE = {{ 'true' if ADMIN_MODE else 'false' }};
+  const MODE = ADMIN_MODE ? "admin" : "user";
+
+  // Nếu đã đăng nhập và là admin, tự chuyển sang admin dashboard
+  (function autoRedirectIfLoggedIn(){
+    try {
+      const u = JSON.parse(localStorage.getItem("user") || "null");
+      const t = localStorage.getItem("access_token");
+      if (u && t && u.role === "admin") {
+        window.location.replace("/admin/dashboard");
+      }
+    } catch (_) {}
+  })();
+
   // Toggle hiện/ẩn mật khẩu
   document.getElementById("toggleLoginPass")?.addEventListener("click", () => {
     const ip = document.getElementById("loginPass");
     ip.type = ip.type === "password" ? "text" : "password";
   });
 
-  // AJAX login
-  const form = document.getElementById("loginForm");
-  const btn = document.getElementById("btnLogin");
+  // Helper hiển thị thông báo
   const msg = document.getElementById("msg");
-
   function showMsg(text, ok = false) {
     msg.style.display = "block";
     msg.className = "mt-3 alert " + (ok ? "alert-success" : "alert-danger");
     msg.textContent = text;
   }
 
+  // ===== Email/Password Login =====
+  const form = document.getElementById("loginForm");
+  const btn = document.getElementById("btnLogin");
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-
     const fd = new FormData(form);
     const payload = {
       email: fd.get("email"),
       password: fd.get("password"),
       remember: document.getElementById("remember")?.checked || false,
+      mode: MODE, // <<-- quan trọng: gửi mode
     };
 
     btn.disabled = true;
@@ -117,27 +167,24 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
       const data = await resp.json().catch(() => ({}));
 
       if (!resp.ok || !data.success) {
         showMsg(data.message || `Đăng nhập thất bại (HTTP ${resp.status})`);
       } else {
-        // Lưu token & user để dùng ở dashboard
-        try {
-          localStorage.setItem("token_type", data.token_type || "Bearer");
-          localStorage.setItem("access_token", data.access_token || "");
-          localStorage.setItem("refresh_token", data.refresh_token || "");
-          if (data.user)
-            localStorage.setItem("user", JSON.stringify(data.user));
-        } catch (e) {
-          console.warn("Không thể lưu localStorage:", e);
-        }
+        localStorage.setItem("token_type", data.token_type || "Bearer");
+        localStorage.setItem("access_token", data.access_token || "");
+        localStorage.setItem("refresh_token", data.refresh_token || "");
+        if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
 
-        showMsg("Đăng nhập thành công! Đang chuyển trang...", true);
-        setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 600);
+        // Admin → /admin/dashboard, User → /dashboard
+        if (data.user && data.user.role === "admin") {
+          showMsg("Đăng nhập admin thành công! Đang chuyển...", true);
+          setTimeout(() => { window.location.href = "/admin/dashboard"; }, 600);
+        } else {
+          showMsg("Đăng nhập thành công! Đang chuyển...", true);
+          setTimeout(() => { window.location.href = "/dashboard"; }, 600);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -146,6 +193,62 @@
       btn.disabled = false;
       btn.textContent = oldText;
     }
+  });
+
+  // ===== Google Sign-In (custom button → popup) =====
+  let googleReady = false;
+  let googleInitialized = false;
+
+  window.addEventListener("load", () => {
+    googleReady = true;
+    if (!GOOGLE_CLIENT_ID) return;
+    if (!window.google?.accounts?.id) return;
+
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: async ({ credential }) => {
+        try {
+          const resp = await fetch((API_BASE || "") + "/api/auth/google", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ credential, mode: MODE }), // <<-- quan trọng: gửi mode
+          });
+          const data = await resp.json();
+
+          if (!data.success) {
+            showMsg(data.message || "Google Sign-in thất bại");
+            return;
+          }
+
+          localStorage.setItem("access_token", data.access_token || "");
+          if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
+
+          if (data.user && data.user.role === "admin") {
+            window.location.href = "/admin/dashboard";
+          } else {
+            window.location.href = "/dashboard";
+          }
+        } catch (e) {
+          console.error(e);
+          showMsg("Lỗi Google Sign-in");
+        }
+      },
+      ux_mode: "popup",
+      use_fedcm_for_prompt: true,
+    });
+    googleInitialized = true;
+  });
+
+  document.getElementById("btnGoogle")?.addEventListener("click", () => {
+    if (!GOOGLE_CLIENT_ID) {
+      showMsg("Chưa cấu hình GOOGLE_CLIENT_ID trên server.");
+      return;
+    }
+    if (!googleReady || !googleInitialized || !window.google?.accounts?.id) {
+      showMsg("Google chưa sẵn sàng, thử lại sau.");
+      return;
+    }
+    google.accounts.id.prompt(); // mở popup/One Tap
   });
 </script>
 {% endblock %}

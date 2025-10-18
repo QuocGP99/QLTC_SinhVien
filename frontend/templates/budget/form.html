@@ -1,0 +1,66 @@
+{# templates/budget/form.html #}
+<div class="modal fade" id="budgetModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header">
+        <h5 class="modal-title" id="budgetModalTitle">
+          Thêm danh mục ngân sách
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Đóng"
+        ></button>
+      </div>
+
+      <form id="budgetForm">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label"
+              >Danh mục <span class="text-danger">*</span></label
+            >
+            <select
+              name="category"
+              id="budgetCategory"
+              class="form-select"
+              required
+            >
+              <!-- JS sẽ nạp option -->
+            </select>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label"
+              >Số tiền ngân sách / tháng
+              <span class="text-danger">*</span></label
+            >
+            <input
+              type="number"
+              min="0"
+              step="1000"
+              name="amount"
+              id="budgetAmount"
+              class="form-control"
+              placeholder="VD: 500000"
+              required
+            />
+          </div>
+
+          <div class="form-text">
+            Ví dụ: 500000 nghĩa là 500.000đ/ngày tháng này.
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+            Hủy
+          </button>
+          <button type="submit" class="btn btn-primary" id="budgetSubmitBtn">
+            Lưu ngân sách
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

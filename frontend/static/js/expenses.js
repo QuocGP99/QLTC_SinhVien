@@ -1,183 +1,123 @@
-// frontend/static/js/expenses.js
-(function () {
-  const API =
-    window.BASE_API_URL && window.BASE_API_URL.length > 0
-      ? window.BASE_API_URL
-      : "/api";
-  const token = () => localStorage.getItem("access_token") || "";
-  const authHeader = () => ({ Authorization: `Bearer ${token()}` });
+// static/js/expenses.js
+const Expenses = (() => {
+  let state = {
+    categories: [],
+    methods: [],
+    expenses: [],
+    filtered: [],
+    currentCategory: "",
+    editIndex: -1, // index trong state.expenses
+  };
 
-  const q = (sel) => document.querySelector(sel);
+  const API_BASE = window.BASE_API_URL || ""; // base được truyền từ Flask
+  const API = {
+    list: (params = {}) => apiGet("/api/expenses", params),
+    create: (payload) => apiPost("/api/expenses", payload),
+    update: (id, payload) => apiPatch(`/api/expenses/${id}`, payload),
+    remove: (id) => apiDelete(`/api/expenses/${id}`),
+    meta: () => apiGet("/api/expenses/meta"),
+  };
+
+  function token() {
+    return localStorage.getItem("access_token") || "";
+  }
+
+  async function apiGet(path, params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    const url = API_BASE + path + (qs ? `?${qs}` : "");
+    const res = await fetch(url, {
+      headers: {
+        Authorization: token() ? `Bearer ${token()}` : undefined,
+      },
+    });
+    return res.json();
+  }
+  async function apiPost(path, body) {
+    const res = await fetch(API_BASE + path, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token() ? `Bearer ${token()}` : undefined,
+      },
+      body: JSON.stringify(body),
+    });
+    return res.json();
+  }
+  async function apiPatch(path, body) {
+    const res = await fetch(API_BASE + path, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token() ? `Bearer ${token()}` : undefined,
+      },
+      body: JSON.stringify(body),
+    });
+    return res.json();
+  }
+  async function apiDelete(path) {
+    const res = await fetch(API_BASE + path, {
+      method: "DELETE",
+      headers: {
+        Authorization: token() ? `Bearer ${token()}` : undefined,
+      },
+    });
+    return res.json();
+  }
+
   const money = (n) =>
-    (Number(n) || 0).toLocaleString("vi-VN", {
+    (n ?? 0).toLocaleString("vi-VN", {
       style: "currency",
       currency: "VND",
       maximumFractionDigits: 0,
     });
+
   const todayStr = () => new Date().toISOString().slice(0, 10);
 
-  // --- modal & form (không xoá file, tự nhận diện) ---
-  const modalEl = q("#txModal") || q("#expenseModal");
-  const formEl = q("#txForm") || q("#expenseForm");
-  if (!modalEl || !formEl) {
-    console.warn("Thiếu modal/form expenses");
-    return;
-  }
-  const modal = new bootstrap.Modal(modalEl);
-
-  // map field theo cả 2 phiên bản
-  const fieldDesc = formEl.querySelector('[name="desc"], [name="note"]');
-  const fieldAmount = formEl.querySelector('[name="amount"]');
-  let fieldCatId = formEl.querySelector('select[name="category_id"]');
-  const fieldCatByName = formEl.querySelector('select[name="category"]');
-  const fieldDate = formEl.querySelector('[name="date"], [name="occurred_on"]');
-  const fieldMethod = formEl.querySelector(
-    '[name="method"], [name="payment_method"]'
-  );
-  const titleEl =
-    document.getElementById("txModalTitle") ||
-    modalEl.querySelector(".modal-title");
-
-  // alert nổi
-  const alertBox = (() => {
-    const host = document.querySelector(".page-wrap") || document.body;
-    const box = document.createElement("div");
-    box.id = "alertBox";
-    box.className = "alert d-none";
-    host.prepend(box);
-    return box;
-  })();
-  const showAlert = (m, ok = true) => {
-    alertBox.className = `alert ${ok ? "alert-success" : "alert-danger"}`;
-    alertBox.textContent = m;
-    alertBox.classList.remove("d-none");
-    setTimeout(() => alertBox.classList.add("d-none"), 1800);
-  };
-
-  // state
-  let items = [];
-  let categories = []; // {id, name}
-  let currentId = "";
-
-  // helpers
-  const catNameById = (id) =>
-    categories.find((c) => c.id === Number(id))?.name || "";
-  const catIdByName = (name) =>
-    categories.find((c) => c.name === name)?.id || null;
-
-  // ===== KHÔNG tạo trùng select "Danh mục" =====
-  function ensureCategoryIdField() {
-    // 1) Nếu đã có <select name="category_id"> thì dùng luôn
-    fieldCatId = formEl.querySelector('select[name="category_id"]');
-    if (fieldCatId) return;
-
-    // 2) Nếu có <select name="category"> theo tên → ĐỔI name => category_id để dùng với API
-    const selByName = formEl.querySelector('select[name="category"]');
-    if (selByName) {
-      selByName.setAttribute("name", "category_id");
-      fieldCatId = selByName;
-
-      const label = selByName.closest(".mb-3")?.querySelector(".form-label");
-      if (label) label.textContent = "Danh mục";
-
-      // nếu từng có select category_id do JS tạo → xoá các bản dư
-      const dups = [...formEl.querySelectorAll('select[name="category_id"]')]
-        .filter((el) => el !== fieldCatId)
-        .map((el) => el.closest(".mb-3") || el);
-      dups.forEach((el) => el.remove());
-      return;
-    }
-
-    // 3) Không có gì → tạo mới
-    const group = document.createElement("div");
-    group.className = "mb-3";
-    group.innerHTML = `
-      <label class="form-label">Danh mục</label>
-      <select name="category_id" class="form-select"></select>
-    `;
-    const anchor = formEl.querySelector(".modal-body") || formEl;
-    anchor.appendChild(group);
-    fieldCatId = group.querySelector('select[name="category_id"]');
-  }
-
-  // ===== Đổ options và giữ nguyên lựa chọn (kèm placeholder nếu rỗng) =====
-  function fillCategorySelect() {
-    ensureCategoryIdField();
-    if (!fieldCatId) return;
-
-    const current = fieldCatId.value; // giữ lựa chọn cũ nếu có
-
-    if (!Array.isArray(categories) || categories.length === 0) {
-      fieldCatId.innerHTML = `<option value="">— Chưa có danh mục —</option>`;
-      fieldCatId.value = "";
-      return;
-    }
-
-    fieldCatId.innerHTML = categories
-      .map((c) => `<option value="${c.id}">${c.name}</option>`)
-      .join("");
-
-    // sync từ select theo tên (nếu còn) sang id
-    if (fieldCatByName && fieldCatByName.value && !current) {
-      const id = catIdByName(fieldCatByName.value);
-      if (id) fieldCatId.value = String(id);
-    }
-
-    // khôi phục hoặc set mặc định
-    if (current && categories.some((c) => String(c.id) === String(current))) {
-      fieldCatId.value = current;
-    } else if (fieldCatId.options.length) {
-      fieldCatId.value = fieldCatId.options[0].value;
-    }
-  }
-
-  // KPI + list
+  /* -------------------- Render helpers -------------------- */
   function setKPIs(list) {
     const total = list.reduce((s, x) => s + Number(x.amount || 0), 0);
     const count = list.length;
-    const avg = count ? total / count : 0;
-    const set = (id, val) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = val;
-    };
-    set("kpiTotal", money(total));
-    set("kpiCount", count);
-    set("kpiAvg", money(avg));
+    const avg = count ? Math.floor(total / count) : 0;
+    const q = (id) => document.getElementById(id);
+    q("kpiTotal").textContent = money(total);
+    q("kpiCount").textContent = count;
+    q("kpiAvg").textContent = money(avg);
   }
 
   function renderList() {
     const wrap = document.getElementById("txList");
-    if (!wrap) return;
     wrap.innerHTML = "";
-    if (!items.length) {
+
+    if (!state.filtered.length) {
       wrap.innerHTML = `<div class="text-muted">Chưa có giao dịch.</div>`;
-      setKPIs([]);
       return;
     }
-    items.forEach((e) => {
+
+    state.filtered.forEach((tx, i) => {
       const el = document.createElement("div");
       el.className = "expense-card";
-      const catLabel = e.category_name || catNameById(e.category_id) || "";
       el.innerHTML = `
         <div class="card-body d-flex align-items-start justify-content-between">
           <div class="me-3">
-            <div class="fw-semibold">${e.note || ""}</div>
-            <div class="small text-muted">${e.occurred_on || ""} · ${
-        e.payment_method || "Tiền mặt"
-      }</div>
+            <div class="fw-semibold">${escapeHtml(tx.desc)}</div>
+            <div class="small text-muted">
+              ${new Date(tx.date).toLocaleDateString("vi-VN")} · ${
+        tx.method || "Tiền mặt"
+      }
+            </div>
           </div>
+
           <div class="d-flex align-items-center gap-3">
-            <span class="badge badge-soft">${catLabel}</span>
-            <div class="amount">${money(e.amount)}</div>
+          <span class="badge badge-soft" data-cat="${tx.category}">${
+        tx.category
+      }</span>
+            <div class="amount">${money(tx.amount)}</div>
+
             <div class="text-muted d-flex gap-2">
-              <button class="btn btn-sm btn-link text-muted px-1" title="Sửa" data-action="edit" data-id="${
-                e.id
-              }">
+              <button class="btn btn-sm btn-link text-muted px-1" title="Sửa" data-action="edit" data-idx="${i}">
                 <i class="bi bi-pencil-square"></i>
               </button>
-              <button class="btn btn-sm btn-link text-muted px-1" title="Xóa" data-action="del" data-id="${
-                e.id
-              }">
+              <button class="btn btn-sm btn-link text-muted px-1" title="Xóa" data-action="del" data-idx="${i}">
                 <i class="bi bi-trash"></i>
               </button>
             </div>
@@ -185,212 +125,198 @@
         </div>`;
       wrap.appendChild(el);
     });
-    setKPIs(items);
   }
 
-  // open modal
-  function openAdd() {
-    currentId = "";
-    fieldDesc && (fieldDesc.value = "");
-    fieldAmount && (fieldAmount.value = "");
-    fieldDate && (fieldDate.value = todayStr());
-    fieldMethod &&
-      (fieldMethod.value =
-        fieldMethod.tagName === "SELECT"
-          ? fieldMethod.options[0]?.value || "Tiền mặt"
-          : "Tiền mặt");
-
-    ensureCategoryIdField();
-    // chọn option đầu sau khi đã có categories
-    if (fieldCatId && fieldCatId.options.length) {
-      fieldCatId.value = fieldCatId.options[0].value;
-    }
-
-    if (titleEl) titleEl.textContent = "Thêm chi tiêu mới";
-    modal.show();
+  function escapeHtml(s) {
+    return String(s ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
   }
 
-  // openEdit – thêm option tạm nếu danh mục chưa có trong list
-  async function openEdit(id) {
-    const res = await fetch(`${API}/expenses/${id}`, {
-      headers: { ...authHeader() },
-    });
-    if (!res.ok) return showAlert("Không lấy được chi tiết khoản chi.", false);
-    const { expense } = await res.json();
-    currentId = String(expense.id || "");
-
-    fieldDesc && (fieldDesc.value = expense.note || "");
-    fieldAmount && (fieldAmount.value = expense.amount || 0);
-    fieldDate && (fieldDate.value = expense.occurred_on || todayStr());
-    fieldMethod && (fieldMethod.value = expense.payment_method || "Tiền mặt");
-
-    ensureCategoryIdField();
-    // nếu chưa load categories thì load
-    if (!categories || categories.length === 0) await loadCategories();
-    fillCategorySelect();
-
-    const cid = expense.category_id || catIdByName(expense.category_name);
-    const cname = expense.category_name || expense.category;
-    if (fieldCatId) {
-      // nếu id không có trong select hiện tại -> thêm option tạm
-      if (
-        cid &&
-        ![...fieldCatId.options].some((o) => String(o.value) === String(cid))
-      ) {
-        const opt = document.createElement("option");
-        opt.value = String(cid);
-        opt.textContent = cname || `#${cid}`;
-        fieldCatId.appendChild(opt);
-      }
-      if (cid) fieldCatId.value = String(cid);
-    }
-
-    if (titleEl) titleEl.textContent = "Cập nhật chi tiêu";
-    modal.show();
-  }
-
-  // ===== LOAD CATEGORIES: bỏ header Authorization + thêm log & fallback =====
-  async function loadCategories() {
-    try {
-      const res = await fetch(`${API}/categories`);
-      if (!res.ok) {
-        console.error("GET /categories failed", res.status);
-        showAlert(`Không tải được danh mục (HTTP ${res.status})`, false);
-        categories = [];
-        fillCategorySelect();
-        buildFilterMenu();
-        return;
-      }
-      const json = await res.json();
-      categories = json && json.items ? json.items : [];
-      if (!Array.isArray(categories)) categories = [];
-
-      fillCategorySelect();
-      buildFilterMenu(); // fill dropdown filter
-    } catch (e) {
-      console.error("GET /categories error", e);
-      showAlert("Lỗi mạng khi tải danh mục", false);
-      categories = [];
-      fillCategorySelect();
-      buildFilterMenu();
-    }
-  }
-
-  function buildFilterMenu() {
+  function buildCategoryMenu() {
     const menu = document.getElementById("categoryMenu");
-    const btn = document.getElementById("categoryFilterBtn");
-    if (!menu || !btn) return;
+    // giữ lại item đầu
     menu.querySelectorAll("li:not(:first-child)").forEach((li) => li.remove());
 
-    if (!Array.isArray(categories) || categories.length === 0) {
-      // không có danh mục → giữ mỗi item “Tất cả danh mục”
-      return;
-    }
-
-    categories.forEach((c) => {
+    state.categories.forEach((cat) => {
       const li = document.createElement("li");
-      li.innerHTML = `<a class="dropdown-item" data-value="${c.id}">${c.name}</a>`;
+      li.innerHTML = `<a class="dropdown-item" data-value="${cat}">${cat}</a>`;
       menu.appendChild(li);
     });
-    menu.onclick = async (e) => {
+
+    menu.onclick = (e) => {
       const a = e.target.closest("a.dropdown-item");
       if (!a) return;
       menu
         .querySelectorAll(".dropdown-item")
         .forEach((x) => x.classList.remove("active"));
       a.classList.add("active");
-      btn.textContent = a.textContent;
-      await loadExpenses({ category_id: a.dataset.value || "" });
+      state.currentCategory = a.dataset.value || "";
+      document.getElementById("categoryFilterBtn").textContent =
+        state.currentCategory || "Tất cả danh mục";
+      applyFilter();
     };
   }
 
-  async function loadExpenses(query = {}) {
-    const qs = new URLSearchParams(query).toString();
-    const res = await fetch(`${API}/expenses${qs ? "?" + qs : ""}`, {
-      headers: { ...authHeader() },
-    });
-    if (res.status === 401) {
-      showAlert("Hết phiên đăng nhập. Vui lòng login lại.", false);
-      setTimeout(() => (location.href = "/login"), 800);
-      return;
-    }
-    if (!res.ok) {
-      showAlert(`Không tải được dữ liệu (HTTP ${res.status})`, false);
-      return;
-    }
-    const json = await res.json();
-    const data = json.data || { items: [] };
-    items = data.items || [];
+  function applyFilter() {
+    state.filtered = state.currentCategory
+      ? state.expenses.filter((x) => x.category === state.currentCategory)
+      : [...state.expenses];
     renderList();
+    setKPIs(state.filtered);
   }
 
-  async function saveCurrent(e) {
-    e.preventDefault();
-    ensureCategoryIdField();
-    const payload = {
-      amount: Number(fieldAmount?.value || 0),
-      category_id: fieldCatId?.value
-        ? Number(fieldCatId.value)
-        : fieldCatByName?.value
-        ? catIdByName(fieldCatByName.value)
-        : null,
-      occurred_on: fieldDate?.value || todayStr(),
-      note: fieldDesc?.value || "",
-      payment_method: fieldMethod?.value || "Tiền mặt",
-    };
-    const method = currentId ? "PUT" : "POST";
-    const url = currentId ? `${API}/expenses/${currentId}` : `${API}/expenses`;
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json", ...authHeader() },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) {
-      showAlert(`Lưu thất bại (HTTP ${res.status})`, false);
+  /* -------------------- Modal / Form -------------------- */
+  function openAddModal() {
+    state.editIndex = -1;
+    const form = document.getElementById("txForm");
+    form.reset();
+    form.date.value = todayStr();
+    if (state.categories[0]) form.category.value = state.categories[0];
+    document.getElementById("txModalTitle").textContent = "Thêm chi tiêu mới";
+    new bootstrap.Modal("#txModal").show();
+  }
+
+  function openEditModal(idxFiltered) {
+    const tx = state.filtered[idxFiltered];
+    if (!tx) return;
+    const realIdx = state.expenses.findIndex((x) => x.id === tx.id);
+    state.editIndex = realIdx >= 0 ? realIdx : idxFiltered;
+
+    const form = document.getElementById("txForm");
+    form.desc.value = tx.desc;
+    form.amount.value = tx.amount;
+    form.category.value = tx.category;
+    form.date.value = tx.date;
+    form.method.value = tx.method || "Tiền mặt";
+
+    document.getElementById("txModalTitle").textContent = "Cập nhật chi tiêu";
+    new bootstrap.Modal("#txModal").show();
+  }
+
+  async function deleteItem(idxFiltered) {
+    const target = state.filtered[idxFiltered];
+    if (!target) return;
+    if (!confirm("Bạn chắc chắn muốn xóa giao dịch này?")) return;
+
+    const { success, message } = await API.remove(target.id);
+    if (!success) {
+      alert(message || "Xóa thất bại");
       return;
     }
-    modal.hide();
-    showAlert("Đã lưu!");
-    await loadExpenses();
+    // xóa trong local state
+    state.expenses = state.expenses.filter((x) => x.id !== target.id);
+    applyFilter();
   }
 
-  async function removeById(id) {
-    if (!confirm("Xoá khoản chi này?")) return;
-    const res = await fetch(`${API}/expenses/${id}`, {
-      method: "DELETE",
-      headers: { ...authHeader() },
-    });
-    if (!res.ok) {
-      showAlert("Xoá thất bại.", false);
-      return;
-    }
-    showAlert("Đã xoá!");
-    await loadExpenses();
-  }
-
-  // bind UI
   function bindUI() {
-    document
-      .getElementById("addExpenseBtn")
-      ?.addEventListener("click", openAdd);
-    document.getElementById("txList")?.addEventListener("click", (ev) => {
-      const btn = ev.target.closest("button[data-action]");
+    document.getElementById("addExpenseBtn").onclick = openAddModal;
+
+    document.getElementById("txList").onclick = (e) => {
+      const btn = e.target.closest("button[data-action]");
       if (!btn) return;
-      const id = btn.dataset.id;
-      if (btn.dataset.action === "edit") openEdit(id);
-      if (btn.dataset.action === "del") removeById(id);
-    });
-    formEl.addEventListener("submit", saveCurrent);
+      const idx = Number(btn.dataset.idx);
+      const act = btn.dataset.action;
+      if (act === "edit") openEditModal(idx);
+      if (act === "del") deleteItem(idx);
+    };
+
+    document.getElementById("txForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const tx = Object.fromEntries(fd.entries());
+      tx.amount = Number(tx.amount);
+
+      if (state.editIndex >= 0) {
+        // update
+        const current = state.expenses[state.editIndex];
+        const payload = {
+          desc: tx.desc,
+          amount: tx.amount,
+          category: tx.category,
+          date: tx.date,
+          method: tx.method,
+        };
+        const { success, item, message } = await API.update(
+          current.id,
+          payload
+        );
+        if (!success) {
+          alert(message || "Cập nhật thất bại");
+          return;
+        }
+        state.expenses[state.editIndex] = item;
+      } else {
+        // create
+        const payload = {
+          desc: tx.desc,
+          amount: tx.amount,
+          category: tx.category,
+          date: tx.date,
+          method: tx.method,
+        };
+        const { success, item, message } = await API.create(payload);
+        if (!success) {
+          alert(message || "Tạo mới thất bại");
+          return;
+        }
+        state.expenses.unshift(item);
+      }
+      applyFilter();
+      bootstrap.Modal.getInstance(document.getElementById("txModal")).hide();
+      e.target.reset();
+    };
   }
 
-  // init
-  (async function init() {
-    if (!token()) {
-      location.href = "/login";
-      return;
+  function fillFormCategories() {
+    const sel = document.querySelector('#txForm select[name="category"]');
+    sel.innerHTML = state.categories
+      .map((c) => `<option>${c}</option>`)
+      .join("");
+  }
+
+  function fillFormMethods() {
+    const sel = document.querySelector('#txForm select[name="method"]');
+    // giữ các method sẵn có nếu backend trả rỗng
+    if (state.methods.length) {
+      sel.innerHTML = state.methods
+        .map((m) => `<option>${m}</option>`)
+        .join("");
     }
-    await loadCategories();
-    await loadExpenses();
-    bindUI();
-  })();
+  }
+
+  /* -------------------- Init -------------------- */
+  async function init() {
+    try {
+      // meta: danh mục + phương thức
+      const meta = await API.meta();
+      if (meta?.success) {
+        state.categories = meta.categories || [];
+        state.methods = meta.methods || [];
+      }
+      buildCategoryMenu();
+      fillFormCategories();
+      fillFormMethods();
+
+      // list expenses + KPI
+      const resp = await API.list({
+        // có thể truyền filter mặc định nếu cần
+      });
+      if (resp?.success) {
+        state.expenses = resp.items || [];
+      } else {
+        state.expenses = [];
+      }
+
+      bindUI();
+      document.querySelector('#txForm input[name="date"]').value = todayStr();
+      applyFilter();
+    } catch (err) {
+      console.error(err);
+      alert("Không tải được dữ liệu chi tiêu");
+    }
+  }
+
+  return { init };
 })();

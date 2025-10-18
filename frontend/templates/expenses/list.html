@@ -25,9 +25,88 @@
   }
   .badge-soft {
     background: #f6f7fb;
-    border: 1px solid #e8ebf2;
+    border: 1px solid #f8f8f8ff;
     color: #6b7280;
     font-weight: 500;
+  }
+
+  /* ====== KPI màu gradient (thêm mới) ====== */
+  .kpi-card .card {
+    border: none;
+    border-radius: 16px;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+  .kpi-total {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  }
+  .kpi-count {
+    background: linear-gradient(135deg, #f43f5e, #e11d48);
+  }
+  .kpi-avg {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+  }
+  .kpi-card .label {
+    font-size: 0.85rem;
+    opacity: 0.9;
+  }
+  .kpi-card .value {
+    font-weight: 700;
+    font-size: 1.3rem;
+    margin-top: 0.25rem;
+    color: #fff;
+  }
+  /* ====== /KPI gradient ====== */
+
+  /* Màu cho danh mục (giữ nguyên) */
+  .badge-soft[data-cat="Ăn uống"] {
+    background: #eaf2ff;
+    color: #2563eb;
+  }
+  .badge-soft[data-cat="Di chuyển"] {
+    background: #e7f9f1;
+    color: #16a34a;
+  }
+  .badge-soft[data-cat="Giải trí"] {
+    background: #fde7f7;
+    color: #db2777;
+  }
+  .badge-soft[data-cat="Giáo trình"],
+  .badge-soft[data-cat="Học tập"] {
+    background: #fff8e5;
+    color: #ca8a04;
+  }
+  .badge-soft[data-cat="Nhà ở"] {
+    background: #e8eaf0;
+    color: #475569;
+  }
+  .badge-soft[data-cat="Mua sắm"] {
+    background: #fef3c7;
+    color: #b45309;
+  }
+  .badge-soft[data-cat="Sức khỏe"] {
+    background: #e0f2fe;
+    color: #0284c7;
+  }
+
+  .category-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+    font-size: 0.9rem;
+    color: #555;
+  }
+  .category-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .category-color-box {
+    display: inline-block;
+    width: 20px;
+    height: 10px;
+    border-radius: 2px;
   }
   .toolbar .btn {
     border-radius: 10px;
@@ -36,6 +115,7 @@
     color: #6b7280;
   }
 </style>
+
 {% endblock %} {% block content %}
 <div class="py-4 page-wrap">
   <!-- Header -->
@@ -51,32 +131,58 @@
     </div>
   </div>
 
-  <!-- KPI -->
-  <div class="row g-3 kpi-card mb-4">
+  <!-- KPI Cards có màu -->
+  <div class="row g-3 kpi-card mb-4 text-white">
     <div class="col-md-4">
-      <div class="card border-0 shadow-sm">
+      <div class="card kpi-total">
         <div class="card-body">
-          <div class="text-muted small mb-1">Tổng chi tháng này</div>
+          <div class="label">Tổng chi tháng này</div>
           <div id="kpiTotal" class="value">0 ₫</div>
         </div>
       </div>
     </div>
+
     <div class="col-md-4">
-      <div class="card border-0 shadow-sm">
+      <div class="card kpi-count">
         <div class="card-body">
-          <div class="text-muted small mb-1">Số giao dịch</div>
+          <div class="label">Số giao dịch</div>
           <div id="kpiCount" class="value">0</div>
         </div>
       </div>
     </div>
+
     <div class="col-md-4">
-      <div class="card border-0 shadow-sm">
+      <div class="card kpi-avg">
         <div class="card-body">
-          <div class="text-muted small mb-1">Trung bình mỗi giao dịch</div>
+          <div class="label">Trung bình mỗi giao dịch</div>
           <div id="kpiAvg" class="value">0 ₫</div>
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Legend danh mục -->
+  <div class="category-legend">
+    <span
+      ><span class="category-color-box" style="background: #2563eb"></span> Ăn
+      uống</span
+    >
+    <span
+      ><span class="category-color-box" style="background: #16a34a"></span> Di
+      chuyển</span
+    >
+    <span
+      ><span class="category-color-box" style="background: #ca8a04"></span> Học
+      tập</span
+    >
+    <span
+      ><span class="category-color-box" style="background: #db2777"></span> Giải
+      trí</span
+    >
+    <span
+      ><span class="category-color-box" style="background: #475569"></span> Nhà
+      ở</span
+    >
   </div>
 
   <!-- Recent + Filter -->
