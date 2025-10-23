@@ -1,0 +1,159 @@
+<!-- frontend/templates/transactions/form.html -->
+<!-- Modal Thêm Giao dịch (Income / Expense) -->
+<div class="modal fade" id="transactionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="transactionForm">
+        <div class="modal-header">
+          <h5 class="modal-title">Thêm giao dịch mới</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+          ></button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Loại giao dịch -->
+          <div class="mb-3">
+            <label class="form-label"
+              >Loại giao dịch <span class="text-danger">*</span></label
+            >
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="type"
+                  id="typeExpense"
+                  value="expense"
+                  checked
+                />
+                <label class="form-check-label" for="typeExpense"
+                  >Chi tiêu</label
+                >
+              </div>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="type"
+                  id="typeIncome"
+                  value="income"
+                />
+                <label class="form-check-label" for="typeIncome"
+                  >Thu nhập</label
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Mô tả -->
+          <div class="mb-3">
+            <label class="form-label"
+              >Mô tả <span class="text-danger">*</span></label
+            >
+            <input
+              type="text"
+              name="desc"
+              class="form-control"
+              placeholder="vd: Ăn trưa ở căn tin / Lương part-time"
+              required
+            />
+          </div>
+
+          <!-- Số tiền -->
+          <div class="mb-3">
+            <label class="form-label"
+              >Số tiền <span class="text-danger">*</span></label
+            >
+            <input
+              type="number"
+              name="amount"
+              class="form-control"
+              min="0"
+              step="0.01"
+              inputmode="decimal"
+              required
+            />
+          </div>
+
+          <!-- Danh mục -->
+          <div class="mb-3">
+            <label class="form-label"
+              >Danh mục <span class="text-danger">*</span></label
+            >
+            <select
+              name="category"
+              id="transactionCategory"
+              class="form-select"
+              required
+            ></select>
+            <div class="form-text" id="categoryHint">Danh mục chi tiêu</div>
+          </div>
+
+          <!-- Ngày -->
+          <div class="mb-3">
+            <label class="form-label">Ngày *</label>
+            <div class="input-group">
+              <input
+                type="text"
+                id="transactionDate"
+                name="date"
+                class="form-control"
+                placeholder="dd/mm/yyyy"
+                autocomplete="off"
+                required
+              />
+              <button
+                class="btn btn-outline-secondary"
+                type="button"
+                id="btnOpenCalendar"
+                aria-label="Chọn ngày"
+              >
+                <i class="bi bi-calendar3"></i>
+              </button>
+            </div>
+            <div class="form-text">Nhấp biểu tượng lịch để chọn ngày</div>
+          </div>
+
+          <!-- Phương thức thanh toán -->
+          <div class="mb-3">
+            <label class="form-label"
+              >Phương thức thanh toán <span class="text-danger">*</span></label
+            >
+            <select
+              name="payment_method_id"
+              id="paymentMethod"
+              class="form-select"
+            ></select>
+          </div>
+
+          <!-- Ghi chú -->
+          <div class="mb-3">
+            <label class="form-label">Ghi chú</label>
+            <textarea
+              name="note"
+              class="form-control"
+              rows="2"
+              placeholder="Ghi chú thêm (nếu có)"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Hủy
+          </button>
+          <button type="submit" class="btn btn-primary" id="submitBtnText">
+            Lưu giao dịch
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

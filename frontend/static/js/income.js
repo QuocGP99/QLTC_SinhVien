@@ -1,24 +1,20 @@
-// frontend/static/js/expenses.js
-const ExpensesPage = (() => {
-  // ===== STATE =====
+// frontend/static/js/income.js
+const IncomePage = (() => {
   let state = {
     categories: [],
-    methods: [],
     items: [],
     filtered: [],
     currentCategoryId: "",
     editId: null,
   };
 
-  // ===== Date utils =====
   let dp = null,
     dateMode = "none";
   function toISODate(s) {
     if (!s) return "";
     if (s.includes("/")) {
       const [d, m, y] = s.split("/");
-      const pad = (n) => String(n).padStart(2, "0");
-      return `${y}-${pad(m)}-${pad(d)}`; // <-- zero-pad đảm bảo YYYY-MM-DD
+      return `${y}-${m}-${d}`;
     }
     return s;
   }
@@ -54,19 +50,18 @@ const ExpensesPage = (() => {
     dateMode = "none";
     if (btn) btn.disabled = true;
   }
-  function setDateField(dateObj) {
+  function setDateField(d) {
     const el = document.getElementById("transactionDate");
     if (!el) return;
     const pad = (n) => String(n).padStart(2, "0");
-    if (dateMode === "bootstrap")
-      window.jQuery(el).datepicker("setDate", dateObj);
+    if (dateMode === "bootstrap") window.jQuery(el).datepicker("setDate", d);
     else if (dateMode === "vanilla") {
       ensureDatepicker();
-      dp.setDate(dateObj);
+      dp.setDate(d);
     } else
-      el.value = `${pad(dateObj.getDate())}/${pad(
-        dateObj.getMonth() + 1
-      )}/${dateObj.getFullYear()}`;
+      el.value = `${pad(d.getDate())}/${pad(
+        d.getMonth() + 1
+      )}/${d.getFullYear()}`;
   }
   function getDateField() {
     const el = document.getElementById("transactionDate");
@@ -76,23 +71,13 @@ const ExpensesPage = (() => {
     return el.value || "";
   }
 
-  // ===== API =====
-  const API_BASE = window.BASE_API_URL || "http://127.0.0.1:5000";
-
+  const API_BASE = window.BASE_API_URL || "";
   function token() {
     return localStorage.getItem("access_token") || "";
   }
-  function authHeaders(json = false) {
-    const t = token();
-    const h = json ? { "Content-Type": "application/json" } : {};
-    if (t) h.Authorization = `Bearer ${t}`;
-    return h;
-  }
-
   async function safeJson(res) {
     const ct = (res.headers.get("content-type") || "").toLowerCase();
     if (ct.includes("application/json")) return res.json();
-    // ném lỗi để catch hiển thị thông báo từ BE (nếu có)
     throw new Error(await res.text());
   }
   async function apiGet(path, params = {}) {
@@ -100,7 +85,7 @@ const ExpensesPage = (() => {
     const url = API_BASE + path + (qs ? `?${qs}` : "");
     return safeJson(
       await fetch(url, {
-        headers: authHeaders(), // <-- tránh Authorization: undefined
+        headers: { Authorization: token() ? `Bearer ${token()}` : undefined },
       })
     );
   }
@@ -108,17 +93,22 @@ const ExpensesPage = (() => {
     return safeJson(
       await fetch(API_BASE + path, {
         method: "POST",
-        headers: authHeaders(true), // <-- JSON + auth hợp lệ
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token() ? `Bearer ${token()}` : undefined,
+        },
         body: JSON.stringify(body),
       })
     );
   }
-
   async function apiPatch(path, body) {
     return safeJson(
       await fetch(API_BASE + path, {
         method: "PATCH",
-        headers: authHeaders(true), // <-- tránh undefined header
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token() ? `Bearer ${token()}` : undefined,
+        },
         body: JSON.stringify(body),
       })
     );
@@ -127,27 +117,25 @@ const ExpensesPage = (() => {
     return safeJson(
       await fetch(API_BASE + path, {
         method: "DELETE",
-        headers: authHeaders(), // <-- tránh undefined header
+        headers: { Authorization: token() ? `Bearer ${token()}` : undefined },
       })
     );
   }
 
   const API = {
-    list: (params = {}) => apiGet("/api/expenses", params),
-    create: (payload) => apiPost("/api/expenses", payload),
-    update: (id, body) => apiPatch(`/api/expenses/${id}`, body),
-    remove: (id) => apiDelete(`/api/expenses/${id}`),
-    meta: () => apiGet("/api/expenses/meta"),
+    list: (p = {}) => apiGet("/api/incomes", p),
+    create: (b) => apiPost("/api/incomes", b),
+    update: (id, b) => apiPatch(`/api/incomes/${id}`, b),
+    remove: (id) => apiDelete(`/api/incomes/${id}`),
+    meta: () => apiGet("/api/incomes/meta"),
   };
 
-  // ===== Helpers & render =====
   const money = (n) =>
     (Number(n) || 0).toLocaleString("vi-VN", {
       style: "currency",
       currency: "VND",
       maximumFractionDigits: 0,
     });
-  const moneyNeg = (n) => `-${money(n)}`;
   const escapeHtml = (s) =>
     String(s ?? "")
       .replace(/&/g, "&amp;")
@@ -156,43 +144,40 @@ const ExpensesPage = (() => {
 
   function setKPIs(list) {
     const total = list.reduce((s, x) => s + Number(x.amount || 0), 0);
-    const cnt = list.length || 1;
     const kpiTotal = document.getElementById("kpiTotal");
     const kpiCount = document.getElementById("kpiCount");
     const kpiAvg = document.getElementById("kpiAvg");
-    if (kpiTotal) kpiTotal.textContent = money(-total);
+    if (kpiTotal) kpiTotal.textContent = money(total);
     if (kpiCount) kpiCount.textContent = list.length;
-    if (kpiAvg) kpiAvg.textContent = money(total / cnt);
+    if (kpiAvg) kpiAvg.textContent = money(total / (list.length || 1));
   }
 
   function renderList() {
     const wrap = document.getElementById("txList");
     wrap.innerHTML = "";
     if (!state.filtered.length) {
-      wrap.innerHTML = `<div class="text-muted">Chưa có chi tiêu.</div>`;
+      wrap.innerHTML = `<div class="text-muted">Chưa có thu nhập.</div>`;
       return;
     }
     state.filtered.forEach((tx) => {
-      const el = document.createElement("div");
-      el.className = "expense-card";
       const dateFormatted = tx.date
         ? new Date(tx.date).toLocaleDateString("vi-VN")
         : "";
+      const el = document.createElement("div");
+      el.className = "expense-card";
       el.innerHTML = `
         <div class="card-body d-flex align-items-start justify-content-between">
           <div class="me-3">
             <div class="fw-semibold">${escapeHtml(
-              tx.description || tx.desc || tx.note || ""
+              tx.desc || tx.note || ""
             )}</div>
-            <div class="small text-muted">${dateFormatted} · ${
-        tx.method_name || tx.method || "Tiền mặt"
-      }</div>
+            <div class="small text-muted">${dateFormatted}</div>
           </div>
           <div class="d-flex align-items-center gap-3">
             <span class="badge badge-soft" data-cat-id="${tx.category_id}">
               ${escapeHtml(tx.category || tx.category_name || "")}
             </span>
-            <div class="amount text-danger">${moneyNeg(tx.amount)}</div>
+            <div class="amount text-success">+${money(tx.amount)}</div>
             <div class="text-muted d-flex gap-2">
               <button class="btn btn-sm btn-link text-muted px-1" title="Sửa" data-action="edit" data-id="${
                 tx.id
@@ -210,16 +195,10 @@ const ExpensesPage = (() => {
   async function loadMeta() {
     const data = await API.meta();
     state.categories = data?.categories || [];
-    state.methods = data?.methods || [];
     const selCat = document.getElementById("transactionCategory");
     if (selCat)
       selCat.innerHTML = state.categories
         .map((c) => `<option value="${c.id}">${c.name}</option>`)
-        .join("");
-    const selPm = document.getElementById("paymentMethod");
-    if (selPm)
-      selPm.innerHTML = state.methods
-        .map((m) => `<option value="${m.id}">${m.name}</option>`)
         .join("");
     buildFilterMenu();
   }
@@ -263,10 +242,9 @@ const ExpensesPage = (() => {
       ? state.items.filter((x) => String(x.category_id) === String(cid))
       : [...state.items];
     renderList();
-    setKPIs(state.items); // KPI theo toàn bộ
+    setKPIs(state.items);
   }
 
-  // ===== Modal / Form =====
   function modalEl() {
     return document.getElementById("transactionModal");
   }
@@ -280,10 +258,13 @@ const ExpensesPage = (() => {
     form.reset();
     ensureDatepicker();
     setDateField(new Date());
-    document.getElementById("categoryHint").textContent = "Danh mục chi tiêu";
-    document.getElementById("submitBtnText").textContent = "Lưu chi tiêu";
+    document.getElementById("categoryHint").textContent = "Nguồn thu nhập";
+    document.getElementById("submitBtnText").textContent = "Lưu thu nhập";
     document.querySelector("#transactionModal .modal-title").textContent =
-      "Thêm chi tiêu";
+      "Thêm thu nhập";
+    // Ẩn ô payment method nếu bạn dùng chung form.html
+    const pm = document.getElementById("paymentMethod");
+    if (pm) pm.closest(".mb-3").style.display = "none";
     getModal().show();
   }
 
@@ -291,32 +272,25 @@ const ExpensesPage = (() => {
     const tx = state.items.find((t) => String(t.id) === String(id));
     if (!tx) return;
     state.editId = tx.id;
-
     const form = document.getElementById("transactionForm");
     form.reset();
-
-    await loadMeta(); // đảm bảo options có sẵn
-
-    if (form.desc) form.desc.value = tx.description || tx.desc || tx.note || "";
+    await loadMeta();
+    if (form.desc) form.desc.value = tx.desc || tx.note || "";
     if (form.amount) form.amount.value = tx.amount;
     if (form.category) form.category.value = tx.category_id;
-    const pm = document.getElementById("paymentMethod");
-    if (pm)
-      pm.value =
-        tx.payment_method_id || tx.method_id || state.methods[0]?.id || "";
-
     ensureDatepicker();
     setDateField(tx.date ? new Date(tx.date) : new Date());
-
-    document.getElementById("categoryHint").textContent = "Danh mục chi tiêu";
-    document.getElementById("submitBtnText").textContent = "Lưu chi tiêu";
+    document.getElementById("categoryHint").textContent = "Nguồn thu nhập";
+    document.getElementById("submitBtnText").textContent = "Lưu thu nhập";
     document.querySelector("#transactionModal .modal-title").textContent =
-      "Cập nhật chi tiêu";
+      "Cập nhật thu nhập";
+    const pm = document.getElementById("paymentMethod");
+    if (pm) pm.closest(".mb-3").style.display = "none";
     getModal().show();
   }
 
   async function removeItem(id) {
-    if (!confirm("Xoá chi tiêu này?")) return;
+    if (!confirm("Xoá thu nhập này?")) return;
     const res = await API.remove(id);
     if (!res?.success) return alert(res?.message || "Xoá thất bại");
     state.items = state.items.filter((x) => x.id !== Number(id));
@@ -326,7 +300,7 @@ const ExpensesPage = (() => {
 
   function bindUI() {
     const btnAdd =
-      document.getElementById("addExpenseBtn") ||
+      document.getElementById("addIncomeBtn") ||
       document.querySelector('[data-bs-target="#transactionModal"]');
     if (btnAdd) {
       btnAdd.removeAttribute("data-bs-toggle");
@@ -343,18 +317,14 @@ const ExpensesPage = (() => {
       if (btn.dataset.action === "edit") openEdit(id);
       if (btn.dataset.action === "del") removeItem(id);
     };
-
     document.getElementById("transactionForm").onsubmit = async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
-      const iso = toISODate(getDateField());
-      const catVal = Number(fd.get("category") || fd.get("category_id") || 0);
       const payload = {
         amount: Number(fd.get("amount") || 0),
-        category_id: catVal,
-        description: (fd.get("desc") || fd.get("note") || "").trim(), // <-- BE thường yêu cầu 'description'
-        date: iso,
-        payment_method_id: Number(fd.get("payment_method_id") || 0), // <-- gửi id, không gửi name
+        category_id: Number(fd.get("category") || fd.get("category_id") || 0),
+        note: (fd.get("note") || fd.get("desc") || "").trim(),
+        date: toISODate(getDateField()),
       };
       if (payload.amount <= 0 || !payload.category_id)
         return alert("Vui lòng nhập số tiền > 0 và chọn danh mục.");
@@ -371,7 +341,7 @@ const ExpensesPage = (() => {
         } else {
           const res = await API.create(payload);
           if (!res?.success)
-            throw new Error(res?.message || "Tạo chi tiêu thất bại");
+            throw new Error(res?.message || "Tạo thu nhập thất bại");
           state.items.unshift(res.item);
         }
         buildFilterMenu();
@@ -389,12 +359,11 @@ const ExpensesPage = (() => {
     };
   }
 
-  // ===== INIT =====
   async function init() {
     ensureDatepicker();
     await loadMeta();
-    const exp = await API.list({});
-    state.items = (exp?.items || []).map((x) => ({ ...x, type: "expense" }));
+    const inc = await API.list({});
+    state.items = (inc?.items || []).map((x) => ({ ...x, type: "income" }));
     state.items.sort(
       (a, b) => (b.date || "").localeCompare(a.date || "") || b.id - a.id
     );

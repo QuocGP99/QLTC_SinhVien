@@ -86,5 +86,20 @@ def create_app(config_class: type[Config] | None = None):
             "db": app.config.get("SQLALCHEMY_DATABASE_URI"),
             "cache": app.config.get("CACHE_TYPE", "disabled")
         }, 200
+    
+     # --- Jinja filters: tiền VND & hiển thị +/- ---
+    def format_vnd(n):
+        try:
+            return f"{float(n):,.0f} đ".replace(",", ".")
+        except Exception:
+            return f"{n} đ"
+
+    def sign_amount(amount, tx_type='expense'):
+        # Chi tiêu -> âm, Thu nhập -> dương
+        s = "-" if tx_type == "expense" else "+"
+        return f"{s}{format_vnd(amount)}"
+
+    app.jinja_env.filters["vnd"]  = format_vnd
+    app.jinja_env.filters["samt"] = sign_amount
 
     return app

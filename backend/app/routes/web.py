@@ -62,9 +62,17 @@ def admin_dashboard():
 def admin_users_page():
     return render_template("admin/users.html", BASE_API_URL=_api_base(), title="Quản trị người dùng")
 
-@bp.route("/expenses")
+@bp.route("/transactions")
 def expenses():
-    return render_template("expenses/list.html", BASE_API_URL=_api_base(), title="Quản lý chi tiêu")
+    return render_template("transactions/index.html", BASE_API_URL=_api_base(), title="Quản lý giao dịch")
+
+@bp.route("/transactions/expenses")
+def page_expenses():
+    return render_template("transactions/expenses.html")
+
+@bp.route("/transactions/income")
+def page_incomes():
+    return render_template("transactions/income.html")
 
 @bp.route("/budgets")
 def budgets():

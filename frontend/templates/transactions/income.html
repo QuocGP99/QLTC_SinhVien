@@ -1,0 +1,123 @@
+{% extends "base.html" %} {% block title %}Thu nhập{% endblock %} {% block head
+%}
+<link
+  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+  rel="stylesheet"
+/>
+<style>
+  .page-wrap {
+    max-width: 980px;
+    margin: 0 auto;
+  }
+  .expense-card {
+    border: 1px solid #edf0f5;
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+  }
+  .badge-soft {
+    background: #f6f7fb;
+    border: 1px solid #f8f8f8ff;
+    color: #6b7280;
+    font-weight: 500;
+  }
+  .kpi-card .card {
+    border: none;
+    border-radius: 16px;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+  .kpi-total {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+  }
+  .kpi-count {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+  }
+  .kpi-avg {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="py-4 page-wrap">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h4 class="mb-1">Thu nhập</h4>
+      <div class="text-muted small">Theo dõi nguồn thu hằng ngày</div>
+    </div>
+    <div class="toolbar">
+      <button id="addIncomeBtn" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Thêm thu nhập
+      </button>
+    </div>
+  </div>
+
+  <div class="row g-3 kpi-card mb-4 text-white">
+    <div class="col-md-4">
+      <div class="card kpi-total">
+        <div class="card-body">
+          <div class="label">Tổng thu tháng này</div>
+          <div id="kpiTotal" class="value">0 ₫</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card kpi-count">
+        <div class="card-body">
+          <div class="label">Số giao dịch</div>
+          <div id="kpiCount" class="value">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card kpi-avg">
+        <div class="card-body">
+          <div class="label">Trung bình mỗi thu</div>
+          <div id="kpiAvg" class="value">0 ₫</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div
+      class="card-header bg-white d-flex align-items-center justify-content-between"
+    >
+      <div class="fw-semibold">Nguồn thu gần đây</div>
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-funnel filter-icon"></i>
+        <div class="dropdown">
+          <button
+            class="btn btn-light btn-sm dropdown-toggle"
+            id="categoryFilterBtn"
+            data-bs-toggle="dropdown"
+          >
+            Tất cả danh mục
+          </button>
+          <ul
+            class="dropdown-menu dropdown-menu-end"
+            id="categoryMenu"
+            style="min-width: 220px"
+          >
+            <li>
+              <a class="dropdown-item active" data-id="">Tất cả danh mục</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="card-body"><div id="txList"></div></div>
+  </div>
+</div>
+
+{% include "transactions/form.html" %} {% endblock %} {% block scripts %}
+<script src="{{ url_for('static', filename='js/income.js') }}"></script>
+<script>
+  // Ẩn nhóm radio "Loại giao dịch" và ô Phương thức thanh toán vì trang này chỉ xử lý thu nhập
+  const typeGrp = document
+    .querySelector('#transactionForm input[name="type"]')
+    ?.closest(".mb-3");
+  if (typeGrp) typeGrp.style.display = "none";
+  const pm = document.getElementById("paymentMethod");
+  if (pm) pm.closest(".mb-3").style.display = "none";
+  IncomePage.init();
+</script>
+{% endblock %}

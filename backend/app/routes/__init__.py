@@ -2,11 +2,13 @@ from flask import Flask
 #webp
 from .web import bp as web_bp
 from .auth import bp as auth_bp
-from .expenses import bp as expenses_bp
+from .expenses_api import bp as expenses_bp
+from .incomes_api import bp as incomes_bp
 from .categories import bp as categories_bp
 from .budgets import bp as budgets_bp 
 from .savings import bp as savings_bp
 from .dashboard_api import bp as dashboard_api_bp
+from .analytics import bp as analytics_bp
 from .admin_users import bp as admin_users_bp
 
 def register_blueprints(app: Flask):
@@ -16,8 +18,10 @@ def register_blueprints(app: Flask):
     #api
     app.register_blueprint(auth_bp)
     app.register_blueprint(expenses_bp)
+    app.register_blueprint(incomes_bp)
     app.register_blueprint(categories_bp)
     app.register_blueprint(budgets_bp)
     app.register_blueprint(dashboard_api_bp)
     app.register_blueprint(savings_bp)
     app.register_blueprint(admin_users_bp)
+    app.register_blueprint(analytics_bp)
