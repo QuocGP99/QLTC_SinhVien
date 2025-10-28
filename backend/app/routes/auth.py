@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, redirect, url_for
 from flask_jwt_extended import(create_access_token, create_refresh_token,
                                 jwt_required, get_jwt_identity, get_jwt) 
 from ..extensions import db, jwt, jwt_blocklist, cache
@@ -52,7 +52,7 @@ def check_if_token_revoked(jwt_header, jwt_payload):
 # Routes
 @bp.route("/register", methods=["POST"])
 def register():
-    # an toàn hơn khi parse JSON
+    # cố gắng parse JSON vào dict
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
         raw = request.get_data(as_text=True).strip()
@@ -65,47 +65,59 @@ def register():
     password = (data.get("password") or "").strip()
     full_name = (data.get("full_name") or "").strip()
 
+    # validate đầu vào
     if not email or not EMAIL_REGEX.match(email):
-        return fail("Email khong hop le", 422)
+        return jsonify(success=False, message="Email không hợp lệ"), 422
     if not password or not validate_password(password):
-        return fail("Mat khau phai co it nhat 6 ki tu, bao gom so va chu", 422)
+        return jsonify(success=False, message="Mật khẩu phải >=6 ký tự, gồm chữ và số"), 422
 
+    # nếu email đã tồn tại -> trả JSON lỗi, KHÔNG tạo user nữa
     if User.query.filter_by(email=email).first():
-        return fail("Email da ton tai", 409)
-    
-    #Tao user chua cap token, tuy model co cot is_verified thi set False
+        return jsonify(success=False, message="Email đã tồn tại"), 409
+
+    # tạo user mới với is_verified=False
     user = User(email=email, full_name=full_name)
     user.set_password(password)
     if hasattr(User, "is_verified"):
         user.is_verified = False
-    db.session.add(user); db.session.commit()
 
-    #sinh OTP 6 so & luu cache
-    #khoa cooldown 60s de chong spam resend
+    db.session.add(user)
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        # phòng trường hợp race condition unique email
+        return jsonify(success=False, message="Email đã tồn tại"), 409
+
+    # chống spam resend OTP bằng cooldown
     if cache.get(_otp_cooldown_key(email)):
-        return fail("Vui lòng chờ 60s trước khi yêu cầu gửi lại mã OTP", 429)
-    
+        return jsonify(
+            success=False,
+            message="Vui lòng chờ 60s trước khi yêu cầu gửi lại mã OTP",
+        ), 429
+
+    # sinh mã OTP 6 số
     code = f"{random.randint(0, 999999):06d}"
+
+    # lưu OTP vào cache với TTL
     cache.set(_otp_cache_key(email), code, timeout=OTP_TTL_SECONDS)
     cache.set(_otp_cooldown_key(email), 1, timeout=OTP_COOLDOWN_SECONDS)
 
-    # print(f"[DEBUG] OTP for {email}: {code}")  # DEV: in OTP ra console
-
-    # GỬI EMAIL OTP THẬT
+    # gửi email OTP
     send_email(
         to=email,
         subject="SVFinance - Mã xác thực OTP",
-        template_name="otp",           # sẽ dùng templates/email/otp.html & otp.txt
+        template_name="otp",  # sẽ render templates/email/otp.html và otp.txt
         email=email,
         code=code,
-        ttl_min=OTP_TTL_SECONDS // 60
+        ttl_min=OTP_TTL_SECONDS // 60,
     )
 
-    #tra redirect de FE chuyen trang nhap OTP
+    # trả JSON để FE redirect qua trang nhập OTP
     return jsonify({
         "success": True,
         "message": "Đăng ký thành công. Vui lòng kiểm tra email để lấy mã OTP xác thực.",
-        "redirect_url": f"/verify-otp/{email}"
+        "redirect_url": f"/verify-otp/{email}",
     }), 201
 
 @bp.post("/resend-otp")
@@ -222,6 +234,22 @@ def login():
         "message": "Đăng nhập thành công"
     })
 
+@bp.post("/login_form")
+def login_form_bridge():
+    email = (request.form.get("email") or "").strip().lower()
+    password = (request.form.get("password") or "").strip()
+
+    if not email or not password:
+        return redirect("/login")
+
+    user = User.query.filter_by(email=email).first()
+    if not user or not user.check_password(password):
+        return redirect("/login?err=bad_cred")
+
+    return redirect("/dashboard?login_ok=1")
+
+
+
 @bp.post("/refresh")
 @jwt_required(refresh=True)
 def refresh():
@@ -245,46 +273,79 @@ def logout():
     jwt_blocklist.add(jti)
     return ok({"msg": "Đăng xuất thành công"})
 
-#forgot password
-from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
-from flask import current_app
-
-def _serializer():
-    return URLSafeTimedSerializer(current_app.config["SECRET_KEY"], salt="reset-password")
-
+# ========================
+# QUÊN / ĐẶT LẠI MẬT KHẨU
+# ========================
 
 @bp.post("/forgot")
-def forgot():
+def forgot_password():
     data = request.get_json() or {}
     email = (data.get("email") or "").strip().lower()
+
     if not EMAIL_REGEX.match(email):
-        return fail("Email khong hop le", 422)
+        return fail("Email không hợp lệ", 422)
+
     user = User.query.filter_by(email=email).first()
     if not user:
-        # trả success để tránh lộ email tồn tại hay không
-        return ok({"message": "Nếu email tồn tại, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu."})
-    token = _serializer().dumps({"uid": user.id, "ts": int(time.time())})
-    # TODO: gửi email kèm link: https://your-fe/reset?token=...
-    return ok({"reset_token_dev_only": token})  # DEV: trả token để test ngay
+        # Không tiết lộ email tồn tại hay không
+        return ok({"message": "Nếu email tồn tại, bạn sẽ nhận được mã xác nhận trong hộp thư."})
+
+    # chống spam gửi lại
+    if cache.get(_otp_cooldown_key(email)):
+        return fail("Vui lòng chờ 60s trước khi yêu cầu gửi lại mã xác nhận", 429)
+
+    # Sinh mã OTP 6 số
+    code = f"{random.randint(0, 999999):06d}"
+
+    # Lưu OTP reset vào cache
+    cache.set(_otp_cache_key(f"reset:{email}"), code, timeout=OTP_TTL_SECONDS)
+    cache.set(_otp_cooldown_key(email), 1, timeout=OTP_COOLDOWN_SECONDS)
+
+    # Gửi email xác nhận đặt lại mật khẩu
+    send_email(
+        to=email,
+        subject="SVFinance - Mã xác nhận đặt lại mật khẩu",
+        template_name="otp",  # dùng lại otp.html/otp.txt
+        email=email,
+        code=code,
+        ttl_min=OTP_TTL_SECONDS // 60,
+    )
+
+    return ok({"message": "Đã gửi mã xác nhận đến email của bạn."})
 
 
 @bp.post("/reset")
 def reset_password():
     data = request.get_json() or {}
-    token = data.get("token")
-    new_pw = data.get("password") or ""
+    email = (data.get("email") or "").strip().lower()
+    code = (data.get("code") or "").strip()
+    new_pw = (data.get("password") or "").strip()
+    confirm_pw = (data.get("confirm_password") or "").strip()
+
+    if not EMAIL_REGEX.match(email):
+        return fail("Email không hợp lệ", 422)
+    if new_pw != confirm_pw:
+        return fail("Mật khẩu xác nhận không khớp", 422)
     if not validate_password(new_pw):
-        return fail("Mat khau toi thieu 6 ki tu, bao gom chu va so", 422)
-    try:
-        payload = _serializer().loads(token, max_age=3600)  # 1h
-    except (BadSignature, SignatureExpired):
-        return fail("Token không hợp lệ hoặc hết hạn", 400)
-    user = User.query.get(payload.get("uid"))
+        return fail("Mật khẩu phải >=6 ký tự, gồm chữ và số", 422)
+
+    # Kiểm tra OTP reset
+    saved = cache.get(_otp_cache_key(f"reset:{email}"))
+    if not saved or saved != code:
+        return fail("Mã xác nhận không đúng hoặc đã hết hạn", 400)
+
+    user = User.query.filter_by(email=email).first()
     if not user:
         return fail("Người dùng không tồn tại", 404)
+
     user.set_password(new_pw)
     db.session.commit()
-    return ok({"message": "Đặt lại mật khẩu thành công."})
+
+    # Xóa mã reset khỏi cache
+    cache.delete(_otp_cache_key(f"reset:{email}"))
+
+    return ok({"message": "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại."})
+
 
 @bp.post("/google")
 def login_with_google():

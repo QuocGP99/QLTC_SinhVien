@@ -1,0 +1,114 @@
+<!-- templates/transactions/income_form.html -->
+<div class="modal fade" id="incomeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="incomeForm">
+        <div class="modal-header">
+          <h5 class="modal-title">Thêm thu nhập mới</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+          ></button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Mô tả -->
+          <div class="mb-3">
+            <label class="form-label"
+              >Nguồn thu <span class="text-danger">*</span></label
+            >
+            <input
+              type="text"
+              name="desc"
+              class="form-control"
+              placeholder="vd: Lương part-time, gia đình hỗ trợ"
+              required
+            />
+          </div>
+
+          <!-- Số tiền -->
+          <div class="mb-3">
+            <label class="form-label"
+              >Số tiền <span class="text-danger">*</span></label
+            >
+            <input
+              type="number"
+              name="amount"
+              class="form-control"
+              min="0"
+              step="1000"
+              inputmode="decimal"
+              required
+            />
+          </div>
+
+          <!-- Danh mục thu nhập -->
+          <div class="mb-3">
+            <label class="form-label"
+              >Danh mục thu nhập <span class="text-danger">*</span></label
+            >
+            <select
+              name="category_id"
+              id="incomeCategory"
+              class="form-select"
+              required
+            ></select>
+            <div class="form-text">Ví dụ: Lương, Trợ cấp, Freelance…</div>
+          </div>
+
+          <!-- Ngày nhận -->
+          <div class="mb-3">
+            <label class="form-label"
+              >Ngày nhận <span class="text-danger">*</span></label
+            >
+            <div class="input-group">
+              <input
+                type="text"
+                id="incomeDate"
+                name="date"
+                class="form-control"
+                placeholder="dd/mm/yyyy"
+                autocomplete="off"
+                required
+              />
+              <button
+                class="btn btn-outline-secondary"
+                type="button"
+                id="btnOpenIncomeCalendar"
+                aria-label="Chọn ngày"
+              >
+                <i class="bi bi-calendar3"></i>
+              </button>
+            </div>
+            <div class="form-text">Nhấp biểu tượng lịch để chọn ngày</div>
+          </div>
+
+          <!-- Ghi chú -->
+          <div class="mb-3">
+            <label class="form-label">Ghi chú</label>
+            <textarea
+              name="note"
+              class="form-control"
+              rows="2"
+              placeholder="Ghi chú thêm (nếu có)"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Hủy
+          </button>
+          <button type="submit" class="btn btn-success" id="incomeSubmitBtn">
+            Lưu thu nhập
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

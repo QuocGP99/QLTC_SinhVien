@@ -104,11 +104,15 @@
 
 <!-- Quick actions -->
 <div class="mb-3 d-flex gap-2">
-  <button class="btn btn-primary">
+  <button class="btn btn-primary" id="quickAddBtn">
     <i class="bi bi-plus-lg me-1"></i> Thêm giao dịch
   </button>
-  <button class="btn btn-outline-secondary">Quản lý ngân sách</button>
-  <button class="btn btn-outline-secondary">Đặt mục tiêu tiết kiệm</button>
+  <button class="btn btn-outline-secondary" id="quickBudgetPageBtn">
+    Quản lý ngân sách
+  </button>
+  <button class="btn btn-outline-secondary" id="quickAddSavingBtn">
+    Đặt mục tiêu tiết kiệm
+  </button>
 </div>
 
 <div class="row g-3">
@@ -207,7 +211,12 @@
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <div class="fw-semibold">Giao dịch gần đây</div>
-          <button class="btn btn-sm btn-outline-secondary">Xem tất cả</button>
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            id="viewAllTransactionsBtn"
+          >
+            Xem tất cả
+          </button>
         </div>
         <div id="recentList" class="vstack gap-2">
           <!-- JS render -->
@@ -221,20 +230,40 @@
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <div class="fw-semibold">Tổng quan ngân sách</div>
-          <span class="text-muted small"><i class="bi bi-gear"></i></span>
-        </div>
-        <div class="small text-muted mb-1">Ngân sách tháng</div>
-        <div class="d-flex align-items-center justify-content-between">
-          <div class="fw-semibold">₫1.254.000 / ₫1.800.000</div>
-          <div class="small text-muted">69.7% sử dụng</div>
-        </div>
-        <div class="progress my-2" style="height: 10px">
-          <div class="progress-bar bg-primary" style="width: 69.7%"></div>
+          <button
+            class="btn btn-link p-0 text-muted small"
+            id="openBudgetPageBtn"
+            style="text-decoration: none"
+            title="Quản lý ngân sách"
+          >
+            <i class="bi bi-gear"></i>
+          </button>
         </div>
 
+        <!-- Nhãn tháng/năm -->
+        <div class="small text-muted mb-1" id="budgetMonthLabel">
+          Ngân sách tháng
+        </div>
+
+        <!-- Tổng đã dùng / hạn mức + % -->
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="fw-semibold" id="budgetUsedVsLimit">₫0 / ₫0</div>
+          <div class="small text-muted" id="budgetPercentUsed">0% sử dụng</div>
+        </div>
+
+        <!-- Thanh tiến độ tổng -->
+        <div class="progress my-2" style="height: 10px">
+          <div
+            class="progress-bar"
+            id="budgetProgressBar"
+            style="width: 0%"
+          ></div>
+        </div>
+
+        <!-- Danh mục -->
         <div class="mt-3">
           <div class="fw-semibold small mb-2">Phân bổ theo danh mục</div>
-          <div id="budgetList" class="vstack gap-1">
+          <div id="budgetList" class="vstack gap-2">
             <!-- JS render -->
           </div>
         </div>
@@ -247,16 +276,26 @@
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <div class="fw-semibold">Mục tiêu tiết kiệm</div>
-          <button class="btn btn-sm btn-outline-secondary">
-            Thêm mục tiêu
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            id="dashViewSavingsBtn"
+          >
+            Xem chi tiết
           </button>
         </div>
+
+        <!-- Tổng tiến độ tất cả goals -->
         <div class="small text-muted mb-1">Tiến độ tổng</div>
         <div class="progress mb-2" style="height: 10px">
-          <div class="progress-bar bg-success" style="width: 37.4%"></div>
+          <div
+            class="progress-bar bg-success"
+            id="savingsTotalBar"
+            style="width: 0%"
+          ></div>
         </div>
-        <div class="small">₫1.497.000 / ₫4.000.000</div>
+        <div class="small" id="savingsTotalText">₫0 / ₫0</div>
 
+        <!-- Danh sách mục tiêu cụ thể -->
         <div class="mt-3 vstack gap-2" id="savingsGoals">
           <!-- JS render -->
         </div>
@@ -265,167 +304,120 @@
   </div>
 </div>
 
-<!-- ⬇️ include modal form để có sẵn trong DOM -->
-{% include 'transactions/form.html' %} {% endblock %} {% block scripts %}
+<!-- ========== MODALS (phải ở trong DOM trước khi JS chạy) ========== -->
+
+<!-- Modal chọn loại giao dịch -->
+<div class="modal fade" id="chooseTypeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-3">
+      <div class="modal-header">
+        <h5 class="modal-title">Thêm giao dịch mới</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Đóng"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3 fw-semibold">Bạn muốn thêm loại giao dịch nào?</p>
+        <div class="d-grid gap-2">
+          <button class="btn btn-danger" id="btnChooseExpense">
+            <i class="bi bi-cash-stack me-1"></i> Chi tiêu
+          </button>
+          <button class="btn btn-success" id="btnChooseIncome">
+            <i class="bi bi-cash-coin me-1"></i> Thu nhập
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          data-bs-dismiss="modal"
+        >
+          Hủy
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal xác nhận loại giao dịch -->
+<div class="modal fade" id="confirmAddModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-3">
+      <div class="modal-header">
+        <h5 class="modal-title">Xác nhận thêm giao dịch</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Đóng"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0" id="confirmMessage"></p>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          data-bs-dismiss="modal"
+          id="btnNoConfirm"
+        >
+          Không
+        </button>
+        <button type="button" class="btn btn-primary" id="btnYesConfirm">
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal xác nhận thêm mục tiêu tiết kiệm -->
+<div
+  class="modal fade"
+  id="confirmAddSavingModal"
+  tabindex="-1"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-3">
+      <div class="modal-header">
+        <h5 class="modal-title">Xác nhận thêm mục tiêu</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Đóng"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0 fw-semibold">
+          Bạn chắc chắn muốn thêm mục tiêu tiết kiệm?
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          data-bs-dismiss="modal"
+          id="btnNoAddSaving"
+        >
+          Không
+        </button>
+        <button type="button" class="btn btn-primary" id="btnYesAddSaving">
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include 'transactions/expense_form.html' %} {% include
+'transactions/income_form.html' %} {% endblock %} {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script>
-  (function () {
-    // ====== DEMO DATA (có thể thay bằng API sau) ======
-    const months = ["01", "02", "03", "04", "05"];
-    const spend = [1450000, 1200000, 980000, 1500000, 1100000];
-    const categories = [
-      { name: "Ăn uống", value: 36, color: "#60a5fa" },
-      { name: "Di chuyển", value: 22, color: "#34d399" },
-      { name: "Giáo trình", value: 18, color: "#fbbf24" },
-      { name: "Giải trí", value: 14, color: "#f472b6" },
-      { name: "Nhà trọ", value: 10, color: "#94a3b8" },
-    ];
-    const recent = [
-      {
-        desc: "Starbucks Coffee",
-        date: "15/01",
-        category: "Ăn uống",
-        amount: 49500,
-      },
-      {
-        desc: "Bus Pass Monthly",
-        date: "14/01",
-        category: "Di chuyển",
-        amount: 750000,
-      },
-      {
-        desc: "Physics Textbook",
-        date: "13/01",
-        category: "Giáo trình",
-        amount: 899900,
-      },
-    ];
-    const budgets = [
-      { name: "Ăn uống", used: 450000, limit: 800000 },
-      { name: "Di chuyển", used: 280000, limit: 400000 },
-      { name: "Giáo trình", used: 200000, limit: 600000 },
-      { name: "Giải trí", used: 180000, limit: 300000 },
-      { name: "Nhà trọ", used: 144000, limit: 200000 },
-    ];
-    const goals = [
-      { name: "Laptop mới", current: 6500000, target: 15000000 },
-      { name: "Học tiếng Anh", current: 1200000, target: 4000000 },
-    ];
-
-    // ====== Charts ======
-    const ctxBar = document.getElementById("spendTrend");
-    new Chart(ctxBar, {
-      type: "bar",
-      data: {
-        labels: months.map((m) => `Th ${m}`),
-        datasets: [{ label: "Chi tiêu (₫)", data: spend }],
-      },
-      options: { responsive: true, plugins: { legend: { display: false } } },
-    });
-
-    const ctxPie = document.getElementById("categoryPie");
-    new Chart(ctxPie, {
-      type: "pie",
-      data: {
-        labels: categories.map((c) => c.name),
-        datasets: [{ data: categories.map((c) => c.value) }],
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { position: "bottom" } },
-      },
-    });
-
-    // ====== Bảng chi tiết danh mục ======
-    const tbl = document.getElementById("categoryTable");
-    categories.forEach((c, idx) => {
-      const amt = [450000, 280000, 200000, 180000, 144000][idx];
-      tbl.insertAdjacentHTML(
-        "beforeend",
-        `<tr>
-          <td class="text-nowrap"><span class="badge rounded-pill" style="background:${
-            c.color
-          };">&nbsp;</span> ${c.name}</td>
-          <td class="text-end">₫${amt.toLocaleString("vi-VN")}</td>
-        </tr>`
-      );
-    });
-
-    // ====== Recent list ======
-    const list = document.getElementById("recentList");
-    recent.forEach((r) => {
-      list.insertAdjacentHTML(
-        "beforeend",
-        `<div class="d-flex justify-content-between align-items-center border rounded-3 px-3 py-2">
-          <div>
-            <div class="fw-semibold">${r.desc}</div>
-            <div class="small text-muted">${r.category} • ${r.date}</div>
-          </div>
-          <div class="fw-semibold text-danger">₫${r.amount.toLocaleString(
-            "vi-VN"
-          )}</div>
-        </div>`
-      );
-    });
-
-    // ====== Budget list ======
-    const bl = document.getElementById("budgetList");
-    budgets.forEach((b) => {
-      const pct = Math.min(100, Math.round((b.used / b.limit) * 100));
-      bl.insertAdjacentHTML(
-        "beforeend",
-        `<div>
-          <div class="d-flex justify-content-between small">
-            <span>${b.name}</span>
-            <span>₫${b.used.toLocaleString(
-              "vi-VN"
-            )} / ₫${b.limit.toLocaleString("vi-VN")}</span>
-          </div>
-          <div class="progress" style="height:8px;">
-            <div class="progress-bar ${
-              pct >= 100 ? "bg-danger" : pct >= 80 ? "bg-warning" : "bg-success"
-            }" style="width:${pct}%"></div>
-          </div>
-        </div>`
-      );
-    });
-
-    // ====== Savings goals ======
-    const sg = document.getElementById("savingsGoals");
-    goals.forEach((g) => {
-      const pct = Math.min(100, Math.round((g.current / g.target) * 100));
-      sg.insertAdjacentHTML(
-        "beforeend",
-        `<div class="border rounded-3 p-2">
-          <div class="d-flex justify-content-between">
-            <div class="fw-semibold">${g.name}</div>
-            <div class="small">${pct}%</div>
-          </div>
-          <div class="progress my-1" style="height:8px;">
-            <div class="progress-bar" style="width:${pct}%"></div>
-          </div>
-          <div class="small">₫${g.current.toLocaleString(
-            "vi-VN"
-          )} / ₫${g.target.toLocaleString("vi-VN")}</div>
-        </div>`
-      );
-    });
-
-    // ====== OPEN MODAL: "Thêm giao dịch" ======
-    const quickAddBtn = document.querySelector(
-      ".mb-3.d-flex.gap-2 > .btn.btn-primary"
-    );
-    const modalEl = document.getElementById("expenseModal");
-    if (quickAddBtn && modalEl && window.bootstrap) {
-      const modal = new bootstrap.Modal(modalEl);
-      quickAddBtn.addEventListener("click", () => modal.show());
-      modalEl.addEventListener("shown.bs.modal", () => {
-        modalEl.querySelector('input[name="desc"]')?.focus();
-      });
-      modalEl.addEventListener("hidden.bs.modal", () => {
-        document.getElementById("expenseForm")?.reset();
-      });
-    }
-  })();
-</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

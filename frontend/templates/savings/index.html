@@ -496,7 +496,36 @@ block head %}
       }
     }
 
-    document.addEventListener("DOMContentLoaded", boot);
+    document.addEventListener("DOMContentLoaded", async () => {
+      // 1. load dữ liệu lần đầu
+      await boot();
+
+      // 2. kiểm tra query ?add=1 để auto mở modal tạo mới
+      const params = new URLSearchParams(window.location.search);
+      const shouldOpen = params.has("add");
+
+      if (shouldOpen) {
+        // mở modal ở chế độ "tạo mục tiêu mới"
+        openModal(null);
+      }
+
+      // 3. nếu có ?scroll=list => tự động cuộn tới danh sách và highlight
+      const scrollToList = params.has("scroll");
+      if (scrollToList) {
+        setTimeout(() => {
+          const listEl = document.getElementById("goalsGrid");
+          if (listEl) {
+            listEl.scrollIntoView({ behavior: "smooth", block: "start" });
+            // hiệu ứng sáng nhẹ 2s
+            listEl.style.transition = "box-shadow 0.6s ease";
+            listEl.style.boxShadow = "0 0 0 4px rgba(59,130,246,0.3)";
+            setTimeout(() => {
+              listEl.style.boxShadow = "none";
+            }, 2000);
+          }
+        }, 600);
+      }
+    });
   })();
 </script>
 {% endblock %}

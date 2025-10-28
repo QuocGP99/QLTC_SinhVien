@@ -14,7 +14,8 @@ class User(BaseModel):
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
     full_name = db.Column(db.String(255))
     password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(16), nullable=False, default="user")  # NEW
+    role = db.Column(db.String(16), nullable=False, default="user") 
+    is_verified = db.Column(db.Boolean, nullable=False, default=False)
 
     # Relations (giữ nguyên)
     categories = relationship("Category", back_populates="user",
@@ -39,4 +40,4 @@ class User(BaseModel):
         return check_password_hash(self.password_hash, raw_password)
 
     def to_public(self):
-        return {"id": self.id, "email": self.email, "full_name": self.full_name, "role": self.role}
+        return {"id": self.id, "email": self.email, "full_name": self.full_name, "role": self.role, "is_verified": self.is_verified,}

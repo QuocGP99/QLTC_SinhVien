@@ -182,6 +182,23 @@ const BudgetPage = (() => {
     };
     renderKPIs();
     renderList();
+
+    // --- GHI DỮ LIỆU CHO CHUÔNG CẢNH BÁO ---
+    try {
+      const normalized = state.items.map((it) => ({
+        category: it.category || it.category_name || "Không rõ danh mục",
+        limit: Number(it.amount ?? it.limit ?? it.budget ?? 0),
+        spent: Number(it.spent ?? it.used ?? it.expense ?? 0),
+      }));
+      localStorage.setItem("budget_data", JSON.stringify(normalized));
+    } catch (err) {
+      console.warn("Không thể lưu budget_data:", err);
+    }
+
+    // Nếu notify.js đã load, tự refresh
+    if (window.BudgetNotify?.render) {
+      window.BudgetNotify.render();
+    }
   }
 
   function bind() {

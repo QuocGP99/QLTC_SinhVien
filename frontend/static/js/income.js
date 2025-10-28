@@ -8,20 +8,26 @@ const IncomePage = (() => {
     editId: null,
   };
 
+  // date utils
   let dp = null,
     dateMode = "none";
+
   function toISODate(s) {
     if (!s) return "";
+    // "dd/mm/yyyy" -> "yyyy-mm-dd"
     if (s.includes("/")) {
       const [d, m, y] = s.split("/");
-      return `${y}-${m}-${d}`;
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${y}-${pad(m)}-${pad(d)}`;
     }
     return s;
   }
+
   function ensureDatepicker() {
-    const el = document.getElementById("transactionDate");
-    const btn = document.getElementById("btnOpenCalendar");
+    const el = document.getElementById("incomeDate");
+    const btn = document.getElementById("btnOpenIncomeCalendar");
     if (!el) return;
+
     if (window.jQuery && jQuery.fn?.datepicker) {
       const $ = window.jQuery;
       $(el).datepicker({
@@ -34,6 +40,7 @@ const IncomePage = (() => {
       if (btn) btn.onclick = () => $(el).datepicker("show");
       return;
     }
+
     if (window.Datepicker) {
       dp =
         dp ||
@@ -47,77 +54,92 @@ const IncomePage = (() => {
       if (btn) btn.onclick = () => dp.show();
       return;
     }
+
     dateMode = "none";
     if (btn) btn.disabled = true;
   }
-  function setDateField(d) {
-    const el = document.getElementById("transactionDate");
+
+  function setDateField(dateObj) {
+    const el = document.getElementById("incomeDate");
     if (!el) return;
     const pad = (n) => String(n).padStart(2, "0");
-    if (dateMode === "bootstrap") window.jQuery(el).datepicker("setDate", d);
-    else if (dateMode === "vanilla") {
+
+    if (dateMode === "bootstrap") {
+      window.jQuery(el).datepicker("setDate", dateObj);
+    } else if (dateMode === "vanilla") {
       ensureDatepicker();
-      dp.setDate(d);
-    } else
-      el.value = `${pad(d.getDate())}/${pad(
-        d.getMonth() + 1
-      )}/${d.getFullYear()}`;
+      dp.setDate(dateObj);
+    } else {
+      el.value = `${pad(dateObj.getDate())}/${pad(
+        dateObj.getMonth() + 1
+      )}/${dateObj.getFullYear()}`;
+    }
   }
+
   function getDateField() {
-    const el = document.getElementById("transactionDate");
+    const el = document.getElementById("incomeDate");
     if (!el) return "";
-    if (dateMode === "bootstrap")
+    if (dateMode === "bootstrap") {
       return window.jQuery(el).datepicker("getFormattedDate", "dd/mm/yyyy");
+    }
     return el.value || "";
   }
 
-  const API_BASE = window.BASE_API_URL || "";
+  // API
+  const API_BASE = window.BASE_API_URL || "http://127.0.0.1:5000";
+
   function token() {
     return localStorage.getItem("access_token") || "";
   }
+
+  function authHeaders(json = false) {
+    const t = token();
+    const h = json ? { "Content-Type": "application/json" } : {};
+    if (t) h.Authorization = `Bearer ${t}`;
+    return h;
+  }
+
   async function safeJson(res) {
     const ct = (res.headers.get("content-type") || "").toLowerCase();
     if (ct.includes("application/json")) return res.json();
     throw new Error(await res.text());
   }
+
   async function apiGet(path, params = {}) {
     const qs = new URLSearchParams(params).toString();
     const url = API_BASE + path + (qs ? `?${qs}` : "");
     return safeJson(
       await fetch(url, {
-        headers: { Authorization: token() ? `Bearer ${token()}` : undefined },
+        headers: authHeaders(),
       })
     );
   }
+
   async function apiPost(path, body) {
     return safeJson(
       await fetch(API_BASE + path, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token() ? `Bearer ${token()}` : undefined,
-        },
+        headers: authHeaders(true),
         body: JSON.stringify(body),
       })
     );
   }
+
   async function apiPatch(path, body) {
     return safeJson(
       await fetch(API_BASE + path, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token() ? `Bearer ${token()}` : undefined,
-        },
+        headers: authHeaders(true),
         body: JSON.stringify(body),
       })
     );
   }
+
   async function apiDelete(path) {
     return safeJson(
       await fetch(API_BASE + path, {
         method: "DELETE",
-        headers: { Authorization: token() ? `Bearer ${token()}` : undefined },
+        headers: authHeaders(),
       })
     );
   }
@@ -130,12 +152,14 @@ const IncomePage = (() => {
     meta: () => apiGet("/api/incomes/meta"),
   };
 
+  // render helpers
   const money = (n) =>
     (Number(n) || 0).toLocaleString("vi-VN", {
       style: "currency",
       currency: "VND",
       maximumFractionDigits: 0,
     });
+
   const escapeHtml = (s) =>
     String(s ?? "")
       .replace(/&/g, "&amp;")
@@ -144,9 +168,11 @@ const IncomePage = (() => {
 
   function setKPIs(list) {
     const total = list.reduce((s, x) => s + Number(x.amount || 0), 0);
+
     const kpiTotal = document.getElementById("kpiTotal");
     const kpiCount = document.getElementById("kpiCount");
     const kpiAvg = document.getElementById("kpiAvg");
+
     if (kpiTotal) kpiTotal.textContent = money(total);
     if (kpiCount) kpiCount.textContent = list.length;
     if (kpiAvg) kpiAvg.textContent = money(total / (list.length || 1));
@@ -154,17 +180,22 @@ const IncomePage = (() => {
 
   function renderList() {
     const wrap = document.getElementById("txList");
+    if (!wrap) return;
+
     wrap.innerHTML = "";
     if (!state.filtered.length) {
-      wrap.innerHTML = `<div class="text-muted">Chưa có thu nhập.</div>`;
+      wrap.innerHTML =
+        '<div class="text-muted small fst-italic">Chưa có thu nhập.</div>';
       return;
     }
+
     state.filtered.forEach((tx) => {
       const dateFormatted = tx.date
         ? new Date(tx.date).toLocaleDateString("vi-VN")
         : "";
+
       const el = document.createElement("div");
-      el.className = "expense-card";
+      el.className = "income-card";
       el.innerHTML = `
         <div class="card-body d-flex align-items-start justify-content-between">
           <div class="me-3">
@@ -173,18 +204,27 @@ const IncomePage = (() => {
             )}</div>
             <div class="small text-muted">${dateFormatted}</div>
           </div>
+
           <div class="d-flex align-items-center gap-3">
             <span class="badge badge-soft" data-cat-id="${tx.category_id}">
               ${escapeHtml(tx.category || tx.category_name || "")}
             </span>
+
             <div class="amount text-success">+${money(tx.amount)}</div>
+
             <div class="text-muted d-flex gap-2">
-              <button class="btn btn-sm btn-link text-muted px-1" title="Sửa" data-action="edit" data-id="${
-                tx.id
-              }"><i class="bi bi-pencil-square"></i></button>
-              <button class="btn btn-sm btn-link text-muted px-1" title="Xóa" data-action="del" data-id="${
-                tx.id
-              }"><i class="bi bi-trash"></i></button>
+              <button class="btn btn-sm btn-link text-muted px-1"
+                      title="Sửa"
+                      data-action="edit"
+                      data-id="${tx.id}">
+                <i class="bi bi-pencil-square"></i>
+              </button>
+              <button class="btn btn-sm btn-link text-muted px-1"
+                      title="Xóa"
+                      data-action="del"
+                      data-id="${tx.id}">
+                <i class="bi bi-trash"></i>
+              </button>
             </div>
           </div>
         </div>`;
@@ -195,11 +235,22 @@ const IncomePage = (() => {
   async function loadMeta() {
     const data = await API.meta();
     state.categories = data?.categories || [];
-    const selCat = document.getElementById("transactionCategory");
-    if (selCat)
-      selCat.innerHTML = state.categories
-        .map((c) => `<option value="${c.id}">${c.name}</option>`)
-        .join("");
+
+    // đổ danh mục thu nhập vào select trong modal
+    const selCat = document.getElementById("incomeCategory");
+    if (selCat) {
+      selCat.innerHTML = `<option value="">-- Chọn danh mục thu nhập --</option>`;
+      state.categories
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name, "vi"))
+        .forEach((c) => {
+          selCat.insertAdjacentHTML(
+            "beforeend",
+            `<option value="${c.id}">${escapeHtml(c.name)}</option>`
+          );
+        });
+    }
+
     buildFilterMenu();
   }
 
@@ -207,10 +258,14 @@ const IncomePage = (() => {
     const menu = document.getElementById("categoryMenu");
     const btn = document.getElementById("categoryFilterBtn");
     if (!menu || !btn) return;
+
+    // remove các li cũ (trừ dòng Tất cả)
     menu.querySelectorAll("li:not(:first-child)").forEach((li) => li.remove());
+
     const cats = state.categories
       .slice()
       .sort((a, b) => a.name.localeCompare(b.name, "vi"));
+
     cats.forEach((c) => {
       const li = document.createElement("li");
       li.innerHTML = `<a class="dropdown-item" data-id="${c.id}">${escapeHtml(
@@ -218,20 +273,25 @@ const IncomePage = (() => {
       )}</a>`;
       menu.appendChild(li);
     });
+
     menu.onclick = (e) => {
       const a = e.target.closest("a.dropdown-item");
       if (!a) return;
+
       menu
         .querySelectorAll(".dropdown-item")
         .forEach((x) => x.classList.remove("active"));
       a.classList.add("active");
+
       state.currentCategoryId = a.dataset.id || "";
+
       const found = cats.find(
         (x) => String(x.id) === String(state.currentCategoryId)
       );
       btn.textContent = state.currentCategoryId
         ? found?.name || "Danh mục"
         : "Tất cả danh mục";
+
       applyFilter();
     };
   }
@@ -241,134 +301,193 @@ const IncomePage = (() => {
     state.filtered = cid
       ? state.items.filter((x) => String(x.category_id) === String(cid))
       : [...state.items];
+
     renderList();
     setKPIs(state.items);
   }
 
-  function modalEl() {
-    return document.getElementById("transactionModal");
+  // ===== Modal / Form =====
+  function incomeModalEl() {
+    return document.getElementById("incomeModal");
   }
-  function getModal() {
-    return bootstrap.Modal.getOrCreateInstance(modalEl());
+
+  function getIncomeModal() {
+    return bootstrap.Modal.getOrCreateInstance(incomeModalEl());
   }
 
   function openAdd() {
     state.editId = null;
-    const form = document.getElementById("transactionForm");
+
+    const form = document.getElementById("incomeForm");
+    if (!form) return;
     form.reset();
+
     ensureDatepicker();
     setDateField(new Date());
-    document.getElementById("categoryHint").textContent = "Nguồn thu nhập";
-    document.getElementById("submitBtnText").textContent = "Lưu thu nhập";
-    document.querySelector("#transactionModal .modal-title").textContent =
-      "Thêm thu nhập";
-    // Ẩn ô payment method nếu bạn dùng chung form.html
-    const pm = document.getElementById("paymentMethod");
-    if (pm) pm.closest(".mb-3").style.display = "none";
-    getModal().show();
+
+    const titleEl = incomeModalEl().querySelector(".modal-title");
+    if (titleEl) titleEl.textContent = "Thêm thu nhập mới";
+
+    const submitBtn = document.getElementById("incomeSubmitBtn");
+    if (submitBtn) submitBtn.textContent = "Lưu thu nhập";
+
+    getIncomeModal().show();
   }
 
   async function openEdit(id) {
     const tx = state.items.find((t) => String(t.id) === String(id));
     if (!tx) return;
     state.editId = tx.id;
-    const form = document.getElementById("transactionForm");
+
+    await loadMeta(); // để có categories trong select
+
+    const form = document.getElementById("incomeForm");
+    if (!form) return;
     form.reset();
-    await loadMeta();
+
     if (form.desc) form.desc.value = tx.desc || tx.note || "";
     if (form.amount) form.amount.value = tx.amount;
-    if (form.category) form.category.value = tx.category_id;
+    if (form.category_id) form.category_id.value = tx.category_id;
+
     ensureDatepicker();
     setDateField(tx.date ? new Date(tx.date) : new Date());
-    document.getElementById("categoryHint").textContent = "Nguồn thu nhập";
-    document.getElementById("submitBtnText").textContent = "Lưu thu nhập";
-    document.querySelector("#transactionModal .modal-title").textContent =
-      "Cập nhật thu nhập";
-    const pm = document.getElementById("paymentMethod");
-    if (pm) pm.closest(".mb-3").style.display = "none";
-    getModal().show();
+
+    const titleEl = incomeModalEl().querySelector(".modal-title");
+    if (titleEl) titleEl.textContent = "Cập nhật thu nhập";
+
+    const submitBtn = document.getElementById("incomeSubmitBtn");
+    if (submitBtn) submitBtn.textContent = "Lưu thay đổi";
+
+    getIncomeModal().show();
   }
 
   async function removeItem(id) {
     if (!confirm("Xoá thu nhập này?")) return;
     const res = await API.remove(id);
-    if (!res?.success) return alert(res?.message || "Xoá thất bại");
+    if (!res?.success) {
+      alert(res?.message || "Xoá thất bại");
+      return;
+    }
     state.items = state.items.filter((x) => x.id !== Number(id));
     buildFilterMenu();
     applyFilter();
   }
 
   function bindUI() {
-    const btnAdd =
-      document.getElementById("addIncomeBtn") ||
-      document.querySelector('[data-bs-target="#transactionModal"]');
+    // nút "Thêm thu nhập"
+    const btnAdd = document.getElementById("addIncomeBtn");
     if (btnAdd) {
-      btnAdd.removeAttribute("data-bs-toggle");
-      btnAdd.removeAttribute("data-bs-target");
       btnAdd.addEventListener("click", (e) => {
         e.preventDefault();
         openAdd();
       });
     }
-    document.getElementById("txList").onclick = (e) => {
-      const btn = e.target.closest("button[data-action]");
-      if (!btn) return;
-      const id = btn.dataset.id;
-      if (btn.dataset.action === "edit") openEdit(id);
-      if (btn.dataset.action === "del") removeItem(id);
-    };
-    document.getElementById("transactionForm").onsubmit = async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const payload = {
-        amount: Number(fd.get("amount") || 0),
-        category_id: Number(fd.get("category") || fd.get("category_id") || 0),
-        note: (fd.get("note") || fd.get("desc") || "").trim(),
-        date: toISODate(getDateField()),
-      };
-      if (payload.amount <= 0 || !payload.category_id)
-        return alert("Vui lòng nhập số tiền > 0 và chọn danh mục.");
 
-      const submitBtn = e.target.querySelector('button[type="submit"]');
-      submitBtn.disabled = true;
-      try {
-        if (state.editId) {
-          const res = await API.update(state.editId, payload);
-          if (!res?.success)
-            throw new Error(res?.message || "Cập nhật thất bại");
-          const idx = state.items.findIndex((t) => t.id === state.editId);
-          if (idx !== -1) state.items[idx] = res.item;
-        } else {
-          const res = await API.create(payload);
-          if (!res?.success)
-            throw new Error(res?.message || "Tạo thu nhập thất bại");
-          state.items.unshift(res.item);
+    // click edit / delete trong danh sách
+    const listWrap = document.getElementById("txList");
+    if (listWrap) {
+      listWrap.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-action]");
+        if (!btn) return;
+        const id = btn.dataset.id;
+        if (btn.dataset.action === "edit") openEdit(id);
+        if (btn.dataset.action === "del") removeItem(id);
+      });
+    }
+
+    // submit form thu nhập
+    const form = document.getElementById("incomeForm");
+    if (form) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const fd = new FormData(form);
+
+        const payload = {
+          amount: Number(fd.get("amount") || 0),
+          category_id: Number(fd.get("category_id") || 0),
+          note: (fd.get("note") || fd.get("desc") || "").trim(),
+          date: toISODate(fd.get("date") || getDateField()),
+          type: "income",
+        };
+
+        if (payload.amount <= 0 || !payload.category_id) {
+          alert("Vui lòng nhập số tiền > 0 và chọn danh mục.");
+          return;
         }
-        buildFilterMenu();
-        applyFilter();
-        getModal().hide();
-        e.target.reset();
-        ensureDatepicker();
-        setDateField(new Date());
-        state.editId = null;
-      } catch (err) {
-        alert(err.message || "Có lỗi xảy ra");
-      } finally {
-        submitBtn.disabled = false;
-      }
-    };
+
+        const submitBtn = document.getElementById("incomeSubmitBtn");
+        if (submitBtn) submitBtn.disabled = true;
+
+        try {
+          if (state.editId) {
+            const res = await API.update(state.editId, payload);
+            if (!res?.success)
+              throw new Error(res?.message || "Cập nhật thất bại");
+
+            const idx = state.items.findIndex((t) => t.id === state.editId);
+            if (idx !== -1) state.items[idx] = res.item;
+          } else {
+            const res = await API.create(payload);
+            if (!res?.success)
+              throw new Error(res?.message || "Tạo thu nhập thất bại");
+            state.items.unshift(res.item);
+          }
+
+          buildFilterMenu();
+          applyFilter();
+
+          getIncomeModal().hide();
+          form.reset();
+          ensureDatepicker();
+          setDateField(new Date());
+          state.editId = null;
+        } catch (err) {
+          alert(err.message || "Có lỗi xảy ra");
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
+        }
+      });
+    }
   }
 
-  async function init() {
+  async function init(opts = {}) {
+    // 1. chuẩn datepicker
     ensureDatepicker();
+
+    // 2. load ds danh mục thu nhập cho dropdown + filter
     await loadMeta();
+
+    // 3. gọi BE lấy list thu nhập
     const inc = await API.list({});
     state.items = (inc?.items || []).map((x) => ({ ...x, type: "income" }));
     state.items.sort(
       (a, b) => (b.date || "").localeCompare(a.date || "") || b.id - a.id
     );
+
+    // 4. bind UI
     bindUI();
+
+    // 5. render lần đầu
     applyFilter();
+
+    // 6. focus mô tả khi modal mở, reset form khi đóng
+    const modal = incomeModalEl();
+    if (modal) {
+      modal.addEventListener(
+        "shown.bs.modal",
+        () => {
+          modal.querySelector('input[name="desc"]')?.focus();
+        },
+        { once: true }
+      );
+      modal.addEventListener("hidden.bs.modal", () => {
+        document.getElementById("incomeForm")?.reset();
+      });
+    }
+    if (opts.autoOpen) {
+      openAdd(); // openAdd() sẽ set default date, reset form, và show modal
+    }
   }
 
   return { init };

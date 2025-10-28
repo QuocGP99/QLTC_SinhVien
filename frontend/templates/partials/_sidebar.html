@@ -1,5 +1,8 @@
 <div class="list-group list-group-flush sticky-top" style="top: 72px">
-  <a href="/" class="list-group-item list-group-item-action">
+  <a
+    href="{{ url_for('web.dashboard') }}"
+    class="list-group-item list-group-item-action"
+  >
     <i class="bi bi-speedometer2 me-2"></i>Dashboard
   </a>
   <a href="/transactions" class="list-group-item list-group-item-action">

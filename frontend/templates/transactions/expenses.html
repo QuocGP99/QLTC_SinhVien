@@ -108,14 +108,16 @@
   </div>
 </div>
 
-{% include "transactions/form.html" %} {% endblock %} {% block scripts %}
+{% include "transactions/expense_form.html" %} {% endblock %} {% block scripts
+%}
+<script>
+  window.BASE_API_URL = "{{ BASE_API_URL or '' }}";
+</script>
 <script src="{{ url_for('static', filename='js/expenses.js') }}"></script>
 <script>
-  // Ẩn nhóm radio "Loại giao dịch" vì trang này chỉ xử lý chi tiêu
-  const typeGrp = document
-    .querySelector('#transactionForm input[name="type"]')
-    ?.closest(".mb-3");
-  if (typeGrp) typeGrp.style.display = "none";
-  ExpensesPage.init();
+  // đọc query ?add=1
+  const params = new URLSearchParams(window.location.search);
+  const shouldOpen = params.has("add");
+  ExpensesPage.init({ autoOpen: shouldOpen });
 </script>
 {% endblock %}

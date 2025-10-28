@@ -1,11 +1,10 @@
-<!-- frontend/templates/transactions/form.html -->
-<!-- Modal Thêm Giao dịch (Income / Expense) -->
-<!-- <div class="modal fade" id="transactionModal" tabindex="-1" aria-hidden="true">
+<!-- templates/transactions/expense_form.html -->
+<div class="modal fade" id="expenseModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form id="transactionForm">
+      <form id="expenseForm">
         <div class="modal-header">
-          <h5 class="modal-title">Thêm giao dịch mới</h5>
+          <h5 class="modal-title">Thêm chi tiêu mới</h5>
           <button
             type="button"
             class="btn-close"
@@ -13,43 +12,9 @@
           ></button>
         </div>
 
-        <div class="modal-body"> -->
-<!-- Loại giao dịch -->
-<!-- <div class="mb-3">
-            <label class="form-label"
-              >Loại giao dịch <span class="text-danger">*</span></label
-            >
-            <div class="d-flex gap-3">
-              <div class="form-check">
-                <input
-                  class="form-check-input"
-                  type="radio"
-                  name="type"
-                  id="typeExpense"
-                  value="expense"
-                  checked
-                />
-                <label class="form-check-label" for="typeExpense"
-                  >Chi tiêu</label
-                >
-              </div>
-              <div class="form-check">
-                <input
-                  class="form-check-input"
-                  type="radio"
-                  name="type"
-                  id="typeIncome"
-                  value="income"
-                />
-                <label class="form-check-label" for="typeIncome"
-                  >Thu nhập</label
-                >
-              </div>
-            </div>
-          </div> -->
-
-<!-- Mô tả -->
-<!-- <div class="mb-3">
+        <div class="modal-body">
+          <!-- Mô tả -->
+          <div class="mb-3">
             <label class="form-label"
               >Mô tả <span class="text-danger">*</span></label
             >
@@ -57,13 +22,13 @@
               type="text"
               name="desc"
               class="form-control"
-              placeholder="vd: Ăn trưa ở căn tin / Lương part-time"
+              placeholder="vd: Ăn trưa ở căn tin"
               required
             />
-          </div> -->
+          </div>
 
-<!-- Số tiền -->
-<!-- <div class="mb-3">
+          <!-- Số tiền -->
+          <div class="mb-3">
             <label class="form-label"
               >Số tiền <span class="text-danger">*</span></label
             >
@@ -72,33 +37,35 @@
               name="amount"
               class="form-control"
               min="0"
-              step="0.01"
+              step="1000"
               inputmode="decimal"
               required
             />
-          </div> -->
+          </div>
 
-<!-- Danh mục -->
-<!-- <div class="mb-3">
+          <!-- Danh mục chi tiêu -->
+          <div class="mb-3">
             <label class="form-label"
-              >Danh mục <span class="text-danger">*</span></label
+              >Danh mục chi tiêu <span class="text-danger">*</span></label
             >
             <select
-              name="category"
-              id="transactionCategory"
+              name="category_id"
+              id="expenseCategory"
               class="form-select"
               required
             ></select>
-            <div class="form-text" id="categoryHint">Danh mục chi tiêu</div>
-          </div> -->
+            <div class="form-text">Ví dụ: Ăn uống, Di chuyển, Mua sắm…</div>
+          </div>
 
-<!-- Ngày -->
-<!-- <div class="mb-3">
-            <label class="form-label">Ngày *</label>
+          <!-- Ngày -->
+          <div class="mb-3">
+            <label class="form-label"
+              >Ngày <span class="text-danger">*</span></label
+            >
             <div class="input-group">
               <input
                 type="text"
-                id="transactionDate"
+                id="expenseDate"
                 name="date"
                 class="form-control"
                 placeholder="dd/mm/yyyy"
@@ -108,29 +75,30 @@
               <button
                 class="btn btn-outline-secondary"
                 type="button"
-                id="btnOpenCalendar"
+                id="btnOpenExpenseCalendar"
                 aria-label="Chọn ngày"
               >
                 <i class="bi bi-calendar3"></i>
               </button>
             </div>
             <div class="form-text">Nhấp biểu tượng lịch để chọn ngày</div>
-          </div> -->
+          </div>
 
-<!-- Phương thức thanh toán -->
-<!-- <div class="mb-3">
+          <!-- Phương thức thanh toán -->
+          <div class="mb-3">
             <label class="form-label"
               >Phương thức thanh toán <span class="text-danger">*</span></label
             >
             <select
               name="payment_method_id"
-              id="paymentMethod"
+              id="expensePaymentMethod"
               class="form-select"
+              required
             ></select>
-          </div> -->
+          </div>
 
-<!-- Ghi chú -->
-<!-- <div class="mb-3">
+          <!-- Ghi chú -->
+          <div class="mb-3">
             <label class="form-label">Ghi chú</label>
             <textarea
               name="note"
@@ -149,11 +117,11 @@
           >
             Hủy
           </button>
-          <button type="submit" class="btn btn-primary" id="submitBtnText">
-            Lưu giao dịch
+          <button type="submit" class="btn btn-primary" id="expenseSubmitBtn">
+            Lưu chi tiêu
           </button>
         </div>
       </form>
     </div>
   </div>
-</div> -->
+</div>

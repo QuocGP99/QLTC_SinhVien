@@ -8,6 +8,7 @@ from ..models.expense import Expense
 from ..models.income import Income
 from ..models.category import Category
 from ..models.payment_method import PaymentMethod
+from ..models.budget import Budget
 
 bp = Blueprint("analytics_api", __name__, url_prefix="/api/analytics")
 
@@ -277,3 +278,91 @@ def ai_insights():
             "recommendations": recs,
         }
     ), 200
+
+from ..models.budget import Budget
+
+@bp.get("/budget_comparison")
+@jwt_required()
+def budget_comparison():
+    uid = _uid()
+    if not uid:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    today = date.today()
+
+    q_from = request.args.get("from")
+    q_to   = request.args.get("to")
+
+    d_from = _parse_ymd(q_from, today.replace(day=1))
+    d_to   = _parse_ymd(q_to, today)
+
+    period_year = d_to.year
+    period_month = d_to.month
+
+    # tổng chi tiêu theo category trong khoảng
+    exp_subq = (
+        db.session.query(
+            Expense.category_id.label("cat_id"),
+            func.coalesce(func.sum(Expense.amount), 0).label("spent_total"),
+        )
+        .join(Category, Category.id == Expense.category_id)
+        .filter(
+            Expense.user_id == uid,
+            Expense.spent_at >= d_from,
+            Expense.spent_at <= d_to,
+            Category.type == "expense",
+        )
+        .group_by(Expense.category_id)
+        .subquery()
+    )
+
+    # ngân sách theo category cho đúng tháng/năm
+    bud_subq = (
+        db.session.query(
+            Budget.category_id.label("cat_id"),
+            func.coalesce(func.sum(Budget.limit_amount), 0).label("budget_limit"),
+        )
+        .filter(
+            Budget.user_id == uid,
+            Budget.period_year == period_year,
+            Budget.period_month == period_month,
+        )
+        .group_by(Budget.category_id)
+        .subquery()
+    )
+
+    rows = (
+        db.session.query(
+            Category.id.label("category_id"),
+            Category.name.label("category_name"),
+            func.coalesce(bud_subq.c.budget_limit, 0).label("budget_val"),
+            func.coalesce(exp_subq.c.spent_total, 0).label("expense_val"),
+        )
+        .filter(Category.type == "expense")
+        .outerjoin(bud_subq, bud_subq.c.cat_id == Category.id)
+        .outerjoin(exp_subq, exp_subq.c.cat_id == Category.id)
+        .order_by(Category.name.asc())
+        .all()
+    )
+
+    items = []
+    for cat_id, cat_name, budget_val, spent_val in rows:
+        budget_f = float(budget_val or 0)
+        spent_f = float(spent_val or 0)
+
+        if budget_f > 0 or spent_f > 0:
+            items.append({
+                "category_id": cat_id,
+                "category": cat_name,
+                "budget": budget_f,
+                "expense": spent_f,
+            })
+
+    return jsonify({
+        "user_id": uid,
+        "from": d_from.isoformat(),
+        "to": d_to.isoformat(),
+        "period_year": period_year,
+        "period_month": period_month,
+        "items": items,
+    }), 200

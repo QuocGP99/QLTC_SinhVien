@@ -123,52 +123,115 @@ function attachLogin() {
   const form = $("#loginForm");
   if (!form) return;
 
-  const btn = $("#btnLogin");
+  const emailInput = form.querySelector('input[name="email"]');
+  const passInput = form.querySelector('input[name="password"]');
+  const rememberCb = $("#remember");
+  const btnLogin = $("#btnLogin");
+
+  // modal + form thật để trigger Edge Save Password
+  const modalEl = document.getElementById("rememberModal");
+  const modalYesBtn = document.getElementById("rememberYes");
+  const modalNoBtn = document.getElementById("rememberNo");
+  const loginFormReal = document.getElementById("loginFormReal");
+  const realEmail = document.getElementById("realEmail");
+  const realPass = document.getElementById("realPass");
+
+  // helper mở modal Bootstrap
+  function openRememberModal() {
+    const m = new bootstrap.Modal(modalEl);
+    m.show();
+    return m;
+  }
+
+  // showMsg dùng hiện alert trong trang login
+  function showMsg(text, ok = false) {
+    const msg = $("#msg");
+    if (!msg) return;
+    msg.style.display = "block";
+    msg.className = "alert mt-3 " + (ok ? "alert-success" : "alert-danger");
+    msg.textContent = text;
+  }
+
+  // toggle password eye
+  bindPasswordToggle("loginPass", "toggleLoginPass");
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const fd = new FormData(form);
-    const payload = {
-      email: fd.get("email"),
-      password: fd.get("password"),
-      remember: $("#remember")?.checked || false,
-    };
+    const emailVal = emailInput.value.trim();
+    const passVal = passInput.value;
 
-    if (btn) {
-      btn.disabled = true;
-      var oldText = btn.textContent;
-      btn.textContent = "Đang đăng nhập...";
+    if (!emailVal || !passVal) {
+      showMsg("Vui lòng nhập email và mật khẩu");
+      return;
     }
 
+    btnLogin.disabled = true;
+    const oldText = btnLogin.textContent;
+    btnLogin.textContent = "Đang đăng nhập...";
+
     try {
-      const data = await api("/auth/login", "POST", payload);
+      // gọi API JSON đăng nhập thật
+      const data = await api("/auth/login", "POST", {
+        email: emailVal,
+        password: passVal,
+        remember: !!rememberCb?.checked,
+      });
+
+      // lưu session (token, user...) như cũ
       localStorage.setItem("token_type", data.token_type || "Bearer");
       localStorage.setItem("access_token", data.access_token || "");
       localStorage.setItem("refresh_token", data.refresh_token || "");
-      if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
-      showMsg("Đăng nhập thành công! Đang chuyển...", true);
-      setTimeout(() => (window.location.href = "/dashboard"), 600);
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
+
+      // Nếu user KHÔNG bật remember → chuyển thẳng dashboard
+      if (!rememberCb?.checked) {
+        showMsg("Đăng nhập thành công! Đang chuyển...", true);
+        setTimeout(() => {
+          window.location.href = "/dashboard?login_ok=1";
+        }, 300);
+        return;
+      }
+
+      // Nếu user có tick remember → hỏi họ có muốn Edge lưu mật khẩu không?
+      const modalInstance = openRememberModal();
+
+      // Nếu chọn KHÔNG: bỏ tick -> chuyển dashboard
+      modalNoBtn.onclick = () => {
+        if (rememberCb) rememberCb.checked = false;
+        showMsg("Đăng nhập thành công! Đang chuyển...", true);
+        setTimeout(() => {
+          window.location.href = "/dashboard?login_ok=1";
+        }, 300);
+      };
+
+      // Nếu chọn CÓ: submit form thật -> Edge sẽ đề nghị lưu mật khẩu
+      modalYesBtn.onclick = () => {
+        // nhét credential vào form thật
+        realEmail.value = emailVal;
+        realPass.value = passVal;
+        // submit form truyền thống
+        loginFormReal.submit();
+        // (sau submit này, backend sẽ redirect về dashboard; Edge sẽ hiển thị popup "Save password?")
+      };
     } catch (err) {
       console.error(err);
       showMsg(err.message || "Đăng nhập thất bại");
     } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = oldText;
-      }
+      btnLogin.disabled = false;
+      btnLogin.textContent = oldText;
     }
   });
 
-  bindPasswordToggle("loginPass", "toggleLoginPass");
-
-  // Google button (giữ nút custom)
+  // Google button cảnh báo
   const btnGoogle = $("#btnGoogle");
   if (btnGoogle) {
-    setupGoogle(btnGoogle, async (credential) => {
-      const data = await api("/auth/google", "POST", { credential });
-      localStorage.setItem("access_token", data.access_token || "");
-      if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
-      window.location.href = "/dashboard";
+    btnGoogle.addEventListener("click", () => {
+      alert(
+        "Tính năng đăng nhập Google sẽ sớm bật lại. Hiện tại dùng email/mật khẩu nhé."
+      );
     });
   }
 }

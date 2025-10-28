@@ -1,3 +1,4 @@
+<!-- frontend/templates/auth/register.html -->
 {% extends 'base_auth.html' %} {% block head %}
 <link
   rel="stylesheet"
@@ -40,13 +41,6 @@
                 minlength="6"
                 required
               />
-              <button
-                class="btn btn-outline-secondary"
-                type="button"
-                id="toggleRegPass"
-              >
-                <i class="bi bi-eye"></i>
-              </button>
             </div>
           </div>
 
@@ -61,13 +55,6 @@
                 minlength="6"
                 required
               />
-              <button
-                class="btn btn-outline-secondary"
-                type="button"
-                id="toggleRegPass2"
-              >
-                <i class="bi bi-eye"></i>
-              </button>
             </div>
           </div>
 
@@ -130,17 +117,22 @@
     e.preventDefault();
 
     const fd = new FormData(form);
-    const payload = {
-      full_name: fd.get("full_name"),
-      email: fd.get("email"),
-      password: fd.get("password"),
-      confirm_password: fd.get("confirm_password"),
-    };
+    const full_name = fd.get("full_name");
+    const email = fd.get("email");
+    const password = fd.get("password");
+    const confirm_password = fd.get("confirm_password");
 
-    if (payload.password !== payload.confirm_password) {
+    if (password !== confirm_password) {
       showMsg("Mật khẩu nhập lại không khớp");
       return;
     }
+
+    // payload gửi cho backend: KHÔNG gửi confirm_password
+    const payload = {
+      full_name,
+      email,
+      password,
+    };
 
     btn.disabled = true;
     const oldText = btn.textContent;
@@ -152,30 +144,56 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await resp.json().catch(() => ({}));
-      if (!resp.ok || !data.success) {
-        showMsg(data.message || `Đăng ký thất bại (HTTP ${resp.status})`);
-      } else {
-        const redirectUrl = data.redirect || data.redirect_url;
-        // Nếu backend trả redirect_url -> sang trang OTP
-        if (redirectUrl) {
-          // Lưu lại email phòng khi cần
-          localStorage.setItem("pending_email", payload.email);
-          window.location.href = redirectUrl;
-        } else if (data.access_token) {
-          // Trường hợp backend vẫn trả token (không yêu cầu OTP)
-          localStorage.setItem("access_token", data.access_token);
-          if (data.user)
-            localStorage.setItem("user", JSON.stringify(data.user));
-          window.location.href = "/dashboard";
-        } else {
-          // Fallback cũ
-          showMsg("Đăng ký thành công! Đang chuyển...", true);
-          setTimeout(() => (window.location.href = "/login"), 800);
-        }
+
+      let data = {};
+      try {
+        data = await resp.json();
+      } catch (_) {
+        data = {};
       }
+
+      console.log("[REGISTER] status:", resp.status, data);
+
+      // Khi backend trả lỗi (ví dụ email đã tồn tại)
+      if (!resp.ok || data.success === false) {
+        showMsg(
+          data.message ||
+            (resp.status === 400
+              ? "Email đã tồn tại hoặc dữ liệu không hợp lệ"
+              : `Đăng ký thất bại (HTTP ${resp.status})`)
+        );
+        return;
+      }
+
+      // ---- THÀNH CÔNG ----
+      // Lưu email tạm để OTP page có thể tự fill (nếu cần)
+      localStorage.setItem("pending_email", email);
+
+      // Ưu tiên redirect từ backend (đi tới trang /verify-otp/?email=...)
+      if (data.redirect || data.redirect_url) {
+        const nextUrl = data.redirect || data.redirect_url;
+        console.log("[REGISTER] redirect to OTP:", nextUrl);
+        window.location.href = nextUrl;
+        return;
+      }
+
+      // Nếu backend không trả redirect (fallback)
+      if (data.access_token) {
+        localStorage.setItem("access_token", data.access_token);
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
+        window.location.href = "/dashboard";
+        return;
+      }
+
+      // fallback cuối cùng
+      showMsg("Đăng ký thành công! Vui lòng kiểm tra email để xác thực.", true);
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 800);
     } catch (err) {
-      console.error(err);
+      console.error("[REGISTER] error:", err);
       showMsg("Không thể kết nối tới máy chủ. Thử lại sau.");
     } finally {
       btn.disabled = false;
@@ -201,32 +219,36 @@
             body: JSON.stringify({ credential }),
           });
           const data = await resp.json();
-          if (!data.success)
-            return showMsg(data.message || "Google Sign-in thất bại");
-
-          // Nếu backend yêu cầu OTP cho tài khoản Google mới:
-          const redirectUrl = data.redirect || data.redirect_url;
-          if (redirectUrl) {
-            // Email có thể lấy từ id_token ở backend; ở FE ta không chắc chắn nên bỏ qua
-            window.location.href = redirectUrl;
+          if (!data.success) {
+            showMsg(data.message || "Google Sign-in thất bại");
             return;
           }
+
+          // OTP flow cho tài khoản Google mới (nếu backend buộc xác thực email)
+          if (data.redirect || data.redirect_url) {
+            const nextUrl = data.redirect || data.redirect_url;
+            window.location.href = nextUrl;
+            return;
+          }
+
+          // Đăng nhập thẳng
           localStorage.setItem("access_token", data.access_token || "");
-          if (data.user)
+          if (data.user) {
             localStorage.setItem("user", JSON.stringify(data.user));
+          }
           window.location.href = "/dashboard";
         } catch (e) {
           console.error(e);
           showMsg("Lỗi Google Sign-in");
         }
       },
-      ux_mode: "popup", // dùng popup thay vì redirect
-      use_fedcm_for_prompt: true, // hỗ trợ FedCM (trình duyệt mới)
+      ux_mode: "popup",
+      use_fedcm_for_prompt: true,
     });
     googleInitialized = true;
   });
 
-  // Khi bấm nút Google của BẠN -> gọi prompt để lấy credential
+  // Khi bấm nút Google -> bật chọn tài khoản Google
   document.getElementById("btnGoogle")?.addEventListener("click", () => {
     if (!GOOGLE_CLIENT_ID) {
       showMsg("Chưa cấu hình GOOGLE_CLIENT_ID trên server.");
@@ -236,8 +258,7 @@
       showMsg("Google chưa sẵn sàng, thử lại trong giây lát.");
       return;
     }
-    // Gọi prompt: hiển thị One Tap / tài khoản để user chọn, rồi callback nhận credential
-    google.accounts.id.prompt(); // popup One Tap; credential trả về qua callback ở initialize
+    google.accounts.id.prompt();
   });
 </script>
 {% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base_auth.html" %} {% block title %}Quên mật khẩu{% endblock %} {%
+block content %}
+<div class="auth-page">
+  <div
+    class="auth-hero"
+    style="background-image:url('{{ url_for('static', filename='img/auth-side.png') }}')"
+  ></div>
+
+  <div class="auth-form">
+    <div class="auth-card card shadow-sm border-0">
+      <div class="card-body p-4 p-md-5">
+        <h1 class="h4 mb-1">Quên mật khẩu</h1>
+        <p class="text-muted mb-3 small">
+          Nhập email đã đăng ký. Chúng tôi sẽ gửi mã xác nhận để đặt lại mật
+          khẩu.
+        </p>
+
+        <div id="msg" style="display: none"></div>
+
+        <form id="forgotForm" novalidate>
+          <div class="mb-3">
+            <label class="form-label">Email đăng ký</label>
+            <input
+              class="form-control"
+              type="email"
+              name="email"
+              id="forgotEmail"
+              required
+            />
+          </div>
+
+          <button id="btnForgot" class="btn btn-primary w-100" type="submit">
+            Gửi mã xác nhận
+          </button>
+        </form>
+
+        <div class="text-center mt-3">
+          <a href="/login" class="small">Quay lại đăng nhập</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  (function () {
+    const API = "{{ BASE_API_URL|default('', true) }}";
+    const form = document.getElementById("forgotForm");
+    const emailInput = document.getElementById("forgotEmail");
+    const btnForgot = document.getElementById("btnForgot");
+    const msg = document.getElementById("msg");
+
+    function showMsg(text, ok = false) {
+      msg.style.display = "block";
+      msg.className = "alert mt-3 " + (ok ? "alert-success" : "alert-danger");
+      msg.textContent = text;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = (emailInput.value || "").trim();
+      if (!email) {
+        showMsg("Vui lòng nhập email");
+        return;
+      }
+
+      btnForgot.disabled = true;
+      const oldText = btnForgot.textContent;
+      btnForgot.textContent = "Đang gửi...";
+
+      try {
+        const resp = await fetch((API || "") + "/api/auth/forgot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const data = await resp.json().catch(() => ({}));
+
+        if (!resp.ok || !data.success) {
+          showMsg(data.message || "Không thể gửi mã xác nhận");
+          return;
+        }
+
+        showMsg("Đã gửi mã xác nhận đến email của bạn", true);
+
+        // chuyển sang trang nhập OTP + mật khẩu mới
+        setTimeout(() => {
+          window.location.href = "/reset?email=" + encodeURIComponent(email);
+        }, 800);
+      } catch (err) {
+        console.error(err);
+        showMsg("Lỗi kết nối máy chủ");
+      } finally {
+        btnForgot.disabled = false;
+        btnForgot.textContent = oldText;
+      }
+    });
+  })();
+</script>
+{% endblock %}

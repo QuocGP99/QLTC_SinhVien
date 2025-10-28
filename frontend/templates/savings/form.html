@@ -19,7 +19,9 @@
           <input type="hidden" name="id" />
 
           <div class="mb-3">
-            <label class="form-label">Tiêu đề mục tiêu *</label>
+            <label class="form-label"
+              >Tiêu đề mục tiêu <span class="text-danger">*</span></label
+            >
             <input
               type="text"
               class="form-control"
@@ -41,12 +43,13 @@
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label">Số tiền mục tiêu *</label>
+              <label class="form-label">Số tiền mục tiêu <span class="text-danger">*</label>
               <input
                 type="number"
                 class="form-control"
                 name="target_amount"
                 min="0"
+                step="1000"
                 required
               />
             </div>
@@ -57,6 +60,7 @@
                 class="form-control"
                 name="current_amount"
                 min="0"
+                step="1000"
                 value="0"
               />
             </div>
@@ -64,7 +68,7 @@
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label">Danh mục</label>
+              <label class="form-label">Danh mục <span class="text-danger">*</label>
               <select class="form-select" name="category">
                 <option value="">Chọn danh mục</option>
                 <option value="emergency">Khẩn cấp</option>
@@ -80,8 +84,9 @@
             <div class="col-md-6 mb-3">
               <label class="form-label">Mức độ ưu tiên</label>
               <select class="form-select" name="priority">
+                <option value="" selected>Chọn mức độ ưu tiên</option>
                 <option value="low">Thấp</option>
-                <option value="medium" selected>Trung bình</option>
+                <option value="medium">Trung bình</option>
                 <option value="high">Cao</option>
               </select>
             </div>
@@ -89,11 +94,11 @@
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label">Ngày hoàn thành</label>
+              <label class="form-label">Ngày hoàn thành <span class="text-danger">*</span></label>
               <input type="date" class="form-control" name="deadline" />
             </div>
             <div class="col-md-6 mb-0">
-              <label class="form-label">Đóng góp hàng tháng</label>
+              <label class="form-label">Đóng góp hàng tháng <span class="text-danger">*</label>
               <input
                 type="number"
                 class="form-control"

@@ -24,30 +24,69 @@
     {% block head %}{% endblock %}
   </head>
   <body class="auth-layout">
-    {% block content %}{% endblock %}
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %}
+    <div class="container pt-3">
+      {% for category, message in messages %}
+      <div
+        class="alert alert-{{ category }} alert-dismissible fade show"
+        role="alert"
+      >
+        {{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+        ></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %} {% endwith %} {% block content %}{% endblock %}
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Cấu hình toàn cục cho frontend -->
     <script>
-      // Giữ lại biến cũ (nếu nơi nào đó vẫn dùng)
       window.BASE_API_URL = "{{ BASE_API_URL|default('', true) }}";
-
-      // Cấu hình mới cho auth.js và các JS khác
       window.APP_CONFIG = {
         apiBase: "{{ BASE_API_URL|default('', true) }}", // "" = same-origin
-        googleClientId: "{{ GOOGLE_CLIENT_ID|default('', true) }}", // truyền từ web.py
+        googleClientId: "{{ GOOGLE_CLIENT_ID|default('', true) }}", // dùng cho Google
       };
     </script>
 
-    <!-- Google Identity Services (nút Google custom sẽ gọi popup/One Tap) -->
+    <!-- Google Identity Services (cho Google Sign-In nếu bạn bật) -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-    <!-- App scripts -->
+    <!-- App scripts chung -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
 
-    {% block scripts %}{% endblock %}
+    {# 🔑 Quan trọng: - Nếu ALLOW_AUTH_JS == False -> KHÔNG load auth.js - Nghĩa
+    là trang /login (user thường) sẽ không auto gắn attachLogin() và sẽ không
+    phá form POST #} {% if ALLOW_AUTH_JS|default(true, true) %}
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    {% endif %} {% block scripts %}{% endblock %}
+
+    <script>
+      (function () {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("logout_ok") === "1") {
+          const container = document.createElement("div");
+          container.innerHTML = `
+      <div class="alert alert-success alert-dismissible fade show m-3" role="alert" style="position:fixed;top:1rem;right:1rem;z-index:2000;min-width:240px;">
+        Đăng xuất thành công!
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>`;
+          document.body.appendChild(container);
+
+          params.delete("logout_ok");
+          const cleanUrl =
+            window.location.pathname +
+            (params.toString() ? "?" + params.toString() : "") +
+            window.location.hash;
+          window.history.replaceState({}, "", cleanUrl);
+        }
+      })();
+    </script>
   </body>
 </html>

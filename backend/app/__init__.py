@@ -23,6 +23,8 @@ def register_models():
     from .models.expense import Expense
     from .models.budget import Budget
     from .models.saving import SavingsGoal
+    from .models.otp import OTPVerification
+
     return True
 
 def create_app(config_class: type[Config] | None = None):

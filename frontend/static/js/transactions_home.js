@@ -302,5 +302,16 @@ const TransactionsHome = (() => {
     applyFilters();
   }
 
+  document.addEventListener("DOMContentLoaded", () => {
+    const hash = window.location.hash;
+    if (hash === "#recentSection") {
+      // Chờ API load xong (ví dụ sau 300ms) rồi scroll
+      setTimeout(() => {
+        const el = document.getElementById("recentSection");
+        if (el) el.scrollIntoView({ behavior: "smooth" });
+      }, 400);
+    }
+  });
+
   return { init };
 })();

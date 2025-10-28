@@ -9,7 +9,7 @@
     max-width: 980px;
     margin: 0 auto;
   }
-  .expense-card {
+  .income-card {
     border: 1px solid #edf0f5;
     border-radius: 10px;
     margin-bottom: 0.75rem;
@@ -108,16 +108,16 @@
   </div>
 </div>
 
-{% include "transactions/form.html" %} {% endblock %} {% block scripts %}
+{% include "transactions/income_form.html" %} {% endblock %} {% block scripts %}
+<script>
+  window.BASE_API_URL = "{{ BASE_API_URL or '' }}";
+</script>
 <script src="{{ url_for('static', filename='js/income.js') }}"></script>
 <script>
-  // Ẩn nhóm radio "Loại giao dịch" và ô Phương thức thanh toán vì trang này chỉ xử lý thu nhập
-  const typeGrp = document
-    .querySelector('#transactionForm input[name="type"]')
-    ?.closest(".mb-3");
-  if (typeGrp) typeGrp.style.display = "none";
-  const pm = document.getElementById("paymentMethod");
-  if (pm) pm.closest(".mb-3").style.display = "none";
-  IncomePage.init();
+  // đọc query ?add=1
+  const params = new URLSearchParams(window.location.search);
+  const shouldOpen = params.has("add");
+  IncomePage.init({ autoOpen: shouldOpen });
 </script>
+
 {% endblock %}

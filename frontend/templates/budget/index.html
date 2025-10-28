@@ -77,7 +77,10 @@
   </div>
 
   <!-- Danh sách -->
-  <div class="card card-rounded border-0 shadow-sm">
+  <div
+    class="card card-rounded border-0 shadow-sm"
+    id="budgetCategoriesSection"
+  >
     <div class="card-body">
       <div class="fw-semibold mb-2">Danh mục ngân sách</div>
       <div id="categoryList" class="vstack gap-3">
@@ -90,6 +93,25 @@
 <!-- Modal tạo/sửa -->
 {% include 'budget/form.html' %} {% endblock %} {% block scripts %}
 <script src="{{ url_for('static', filename='js/budgets.js') }}"></script>
+<script>
+  window.addEventListener("DOMContentLoaded", () => {
+    // BudgetPage.init() đã được gọi trong script hiện có của bạn,
+    // nên bây giờ ta chỉ xử lý scroll sau một khoảng nhỏ
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("scroll") === "categories") {
+      setTimeout(() => {
+        const sec = document.getElementById("budgetCategoriesSection");
+        if (sec) {
+          sec.scrollIntoView({ behavior: "smooth", block: "start" });
+          sec.style.transition = "background 0.5s ease";
+          sec.style.background = "#fff3cd";
+          setTimeout(() => (sec.style.background = "transparent"), 1500);
+        }
+      }, 600);
+    }
+  });
+</script>
+
 <script>
   window.addEventListener("DOMContentLoaded", () => BudgetPage.init());
 </script>

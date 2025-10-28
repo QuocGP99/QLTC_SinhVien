@@ -1,0 +1,176 @@
+{% extends "base_auth.html" %} {% block title %}Đặt lại mật khẩu{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div
+    class="auth-hero"
+    style="background-image:url('{{ url_for('static', filename='img/auth-side.png') }}')"
+  ></div>
+
+  <div class="auth-form">
+    <div class="auth-card card shadow-sm border-0">
+      <div class="card-body p-4 p-md-5">
+        <h1 class="h4 mb-1">Đặt lại mật khẩu</h1>
+        <p class="text-muted mb-3 small">
+          Nhập mã xác nhận (OTP) vừa gửi đến email và tạo mật khẩu mới.
+        </p>
+
+        <div id="msg" style="display: none"></div>
+
+        <form id="resetForm" novalidate>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input
+              class="form-control"
+              type="email"
+              name="email"
+              id="resetEmail"
+              required
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Mã xác nhận (OTP)</label>
+            <input
+              class="form-control"
+              type="text"
+              name="code"
+              id="resetCode"
+              maxlength="6"
+              inputmode="numeric"
+              required
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Mật khẩu mới</label>
+            <input type="password" name="password" id="resetPass" />
+            <div class="form-text">Mật khẩu phải ≥6 ký tự, có chữ và số.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Nhập lại mật khẩu mới</label>
+              <input
+                class="form-control"
+                type="password"
+                name="confirm_password"
+                id="resetPass2"
+                required
+              />
+            </div>
+          </div>
+
+          <button id="btnReset" class="btn btn-success w-100" type="submit">
+            Xác nhận đổi mật khẩu
+          </button>
+        </form>
+
+        <div class="text-center mt-3">
+          <a href="/login" class="small">Quay lại đăng nhập</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  (function () {
+    const API = "{{ BASE_API_URL|default('', true) }}";
+
+    const form = document.getElementById("resetForm");
+    const emailInput = document.getElementById("resetEmail");
+    const codeInput = document.getElementById("resetCode");
+    const pass1Input = document.getElementById("resetPass");
+    const pass2Input = document.getElementById("resetPass2");
+    const btnReset = document.getElementById("btnReset");
+    const msg = document.getElementById("msg");
+
+    const toggle1Btn = document.getElementById("toggleResetPass");
+    const toggle2Btn = document.getElementById("toggleResetPass2");
+
+    // Prefill email từ ?email=...
+    (function prefillEmailFromQuery() {
+      const params = new URLSearchParams(location.search);
+      const em = params.get("email");
+      if (em) emailInput.value = em;
+    })();
+
+    // Toggle mắt mật khẩu
+    function bindToggle(btn, ip) {
+      btn.addEventListener("click", () => {
+        const icon = btn.querySelector("i");
+        const isShow = ip.type === "text";
+        if (isShow) {
+          ip.type = "password";
+          icon.classList.remove("bi-eye-slash");
+          icon.classList.add("bi-eye");
+        } else {
+          ip.type = "text";
+          icon.classList.remove("bi-eye");
+          icon.classList.add("bi-eye-slash");
+        }
+      });
+    }
+    bindToggle(toggle1Btn, pass1Input);
+    bindToggle(toggle2Btn, pass2Input);
+
+    function showMsg(text, ok = false) {
+      msg.style.display = "block";
+      msg.className = "alert mt-3 " + (ok ? "alert-success" : "alert-danger");
+      msg.textContent = text;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = emailInput.value.trim();
+      const code = codeInput.value.trim();
+      const pw1 = pass1Input.value;
+      const pw2 = pass2Input.value;
+
+      if (!email || !code || !pw1 || !pw2) {
+        showMsg("Vui lòng nhập đầy đủ thông tin");
+        return;
+      }
+      if (pw1 !== pw2) {
+        showMsg("Mật khẩu nhập lại không khớp");
+        return;
+      }
+
+      btnReset.disabled = true;
+      const oldText = btnReset.textContent;
+      btnReset.textContent = "Đang xử lý...";
+
+      try {
+        const resp = await fetch((API || "") + "/api/auth/reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            code,
+            password: pw1,
+            confirm_password: pw2,
+          }),
+        });
+        const data = await resp.json().catch(() => ({}));
+
+        if (!resp.ok || !data.success) {
+          showMsg(data.message || "Đặt lại mật khẩu thất bại");
+          return;
+        }
+
+        showMsg("Đặt lại mật khẩu thành công! Vui lòng đăng nhập.", true);
+
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1000);
+      } catch (err) {
+        console.error(err);
+        showMsg("Không thể kết nối máy chủ");
+      } finally {
+        btnReset.disabled = false;
+        btnReset.textContent = oldText;
+      }
+    });
+  })();
+</script>
+{% endblock %}

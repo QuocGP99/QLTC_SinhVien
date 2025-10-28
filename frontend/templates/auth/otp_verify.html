@@ -26,56 +26,94 @@ block content %}
         ></i>
       </div>
 
-      <h5 class="fw-bold mb-2">Verify Your Email</h5>
-      <p class="text-muted mb-4">
-        Please enter the 6-digit verification code we sent to
-        <span class="fw-semibold">{{ email or '' }}</span>
-      </p>
+      <!-- ============ STATE 1: thông báo ban đầu + nút mở form ============ -->
+      <div id="stateInfo">
+        <h5 class="fw-bold mb-2">Vui lòng kiểm tra Gmail 📩</h5>
+        <p class="text-muted mb-3">
+          Chúng tôi đã gửi mã xác thực 6 số đến
+          <span class="fw-semibold">{{ email or '' }}</span>.<br />
+          Nhấn nút bên dưới để nhập mã OTP.
+        </p>
 
-      <!-- OTP inputs -->
-      <form
-        id="otpForm"
-        class="d-flex justify-content-center gap-2 mb-3"
-        autocomplete="one-time-code"
-      >
-        {% for i in range(6) %}
-        <input
-          class="otp-input form-control text-center"
-          inputmode="numeric"
-          pattern="[0-9]*"
-          maxlength="1"
-          style="
-            width: 56px;
-            height: 56px;
-            border-radius: 12px;
-            font-size: 20px;
-          "
-        />
-        {% endfor %}
-      </form>
-
-      <!-- actions -->
-      <button
-        id="btnConfirm"
-        class="btn btn-primary w-100 py-2 fw-semibold"
-        disabled
-        style="background: #6a5af9; border: none; border-radius: 12px"
-      >
-        Confirm
-      </button>
-
-      <div class="mt-3 small">
-        <span id="countdown" class="text-muted">Gửi lại mã sau 60s</span>
-        <button id="btnResend" class="btn btn-link p-0 ms-2" disabled>
-          Gửi lại mã
+        <button
+          id="btnShowForm"
+          class="btn btn-primary w-100 py-2 fw-semibold"
+          style="background: #6a5af9; border: none; border-radius: 12px"
+        >
+          Nhập mã OTP
         </button>
+
+        <div class="mt-4 small">
+          <span id="countdownInfo" class="text-muted"
+            >Gửi lại mã sau <span id="cdInfoSec">30</span>s</span
+          >
+          <button
+            id="btnResendInfo"
+            class="btn btn-link p-0 ms-2"
+            disabled
+            style="vertical-align: baseline"
+          >
+            Gửi lại mã
+          </button>
+        </div>
       </div>
 
-      <div
-        id="otpAlert"
-        class="alert alert-danger mt-3 d-none"
-        role="alert"
-      ></div>
+      <!-- ============ STATE 2: form nhập OTP (ẩn ban đầu) ============ -->
+      <div id="stateForm" style="display: none">
+        <h5 class="fw-bold mb-2">Nhập mã OTP</h5>
+        <p class="text-muted mb-3">
+          Nhập 6 số đã gửi đến
+          <span class="fw-semibold">{{ email or '' }}</span>
+        </p>
+
+        <form id="otpForm" class="mb-3" autocomplete="one-time-code">
+          <input
+            id="otpInput"
+            class="form-control text-center"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            placeholder="______"
+            maxlength="6"
+            style="
+              font-size: 24px;
+              font-weight: 600;
+              letter-spacing: 0.6rem;
+              text-align: center;
+              border-radius: 12px;
+            "
+          />
+        </form>
+
+        <button
+          id="btnConfirm"
+          class="btn btn-success w-100 py-2 fw-semibold"
+          disabled
+          style="border: none; border-radius: 12px"
+        >
+          Xác nhận OTP
+        </button>
+
+        <div class="mt-3 small">
+          <span id="countdownForm" class="text-muted"
+            >Gửi lại mã sau <span id="cdFormSec">30</span>s</span
+          >
+          <button
+            id="btnResendForm"
+            class="btn btn-link p-0 ms-2"
+            disabled
+            style="vertical-align: baseline"
+          >
+            Gửi lại mã
+          </button>
+        </div>
+
+        <div
+          id="otpAlert"
+          class="alert mt-3 d-none"
+          role="alert"
+          style="border-radius: 12px; text-align: left"
+        ></div>
+      </div>
     </div>
   </div>
 </div>
@@ -83,104 +121,65 @@ block content %}
 <script>
   (function () {
     const API = "{{ BASE_API_URL|default('', true) }}";
-    const inputs = Array.from(document.querySelectorAll(".otp-input"));
-    const confirm = document.getElementById("btnConfirm");
-    const resend = document.getElementById("btnResend");
-    const alertEl = document.getElementById("otpAlert");
-    const countdown = document.getElementById("countdown");
-
-    // lấy email từ server (nếu có) hoặc query/localStorage
     const email =
       "{{ email or '' }}".trim() ||
       new URLSearchParams(location.search).get("email") ||
       localStorage.getItem("pending_email") ||
       "";
 
-    // focus ô đầu
-    inputs[0].focus();
+    // DOM refs
+    const stateInfo = document.getElementById("stateInfo");
+    const stateForm = document.getElementById("stateForm");
+    const btnShowForm = document.getElementById("btnShowForm");
 
-    // helper
-    const getCode = () => inputs.map((i) => i.value).join("");
-    const setBtnState = () => {
-      confirm.disabled = getCode().length !== 6;
-    };
+    const otpInput = document.getElementById("otpInput");
+    const otpForm = document.getElementById("otpForm");
+    const btnConfirm = document.getElementById("btnConfirm");
+    const otpAlert = document.getElementById("otpAlert");
 
-    // auto-move, chỉ cho số
-    inputs.forEach((inp, idx) => {
-      inp.addEventListener("input", (e) => {
-        let v = e.target.value.replace(/\D/g, "");
-        e.target.value = v.slice(0, 1);
-        if (v && idx < inputs.length - 1) inputs[idx + 1].focus();
-        setBtnState();
-      });
-      inp.addEventListener("keydown", (e) => {
-        if (e.key === "Backspace" && !inp.value && idx > 0) {
-          inputs[idx - 1].focus();
-          inputs[idx - 1].value = "";
-          e.preventDefault();
-        }
-        if (e.key === "ArrowLeft" && idx > 0) inputs[idx - 1].focus();
-        if (e.key === "ArrowRight" && idx < inputs.length - 1)
-          inputs[idx + 1].focus();
-        if (e.key === "Enter" && !confirm.disabled) submitCode();
-      });
-      // paste 6 số cùng lúc
-      inp.addEventListener("paste", (e) => {
-        const text = (e.clipboardData || window.clipboardData)
-          .getData("text")
-          .replace(/\D/g, "")
-          .slice(0, 6);
-        if (!text) return;
-        e.preventDefault();
-        inputs.forEach((i, k) => (i.value = text[k] || ""));
-        inputs[Math.min(text.length, 5)].focus();
-        setBtnState();
-      });
+    // resend buttons + countdown
+    const btnResendInfo = document.getElementById("btnResendInfo");
+    const countdownInfo = document.getElementById("countdownInfo");
+    const cdInfoSec = document.getElementById("cdInfoSec");
+
+    const btnResendForm = document.getElementById("btnResendForm");
+    const countdownForm = document.getElementById("countdownForm");
+    const cdFormSec = document.getElementById("cdFormSec");
+
+    // ========== 1. BUG "gõ 1 số ra 2 số" FIX ==========
+    // Chúng ta dùng 1 ô input duy nhất, không còn 6 ô auto-focus nữa.
+    // Chỉ cho phép số, cắt còn 6 số. Không inject lại giá trị -> không nhân đôi.
+    otpInput?.addEventListener("input", (e) => {
+      let v = e.target.value.replace(/\D+/g, "");
+      if (v.length > 6) v = v.slice(0, 6);
+      e.target.value = v;
+
+      btnConfirm.disabled = v.length !== 6;
     });
 
-    // countdown 60s cho resend
-    let remain = 60,
-      timer = null;
-    function startTimer() {
-      resend.disabled = true;
-      timer && clearInterval(timer);
-      countdown.textContent = `Gửi lại mã sau ${remain}s`;
-      timer = setInterval(() => {
-        remain--;
-        if (remain <= 0) {
-          clearInterval(timer);
-          countdown.textContent = "Bạn có thể gửi lại mã.";
-          resend.disabled = false;
-        } else {
-          countdown.textContent = `Gửi lại mã sau ${remain}s`;
-        }
-      }, 1000);
-    }
-    startTimer();
-
-    resend.addEventListener("click", async () => {
-      remain = 60;
-      startTimer();
-      alertEl.classList.add("d-none");
-      inputs.forEach((i) => (i.value = ""));
-      inputs[0].focus();
-      setBtnState();
-
-      await fetch((API || "") + "/api/auth/resend-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+    // enter để submit
+    otpInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !btnConfirm.disabled) {
+        submitCode();
+      }
     });
 
-    confirm.addEventListener("click", submitCode);
+    // ========== 2. Hiển thị form chỉ khi user click "Nhập mã OTP" ==========
+    btnShowForm.addEventListener("click", () => {
+      stateInfo.style.display = "none";
+      stateForm.style.display = "block";
+      otpInput.focus();
+    });
+
+    // ========== 3. Verify OTP ==========
+    btnConfirm.addEventListener("click", submitCode);
 
     async function submitCode() {
-      const code = getCode();
+      const code = otpInput.value.trim();
       if (code.length !== 6) return;
 
-      confirm.disabled = true;
-      alertEl.classList.add("d-none");
+      btnConfirm.disabled = true;
+      showAlert("", null); // clear alert
 
       try {
         const res = await fetch((API || "") + "/api/auth/verify-otp", {
@@ -188,24 +187,150 @@ block content %}
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, code }),
         });
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          throw new Error(data.message || "OTP không hợp lệ");
+
+        const data = await res.json().catch(() => ({}));
+
+        // OTP đúng
+        if (res.ok && data && data.success) {
+          showAlert("Xác thực thành công! Bạn có thể đăng nhập.", true);
+
+          // Đánh dấu user đã verify (tuỳ backend bạn có trả access_token/user hay không)
+          if (data.access_token) {
+            localStorage.setItem("access_token", data.access_token);
+          }
+          if (data.user) {
+            localStorage.setItem("user", JSON.stringify(data.user));
+          }
+
+          // chuyển qua /login sau 1s
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 1000);
+
+          return;
         }
 
-        // Lưu token nếu backend trả
-        if (data.access_token) {
-          localStorage.setItem("access_token", data.access_token);
-        }
-        if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
-
-        window.location.href = "/dashboard"; // hoặc "/"
+        // OTP sai / hết hạn
+        showAlert(
+          data.message ||
+            "Mã OTP không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.",
+          false
+        );
+        otpInput.value = "";
+        otpInput.focus();
+        btnConfirm.disabled = true;
       } catch (err) {
-        alertEl.textContent = err.message || "Có lỗi xảy ra, vui lòng thử lại.";
-        alertEl.classList.remove("d-none");
-        confirm.disabled = false;
+        console.error("verify-otp error:", err);
+        showAlert("Lỗi kết nối máy chủ. Vui lòng thử lại.", false);
+        otpInput.focus();
+      } finally {
+        // Cho phép nhập lại
+        btnConfirm.disabled = otpInput.value.trim().length !== 6;
       }
     }
+
+    function showAlert(msg, ok) {
+      if (!msg) {
+        otpAlert.classList.add("d-none");
+        otpAlert.textContent = "";
+        return;
+      }
+      otpAlert.classList.remove("d-none", "alert-danger", "alert-success");
+      otpAlert.classList.add(ok ? "alert-success" : "alert-danger");
+      otpAlert.textContent = msg;
+    }
+
+    // ========== 4. Cooldown resend OTP 30s ==========
+    // Yêu cầu của bạn:
+    // - Vừa vào trang: nút resend bị disable, có đếm ngược 30s
+    // - Hết 30s -> enable cả 2 nút resend
+    // - Khi nhấn resend -> gọi /api/auth/resend-otp rồi reset countdown 30s nữa
+
+    let remain = 30;
+    let timer = null;
+
+    function updateCountdownUI() {
+      cdInfoSec.textContent = remain;
+      cdFormSec.textContent = remain;
+    }
+
+    function setResendEnabled(enabled) {
+      btnResendInfo.disabled = !enabled;
+      btnResendForm.disabled = !enabled;
+      countdownInfo.style.display = enabled ? "none" : "inline";
+      countdownForm.style.display = enabled ? "none" : "inline";
+
+      if (enabled) {
+        btnResendInfo.textContent = "Gửi lại mã";
+        btnResendForm.textContent = "Gửi lại mã";
+      } else {
+        btnResendInfo.textContent = "Gửi lại mã";
+        btnResendForm.textContent = "Gửi lại mã";
+      }
+    }
+
+    function startCooldown() {
+      remain = 30;
+      setResendEnabled(false);
+      updateCountdownUI();
+
+      if (timer) clearInterval(timer);
+      timer = setInterval(() => {
+        remain--;
+        if (remain <= 0) {
+          clearInterval(timer);
+          setResendEnabled(true);
+        } else {
+          updateCountdownUI();
+        }
+      }, 1000);
+    }
+
+    async function resendOtp() {
+      // bật cooldown lại ngay khi bấm
+      startCooldown();
+      showAlert("", null); // clear alert
+
+      try {
+        const resp = await fetch((API || "") + "/api/auth/resend-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const data = await resp.json().catch(() => ({}));
+
+        if (!(resp.ok && data && data.success)) {
+          // ví dụ backend trả 429 cooldown
+          showAlert(
+            data.message ||
+              "Không thể gửi lại mã OTP lúc này. Vui lòng thử lại sau.",
+            false
+          );
+          return;
+        }
+
+        // gửi lại OK
+        showAlert("Đã gửi lại mã OTP vào email của bạn.", true);
+      } catch (err) {
+        console.error("resend-otp error:", err);
+        showAlert("Lỗi kết nối khi gửi lại mã OTP.", false);
+      }
+    }
+
+    btnResendInfo.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (btnResendInfo.disabled) return;
+      resendOtp();
+    });
+
+    btnResendForm.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (btnResendForm.disabled) return;
+      resendOtp();
+    });
+
+    // Khởi chạy cooldown lần đầu khi load trang
+    startCooldown();
   })();
 </script>
 {% endblock %}
