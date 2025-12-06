@@ -1,83 +1,88 @@
 // static/js/notify.js
 // =======================================
 // ⚙️ Thông báo ngân sách tháng (BudgetNotify)
-// Tự động đồng bộ với API backend Quốc:
-//    GET /api/budgets/summary?month=YYYY-MM
+// API backend Quốc (ví dụ):
+//    GET {BASE_API_URL}/budgets/summary?month=YYYY-MM
 // ---------------------------------------
-// Lưu localStorage["budget_data"] = [{category, limit, spent}]
-// và hiển thị cảnh báo (vàng / đỏ / vượt ngân sách).
+// - Lưu localStorage["budget_data"] = [{category, limit, spent}]
+// - Tạo thông báo khi mức dùng đạt: ≥80% (vàng), ≥90% (đỏ), >100% (quá ngân sách)
+// - Thông báo mới sẽ nằm TRÊN CÙNG: sort Unread → Severity → Newest
+// - Ghi nhận thời điểm xuất hiện (firstSeen) vào budget_notis_meta để ổn định thứ tự
 // =======================================
 
 const BudgetNotify = (() => {
-  const STORAGE_KEY = "budget_notis_read";
+  const STORAGE_READ = "budget_notis_read";
+  const STORAGE_META = "budget_notis_meta"; // { [id]: { firstSeen: ISOString } }
   const qs = (s, r = document) => r.querySelector(s);
   const money = (n) => (Number(n) || 0).toLocaleString("vi-VN") + " đ";
   const monthLabel = (d = new Date()) => {
     const m = (d.getMonth() + 1).toString().padStart(2, "0");
     return `${m}/${d.getFullYear()}`;
   };
+  const isoMonth = (d = new Date()) => d.toISOString().slice(0, 7); // "YYYY-MM"
 
-  const loadReadMap = () => {
+  const loadJSON = (key, fallback) => {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
     } catch {
-      return {};
+      return fallback;
     }
   };
-  const saveReadMap = (map) => {
+  const saveJSON = (key, val) => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+      localStorage.setItem(key, JSON.stringify(val));
     } catch {}
   };
 
   // 🧩 Gọi API backend để đồng bộ dữ liệu ngân sách
   async function syncFromAPI() {
-    const now = new Date();
-    const month = now.toISOString().slice(0, 7); // "YYYY-MM"
+    const month = isoMonth();
+    const url = `${window.BASE_API_URL.replace(
+      /\/$/,
+      ""
+    )}/budgets/summary?month=${month}`;
 
     try {
-      const res = await fetch(
-        `${BASE_API_URL}/api/budgets/summary?month=${month}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            ...(localStorage.getItem("token")
-              ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
-              : {}),
-          },
-          credentials: "include", // nếu backend dùng cookie JWT
-        }
-      );
+      const token =
+        localStorage.getItem("access_token") || localStorage.getItem("token"); // tuỳ app dùng key nào
+      const res = await fetch(url, {
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include", // nếu backend dùng cookie JWT
+      });
 
-      if (!res.ok) throw new Error("Không thể tải dữ liệu ngân sách");
+      if (!res.ok)
+        throw new Error(`Không thể tải dữ liệu ngân sách (${res.status})`);
       const payload = await res.json();
 
-      // Đảm bảo đúng cấu trúc backend Quốc trả về
+      // Backend Quốc nên trả về kiểu:
+      // { data: { items: [{ category, limit/amount, spent/used, updated_at? }] } }
       const items = payload?.data?.items || [];
 
       // Map về format notify.js cần
       const mapped = items.map((it) => ({
         category: it.category ?? "",
-        limit: Number(it.amount ?? it.limit ?? 0),
+        limit: Number(it.limit ?? it.amount ?? 0),
         spent: Number(it.spent ?? it.used ?? 0),
+        // nếu BE có updated_at/mtime thì tận dụng, else fallback now
+        updated_at: it.updated_at || it.mtime || new Date().toISOString(),
       }));
 
-      localStorage.setItem("budget_data", JSON.stringify(mapped));
+      saveJSON("budget_data", mapped);
     } catch (err) {
       console.error("[BudgetNotify] Lỗi đồng bộ dữ liệu:", err);
-      localStorage.setItem("budget_data", "[]");
+      saveJSON("budget_data", []);
     }
   }
 
-  // 🧠 Render thông báo ra giao diện
-  function render() {
-    const list = qs("#notiList");
-    const badge = qs("#notiBadge");
-    const monthEl = qs("#notiMonth");
-    if (!list || !badge) return;
+  // 🧠 Sinh danh sách thông báo từ budget_data
+  function buildNotifications() {
+    const stored = loadJSON("budget_data", []);
+    const readMap = loadJSON(STORAGE_READ, {});
+    const metaMap = loadJSON(STORAGE_META, {}); // để lưu firstSeen
 
-    const stored = JSON.parse(localStorage.getItem("budget_data") || "[]");
-    const readMap = loadReadMap();
     const notis = [];
     const thang = monthLabel();
 
@@ -86,39 +91,85 @@ const BudgetNotify = (() => {
       const spent = Number(b.spent) || 0;
       const pct = Math.round((spent / limit) * 100);
       const remain = limit - spent;
-      let level = null,
-        msg = null;
 
-      if (pct >= 100) {
+      let level = null;
+      let title = "";
+      let msg = "";
+
+      if (pct > 100) {
         const overBy = pct - 100;
         level = "over";
+        title = "Quá ngân sách";
         msg = `Bạn đã dùng quá ${overBy}% (${money(
           Math.abs(remain)
         )}) ngân sách cho mục ${b.category} trong tháng ${thang}.`;
       } else if (pct >= 90) {
         level = "red";
-        msg = `⚠️ Cảnh báo đỏ: Mục ${b.category} chỉ còn ${money(
+        title = "Cảnh báo đỏ";
+        msg = `⚠️ ${title}: Mục ${b.category} chỉ còn ${money(
           remain
         )} trong ngân sách tháng ${thang}.`;
       } else if (pct >= 80) {
-        const leftPct = 100 - pct;
         level = "yellow";
-        msg = `⚠️ Cảnh báo vàng: Bạn chỉ còn ${leftPct}% (~${money(
+        title = "Cảnh báo vàng";
+        const leftPct = 100 - pct;
+        msg = `⚠️ ${title}: Bạn chỉ còn ${leftPct}% (~${money(
           remain
         )}) cho mục ${b.category} trong tháng ${thang}.`;
       }
 
       if (level) {
-        const id = `${b.category}|${level}|${thang}`;
-        notis.push({ id, level, msg, pct, read: !!readMap[id] });
+        // id ổn định theo (category|level|YYYY-MM)
+        const id = `${b.category}|${level}|${isoMonth()}`;
+
+        // gắn firstSeen một lần để sort "mới nhất" ổn định
+        if (!metaMap[id]) {
+          metaMap[id] = {
+            firstSeen: b.updated_at || new Date().toISOString(),
+          };
+        }
+
+        notis.push({
+          id,
+          level,
+          title,
+          msg,
+          pct,
+          read: !!readMap[id],
+          firstSeen: metaMap[id].firstSeen,
+        });
       }
     });
 
-    // 🧾 render danh sách
-    list.innerHTML = "";
-    const unread = notis.filter((n) => !n.read).length;
-    if (monthEl) monthEl.textContent = thang;
+    // lưu lại meta nếu có id mới phát sinh
+    saveJSON(STORAGE_META, metaMap);
+    return notis;
+  }
 
+  // 📊 Thang mức độ để sort: over > red > yellow
+  const severityWeight = { over: 3, red: 2, yellow: 1 };
+
+  // 🧾 Render ra DOM
+  function render() {
+    const list = qs("#notiList");
+    const badge = qs("#notiBadge");
+    const monthEl = qs("#notiMonth");
+    if (!list || !badge) return;
+
+    const notis = buildNotifications();
+
+    // Sort: Unread first → severity desc → firstSeen desc
+    notis.sort((a, b) => {
+      const timeDiff = new Date(b.firstSeen) - new Date(a.firstSeen);
+      if (timeDiff !== 0) return timeDiff;
+      return (severityWeight[b.level] || 0) - (severityWeight[a.level] || 0);
+    });
+
+    const unread = notis.filter((n) => !n.read).length;
+    if (monthEl) monthEl.textContent = monthLabel();
+
+    // Badge & list
+    list.innerHTML = "";
     if (unread === 0) {
       list.innerHTML = `<div class="text-muted small px-3 py-2">Chưa có thông báo.</div>`;
       badge.classList.add("d-none");
@@ -144,49 +195,55 @@ const BudgetNotify = (() => {
         ? "noti-unread-red"
         : "noti-unread-over";
 
-      const title =
-        n.level === "yellow"
-          ? "Cảnh báo vàng"
-          : n.level === "red"
-          ? "Cảnh báo đỏ"
-          : "Quá ngân sách";
-
       const item = document.createElement("div");
       item.className = `noti-item ${unreadBg}`;
       item.dataset.id = n.id;
       item.innerHTML = `
         <div class="noti-dot ${dotClass}"></div>
         <div>
-          <div class="fw-semibold small">${title} • ${n.pct}%</div>
+          <div class="fw-semibold small">${n.title} • ${n.pct}%</div>
           <div class="small">${n.msg}</div>
+          <div class="small text-muted">${new Date(n.firstSeen).toLocaleString(
+            "vi-VN"
+          )}</div>
         </div>
       `;
       list.appendChild(item);
     });
 
-    // click để đánh dấu đã đọc
+    // Click để đánh dấu đã đọc
     list.onclick = (e) => {
       const el = e.target.closest(".noti-item");
       if (!el) return;
       const id = el.dataset.id;
-      const map = loadReadMap();
-      map[id] = true;
-      saveReadMap(map);
+      const readMap = loadJSON(STORAGE_READ, {});
+      readMap[id] = true;
+      saveJSON(STORAGE_READ, readMap);
       render();
     };
   }
 
-  // 🌐 Public API
-  async function init() {
-    await syncFromAPI();
+  // Public API
+  async function refresh({ sync = true } = {}) {
+    if (sync) await syncFromAPI();
     render();
   }
 
-  return { init, render };
-})();
+  async function init() {
+    await syncFromAPI();
+    render();
+    // lắng nghe sự kiện khi chi tiêu thay đổi từ các module khác
+    window.addEventListener("budget:changed", () => refresh({ sync: true }));
+    window.addEventListener("expenses:changed", () => refresh({ sync: true }));
+    window.addEventListener("transactions:saved", () =>
+      refresh({ sync: true })
+    );
 
-// ============================
-// ✅ Cách dùng (gọi 1 lần khi load trang):
-// document.addEventListener('DOMContentLoaded', () => {
-//   BudgetNotify.init();
-// });
+    // đồng bộ khi localStorage 'budget_data' bị thay ở tab khác
+    window.addEventListener("storage", (e) => {
+      if (e.key === "budget_data") render();
+    });
+  }
+
+  return { init, render, refresh };
+})();

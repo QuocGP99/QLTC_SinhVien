@@ -1,0 +1,85 @@
+{# templates/partials/_chatbot.html #} {# [CHATBOT-ADD] Widget Chatbot: markup
+tối giản, có danh sách câu hỏi gợi ý #}
+<div id="chatbot-widget" class="chatbot hidden" aria-live="polite">
+  <!-- Header -->
+  <div class="chatbot__header">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-robot"></i>
+      <strong>SVFinance Chatbot</strong>
+      <span class="badge bg-secondary ms-2">AI</span>
+    </div>
+    <button
+      class="btn btn-sm btn-light"
+      type="button"
+      id="chatbot-clear-btn"
+      title="Xóa lịch sử"
+    >
+      <i class="bi bi-trash"></i>
+    </button>
+
+    <div class="ms-auto d-flex align-items-center gap-1">
+      <button
+        class="btn btn-sm btn-light"
+        type="button"
+        id="chatbot-minimize-btn"
+        title="Thu gọn"
+      >
+        <i class="bi bi-chevron-down"></i>
+      </button>
+      <button
+        class="btn btn-sm btn-light"
+        type="button"
+        id="chatbot-close-btn"
+        title="Đóng"
+      >
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Suggestions -->
+  <div class="chatbot__suggestions" id="chatbot-suggest">
+    <!-- [CHATBOT-ADD] Gợi ý câu hỏi (tạo động bằng JS, có fallback tĩnh) -->
+    <button type="button" class="chatbot-chip">
+      Làm sao thêm chi tiêu nhanh?
+    </button>
+    <button type="button" class="chatbot-chip">
+      Cách đặt ngân sách theo tháng?
+    </button>
+    <button type="button" class="chatbot-chip">
+      Tại sao bị cảnh báo vượt ngân sách?
+    </button>
+    <button type="button" class="chatbot-chip">Xem báo cáo tháng này</button>
+  </div>
+
+  <!-- Messages -->
+  <div class="chatbot__body" id="chatbot-body" role="log"></div>
+
+  <!-- Input -->
+  <form class="chatbot__input" id="chatbot-form">
+    <input
+      id="chatbot-text"
+      class="form-control"
+      type="text"
+      placeholder='Ví dụ: "Mình vừa ăn bún bò 35k"'
+      autocomplete="off"
+    />
+
+    <button class="btn btn-primary" type="submit" id="chatbot-send-btn">
+      <i class="bi bi-send"></i>
+    </button>
+  </form>
+</div>
+
+<!-- FAB -->
+<button
+  id="chatbot-fab"
+  class="chatbot-fab"
+  aria-controls="chatbot-widget"
+  aria-expanded="false"
+  title="Mở Chatbot"
+>
+  <i class="bi bi-chat-dots"></i>
+</button>
+
+<script src="/static/js/chatbot.js"></script>

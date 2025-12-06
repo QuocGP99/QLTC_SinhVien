@@ -206,9 +206,18 @@ const IncomePage = (() => {
           </div>
 
           <div class="d-flex align-items-center gap-3">
-            <span class="badge badge-soft" data-cat-id="${tx.category_id}">
-              ${escapeHtml(tx.category || tx.category_name || "")}
-            </span>
+            <span class="cat-chip cat--${(
+              tx.category ||
+              tx.category_name ||
+              "khac"
+            )
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-+|-+$/g, "")}">
+  ${escapeHtml(tx.category || tx.category_name || "")}
+</span>
 
             <div class="amount text-success">+${money(tx.amount)}</div>
 

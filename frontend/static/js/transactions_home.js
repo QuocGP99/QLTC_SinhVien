@@ -28,10 +28,12 @@ const TransactionsHome = (() => {
   let state = {
     all: [], // tất cả giao dịch (đã hợp nhất)
     filtered: [], // sau bộ lọc
-    incomeCats: [], // meta danh mục thu nhập
+    incomeCats: [],
+    expenseCats: [],
     month: null, // YYYY-MM
     type: "", // '', 'expense', 'income'
-    incomeCatId: "", // filter cho thu nhập
+    incomeCatId: "",
+    expenseCatId: "",
   };
 
   // ---- util ----
@@ -46,45 +48,38 @@ const TransactionsHome = (() => {
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
-  function parseISO(d) {
-    try {
-      return new Date(d);
-    } catch {
-      return null;
-    }
-  }
-  function ymd(dateObj) {
-    const p = (n) => String(n).padStart(2, "0");
-    return `${dateObj.getFullYear()}-${p(dateObj.getMonth() + 1)}-${p(
-      dateObj.getDate()
-    )}`;
-  }
+  const ymd = (d) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+      d.getDate()
+    ).padStart(2, "0")}`;
+  const dmyVN = (iso) => {
+    const d = new Date(iso);
+    return `${String(d.getDate()).padStart(2, "0")}/${String(
+      d.getMonth() + 1
+    ).padStart(2, "0")}/${d.getFullYear()}`;
+  };
 
-  // Chuẩn hóa item từ 2 API về 1 shape
-  function normalizeExpense(x) {
-    return {
-      id: x.id,
-      type: "expense",
-      amount: Number(x.amount), // âm/ dương để tính net: để dương ở đây, khi hiển thị list sẽ thêm dấu '-'
-      date: x.date, // "YYYY-MM-DD"
-      category_id: x.category_id,
-      category: x.category || x.category_name || "",
-      method: x.method || null,
-      note: x.desc || x.note || "",
-    };
-  }
-  function normalizeIncome(x) {
-    return {
-      id: x.id,
-      type: "income",
-      amount: Number(x.amount),
-      date: x.received_at || x.date, // "YYYY-MM-DD"
-      category_id: x.category_id,
-      category: x.category || x.category_name || "",
-      method: null,
-      note: x.note || "",
-    };
-  }
+  // Chuẩn hoá
+  const normalizeExpense = (x) => ({
+    id: x.id,
+    type: "expense",
+    amount: Number(x.amount),
+    date: x.date,
+    category_id: x.category_id,
+    category: x.category || x.category_name || "",
+    method: x.method || null,
+    note: x.desc || x.note || "",
+  });
+  const normalizeIncome = (x) => ({
+    id: x.id,
+    type: "income",
+    amount: Number(x.amount),
+    date: x.received_at || x.date,
+    category_id: x.category_id,
+    category: x.category || x.category_name || "",
+    method: null,
+    note: x.note || "",
+  });
 
   // ---- render list ----
   function renderList() {
@@ -94,7 +89,6 @@ const TransactionsHome = (() => {
       wrap.innerHTML = `<div class="text-muted">Chưa có giao dịch.</div>`;
       return;
     }
-    // sort by date desc, then id desc
     const items = state.filtered
       .slice()
       .sort(
@@ -126,19 +120,80 @@ const TransactionsHome = (() => {
             )}</span>
             ${amtHtml}
           </div>
-        </div>
-      `;
+        </div>`;
       wrap.appendChild(el);
     });
   }
 
-  // ---- calendar ----
+  // ---- chi tiết ngày (modal) ----
+  function openDayDetail(dateKey) {
+    const items = state.all
+      .filter((x) => x.date && x.date.startsWith(dateKey))
+      .sort(
+        (a, b) =>
+          (b.type === a.type ? 0 : a.type === "expense" ? 1 : -1) ||
+          b.amount - a.amount
+      );
+
+    const title = document.getElementById("dayDetailTitle");
+    const body = document.getElementById("dayDetailBody");
+    if (title) title.textContent = `Chi tiết giao dịch ngày ${dmyVN(dateKey)}`;
+
+    if (!items.length) {
+      body.innerHTML = `<div class="text-muted">Không có giao dịch.</div>`;
+    } else {
+      const totalExp = items
+        .filter((i) => i.type === "expense")
+        .reduce((s, i) => s + i.amount, 0);
+      const totalInc = items
+        .filter((i) => i.type === "income")
+        .reduce((s, i) => s + i.amount, 0);
+
+      body.innerHTML = `
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-danger">Tổng chi: <strong>${money(
+            totalExp
+          )}</strong></span>
+          <span class="text-success">Tổng thu: <strong>${money(
+            totalInc
+          )}</strong></span>
+        </div>
+        <div class="list-group">
+          ${items
+            .map((tx) => {
+              const isExp = tx.type === "expense";
+              const sign = isExp ? "−" : "+";
+              const amtCl = isExp ? "text-danger" : "text-success";
+              const method = isExp ? ` · ${esc(tx.method || "Tiền mặt")}` : "";
+              return `
+              <div class="list-group-item d-flex justify-content-between align-items-start">
+                <div class="me-3">
+                  <div class="fw-semibold">${esc(
+                    tx.note || "(không mô tả)"
+                  )}</div>
+                  <div class="small text-muted">${esc(
+                    tx.category
+                  )}${method}</div>
+                </div>
+                <div class="fw-semibold ${amtCl}">${sign}${money(
+                tx.amount
+              )}</div>
+              </div>`;
+            })
+            .join("")}
+        </div>`;
+    }
+    bootstrap.Modal.getOrCreateInstance(
+      document.getElementById("dayDetailModal")
+    ).show();
+  }
+
+  // ---- calendar (2 dòng + nút 3 chấm) ----
   function buildCalendar() {
     const cal = document.getElementById("calendar");
     const label = document.getElementById("calMonthLabel");
     cal.innerHTML = "";
 
-    // Lấy tháng đang filter hoặc tháng hiện tại
     const mVal =
       state.month ||
       (() => {
@@ -148,79 +203,80 @@ const TransactionsHome = (() => {
           "0"
         )}`;
       })();
-
     const [yStr, mStr] = mVal.split("-");
     const year = Number(yStr),
-      month = Number(mStr); // 1-12
+      month = Number(mStr);
     label.textContent = `Tháng ${month}/${year}`;
 
     const first = new Date(year, month - 1, 1);
-    const last = new Date(year, month, 0); // ngày cuối tháng
-    // offset: muốn thứ 2 là cột đầu → JS: 0=CN → map về 1..7 với CN=7
-    const offset = (first.getDay() || 7) - 1; // 0..6 (T2->0 ... CN->6)
+    const last = new Date(year, month, 0);
+    const offset = (first.getDay() || 7) - 1; // 0..6 (T2..CN)
 
-    // Tính tổng theo ngày
-    const byDay = {}; // ymd -> {exp, inc, net}
-    const inMonth = state.filtered.filter((tx) => {
-      return tx.date && tx.date.startsWith(mVal);
-    });
+    // cộng dồn theo ngày
+    const byDay = {}; // key -> {exp,inc}
+    const inMonth = state.filtered.filter(
+      (tx) => tx.date && tx.date.startsWith(mVal)
+    );
     inMonth.forEach((tx) => {
       const key = tx.date;
-      byDay[key] = byDay[key] || { exp: 0, inc: 0, net: 0 };
-      if (tx.type === "expense") {
-        byDay[key].exp += tx.amount;
-        byDay[key].net -= tx.amount;
-      } else {
-        byDay[key].inc += tx.amount;
-        byDay[key].net += tx.amount;
-      }
+      byDay[key] = byDay[key] || { exp: 0, inc: 0 };
+      if (tx.type === "expense") byDay[key].exp += tx.amount;
+      else byDay[key].inc += tx.amount;
     });
 
-    // Render cells
-    // add empty cells for offset
+    // offset empty
     for (let i = 0; i < offset; i++) {
       const empty = document.createElement("div");
       empty.className = "cell";
       empty.style.visibility = "hidden";
       cal.appendChild(empty);
     }
+
+    // cells
     for (let d = 1; d <= last.getDate(); d++) {
       const DOM = document.createElement("div");
       DOM.className = "cell";
       const today = new Date(year, month - 1, d);
       const key = ymd(today);
-      const agg = byDay[key] || { exp: 0, inc: 0, net: 0 };
+      const agg = byDay[key] || { exp: 0, inc: 0 };
+
       DOM.innerHTML = `
         <div class="d">${d}</div>
         <div class="sum exp small">- ${money(agg.exp)}</div>
         <div class="sum inc small">+ ${money(agg.inc)}</div>
-        <div class="sum net small ${agg.net >= 0 ? "pos" : "neg"}">${
-        agg.net >= 0 ? "+" : "-"
-      } ${money(Math.abs(agg.net))}</div>
+        <button type="button" class="btn btn-link btn-sm more-btn" data-date="${key}" title="Xem chi tiết">
+          <i class="bi bi-three-dots"></i>
+        </button>
       `;
       cal.appendChild(DOM);
     }
+
+    // delegate click 3 chấm
+    cal.onclick = (e) => {
+      const btn = e.target.closest(".more-btn");
+      if (!btn) return;
+      const dateKey = btn.getAttribute("data-date");
+      openDayDetail(dateKey);
+    };
   }
 
   // ---- filters ----
   function applyFilters() {
-    const month = state.month; // YYYY-MM or null
-    const type = state.type; // '', 'expense', 'income'
-    const incCat = state.incomeCatId || ""; // category id for incomes
-
+    const month = state.month,
+      type = state.type,
+      incCat = state.incomeCatId || "";
+    expCat = state.expenseCatId || "";
     let list = state.all.slice();
-
     if (type) list = list.filter((x) => x.type === type);
-
     if (month) list = list.filter((x) => x.date && x.date.startsWith(month));
-
-    if (incCat) {
-      // chỉ lọc theo danh mục thu nhập khi type==income hoặc all
+    if (incCat)
       list = list.filter((x) =>
         x.type !== "income" ? true : String(x.category_id) === String(incCat)
       );
-    }
-
+    if (expCat)
+      list = list.filter((x) =>
+        x.type !== "expense" ? true : String(x.category_id) === String(expCat)
+      );
     state.filtered = list;
     buildCalendar();
     renderList();
@@ -230,9 +286,9 @@ const TransactionsHome = (() => {
     const m = document.getElementById("filterMonth");
     const t = document.getElementById("filterType");
     const c = document.getElementById("filterIncomeCat");
+    const cExp = document.getElementById("filterExpenseCat");
     const r = document.getElementById("btnReset");
 
-    // set default month = tháng hiện tại
     const now = new Date();
     m.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
       2,
@@ -252,6 +308,10 @@ const TransactionsHome = (() => {
       state.incomeCatId = c.value || "";
       applyFilters();
     };
+    cExp.onchange = () => {
+      state.expenseCatId = cExp.value || "";
+      applyFilters();
+    };
     r.onclick = () => {
       m.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
         2,
@@ -262,6 +322,7 @@ const TransactionsHome = (() => {
       state.month = m.value;
       state.type = "";
       state.incomeCatId = "";
+      state.expenseCatId = "";
       applyFilters();
     };
   }
@@ -279,12 +340,26 @@ const TransactionsHome = (() => {
     } catch {}
   }
 
+  async function loadExpensesMeta() {
+    try {
+      const meta = await API.expenseMeta();
+      state.expenseCats = meta?.categories || [];
+      const sel = document.getElementById("filterExpenseCat");
+      sel.innerHTML =
+        `<option value="">Tất cả</option>` +
+        state.expenseCats
+          .map((x) => `<option value="${x.id}">${esc(x.name)}</option>`)
+          .join("");
+    } catch {}
+  }
+
   // ---- init ----
   async function init() {
     bindFilters();
+    buildCalendar();
     await loadIncomeMeta();
+    await loadExpensesMeta();
 
-    // lấy dữ liệu từ cả 2 API
     const [exp, inc] = await Promise.allSettled([
       API.expenses({}),
       API.incomes({}),
@@ -305,10 +380,10 @@ const TransactionsHome = (() => {
   document.addEventListener("DOMContentLoaded", () => {
     const hash = window.location.hash;
     if (hash === "#recentSection") {
-      // Chờ API load xong (ví dụ sau 300ms) rồi scroll
       setTimeout(() => {
-        const el = document.getElementById("recentSection");
-        if (el) el.scrollIntoView({ behavior: "smooth" });
+        document
+          .getElementById("recentSection")
+          ?.scrollIntoView({ behavior: "smooth" });
       }, 400);
     }
   });

@@ -1,3 +1,4 @@
+<!-- frontend/templates/savings/form.html -->
 <!-- Modal Tạo/Sửa Mục tiêu Tiết kiệm -->
 <div class="modal fade" id="goalModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -18,6 +19,7 @@
         <form id="goalForm">
           <input type="hidden" name="id" />
 
+          <!-- Tiêu đề -->
           <div class="mb-3">
             <label class="form-label"
               >Tiêu đề mục tiêu <span class="text-danger">*</span></label
@@ -31,6 +33,7 @@
             />
           </div>
 
+          <!-- Mô tả -->
           <div class="mb-3">
             <label class="form-label">Mô tả</label>
             <input
@@ -41,9 +44,12 @@
             />
           </div>
 
+          <!-- Hàng 1: Số tiền mục tiêu + Ngày hoàn thành -->
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label">Số tiền mục tiêu <span class="text-danger">*</label>
+              <label class="form-label"
+                >Số tiền mục tiêu <span class="text-danger">*</span></label
+              >
               <input
                 type="number"
                 class="form-control"
@@ -53,59 +59,83 @@
                 required
               />
             </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Đã tiết kiệm</label>
-              <input
-                type="number"
-                class="form-control"
-                name="current_amount"
-                min="0"
-                step="1000"
-                value="0"
-              />
+
+            <div class="col-md-6 mb-3 position-relative">
+              <label class="form-label"
+                >Ngày hoàn thành <span class="text-danger">*</span></label
+              >
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="deadlinePicker"
+                  name="deadline"
+                  placeholder="dd/mm/yyyy"
+                  required
+                  readonly
+                />
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  id="btnOpenCalendar"
+                  title="Chọn ngày"
+                >
+                  <i class="bi bi-calendar-event"></i>
+                </button>
+              </div>
             </div>
           </div>
 
+          <!-- Hàng 2: Đóng góp + Chu kỳ -->
           <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Danh mục <span class="text-danger">*</label>
-              <select class="form-select" name="category">
-                <option value="">Chọn danh mục</option>
-                <option value="emergency">Khẩn cấp</option>
-                <option value="tech">Đồ công nghệ</option>
-                <option value="travel">Du lịch</option>
-                <option value="gift">Quà tặng</option>
-                <option value="housing">Nhà ở</option>
-                <option value="transportation">Di chuyển</option>
-                <option value="personal">Cá nhân</option>
-                <option value="other">Khác</option>
-              </select>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Mức độ ưu tiên</label>
-              <select class="form-select" name="priority">
-                <option value="" selected>Chọn mức độ ưu tiên</option>
-                <option value="low">Thấp</option>
-                <option value="medium">Trung bình</option>
-                <option value="high">Cao</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Ngày hoàn thành <span class="text-danger">*</span></label>
-              <input type="date" class="form-control" name="deadline" />
-            </div>
             <div class="col-md-6 mb-0">
-              <label class="form-label">Đóng góp hàng tháng <span class="text-danger">*</label>
+              <label class="form-label"
+                >Đóng góp hàng tháng/ tuần
+                <span class="text-danger">*</span></label
+              >
               <input
                 type="number"
                 class="form-control"
                 name="monthly_contribution"
                 min="0"
                 value="0"
+                required
               />
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Chu kỳ đóng góp</label>
+              <select class="form-select" name="contribute_interval">
+                <option value="monthly" selected>Hằng tháng</option>
+                <option value="weekly">Hằng tuần</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tự động góp -->
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label d-flex align-items-center gap-2">
+                <span>Tự động góp</span>
+                <span
+                  class="badge bg-secondary"
+                  style="font-size: 0.7rem; font-weight: 400"
+                  title="Khi bật, hệ thống sẽ tự động cộng tiền vào mục tiêu theo chu kỳ định sẵn."
+                  >Beta</span
+                >
+              </label>
+              <div class="form-check form-switch">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  name="auto_contribute"
+                  value="1"
+                />
+                <label class="form-check-label small text-muted"
+                  >Tự động trừ tiền hiện có và góp định kỳ</label
+                >
+              </div>
             </div>
           </div>
         </form>
@@ -121,39 +151,71 @@
   </div>
 </div>
 
-<!-- Chỉ form.html xử lý “icon cho danh mục” để tách biệt với trang chính -->
+<!-- Bootstrap Icons cho icon lịch (nếu chưa có ở base) -->
+<link
+  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+  rel="stylesheet"
+/>
+
+<!-- jQuery (bắt buộc cho bootstrap-datepicker) -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+<!-- Bootstrap Datepicker -->
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.10.0/dist/css/bootstrap-datepicker3.min.css"
+/>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.10.0/dist/js/bootstrap-datepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.10.0/dist/locales/bootstrap-datepicker.vi.min.js"></script>
+
+<style>
+  /* đảm bảo lịch nổi trên modal */
+  .datepicker-dropdown {
+    z-index: 2000 !important;
+  }
+</style>
+
 <script>
-  (() => {
-    // Bản đồ giá trị -> icon + nhãn
-    const CAT_META = {
-      emergency: { icon: "🧯", label: "Khẩn cấp" },
-      tech: { icon: "💻", label: "Đồ công nghệ" },
-      travel: { icon: "✈️", label: "Du lịch" },
-      gift: { icon: "🎁", label: "Quà tặng" },
-      housing: { icon: "🏠", label: "Nhà ở" },
-      transportation: { icon: "🚌", label: "Di chuyển" },
-      personal: { icon: "🧑", label: "Cá nhân" },
-      other: { icon: "🔖", label: "Khác" },
+  (function () {
+    const parseISO = (iso) => {
+      if (!iso) return "";
+      const d = new Date(iso);
+      const dd = String(d.getDate()).padStart(2, "0");
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const yyyy = d.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
     };
 
-    const modal = document.getElementById("goalModal");
+    const toISO = (dmy) => {
+      if (!dmy) return null;
+      const [dd, mm, yyyy] = dmy.split("/");
+      return `${yyyy}-${mm}-${dd}`;
+    };
 
-    function decorateCategorySelect() {
-      const sel = modal?.querySelector('select[name="category"]');
-      if (!sel) return;
-      [...sel.options].forEach((op) => {
-        if (!op.value) {
-          op.textContent = "Chọn danh mục";
-          return;
-        }
-        const meta = CAT_META[op.value];
-        if (meta) op.textContent = `${meta.icon} ${meta.label}`;
+    const modalEl = document.getElementById("goalModal");
+
+    // Khởi tạo datepicker mỗi lần mở modal để tránh trạng thái cũ
+    modalEl?.addEventListener("shown.bs.modal", () => {
+      const $inp = $("#deadlinePicker");
+
+      if ($inp.data("datepicker")) $inp.datepicker("destroy");
+      $inp.datepicker({
+        format: "dd/mm/yyyy",
+        autoclose: true,
+        todayHighlight: true,
+        language: "vi",
+        container: "#goalModal",
+        orientation: "bottom auto",
       });
-    }
 
-    // Trang điểm mỗi khi modal mở (và một lần khi trang đã load)
-    modal?.addEventListener("shown.bs.modal", decorateCategorySelect);
-    if (document.readyState !== "loading") decorateCategorySelect();
-    else document.addEventListener("DOMContentLoaded", decorateCategorySelect);
+      // Mở lịch khi bấm icon hoặc focus
+      $("#btnOpenCalendar")
+        .off("click")
+        .on("click", () => $inp.datepicker("show"));
+      $inp.off("focus").on("focus", () => $inp.datepicker("show"));
+    });
+
+    // expose helpers để JS trang chính dùng
+    window.__SAVINGS_DATE__ = { parseISO, toISO };
   })();
 </script>

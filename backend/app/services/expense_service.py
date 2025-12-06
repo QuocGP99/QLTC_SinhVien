@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from datetime import datetime
 from dateutil.parser import isoparse  # robust ISO parser (YYYY-MM-DD / YYYY-MM-DDTHH:MM:SS)
-from sqlalchemy import and_, desc
+from sqlalchemy import and_, desc, func
 
 from ..extensions import db
 from ..models import Expense, Category
@@ -168,3 +168,36 @@ def delete_expense(user_id: int, expense_id: int) -> int:
     db.session.delete(e)
     db.session.commit()
     return expense_id
+
+# Lấy dữ liệu chuỗi thời gian chi tiêu hàng ngày để huấn luyện mô hình dự báo
+def get_daily_expense_series(user_id: int, months: int = 12):
+    """
+    Lấy tổng chi tiêu theo từng ngày trong N tháng gần nhất.
+    Dữ liệu dùng cột spent_at (DATE) theo đúng model Expense.
+    """
+    from datetime import date, timedelta
+
+    start_date = date.today() - timedelta(days=30 * months)
+
+    rows = (
+        db.session.query(
+            func.date(Expense.spent_at).label("ds"),   # <-- sửa đúng trường ngày
+            func.sum(Expense.amount).label("y"),
+        )
+        .filter(
+            Expense.user_id == user_id,
+            Expense.spent_at >= start_date,
+        )
+        .group_by(func.date(Expense.spent_at))
+        .order_by(func.date(Expense.spent_at))
+        .all()
+    )
+
+    # Chuẩn hoá kết quả theo format Prophet
+    result = [
+        {"ds": r.ds, "y": float(r.y)}
+        for r in rows
+        if r.ds is not None
+    ]
+
+    return result

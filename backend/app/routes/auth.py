@@ -117,7 +117,7 @@ def register():
     return jsonify({
         "success": True,
         "message": "Đăng ký thành công. Vui lòng kiểm tra email để lấy mã OTP xác thực.",
-        "redirect_url": f"/verify-otp/{email}",
+        "redirect_url": url_for("web.verify_otp", email=email, _external=True)
     }), 201
 
 @bp.post("/resend-otp")

@@ -1,0 +1,187 @@
+[
+  { "id": 1, "input": "Mình vừa ăn bún bò 35k", "expect": "add_transaction" },
+  {
+    "id": 2,
+    "input": "Uống trà sữa Tocotoco 45k",
+    "expect": "add_transaction"
+  },
+  { "id": 3, "input": "Đi Grab hết 25k", "expect": "add_transaction" },
+  { "id": 4, "input": "Nạp card điện thoại 20k", "expect": "add_transaction" },
+  { "id": 5, "input": "Mua sách hết 120k", "expect": "add_transaction" },
+  { "id": 6, "input": "Đi siêu thị mua đồ 150k", "expect": "add_transaction" },
+  { "id": 7, "input": "Mua áo Shopee 99k", "expect": "add_transaction" },
+  { "id": 8, "input": "Trả tiền điện 350k", "expect": "add_transaction" },
+  { "id": 9, "input": "Đóng tiền phòng 1500000", "expect": "add_transaction" },
+  { "id": 10, "input": "Đi học mua tập 12k", "expect": "add_transaction" },
+  { "id": 11, "input": "Tiền photo tài liệu 10k", "expect": "add_transaction" },
+  { "id": 12, "input": "Đi chơi net hết 30k", "expect": "add_transaction" },
+
+  {
+    "id": 13,
+    "input": "Mình mới nhận lương 3 triệu",
+    "expect": "income_transaction"
+  },
+  {
+    "id": 14,
+    "input": "Học bổng kỳ này 5 triệu",
+    "expect": "income_transaction"
+  },
+  {
+    "id": 15,
+    "input": "Mẹ gửi cho mình 2 triệu",
+    "expect": "income_transaction"
+  },
+  { "id": 16, "input": "Bán áo được 150k", "expect": "income_transaction" },
+  {
+    "id": 17,
+    "input": "Bác gửi cho mình 300k",
+    "expect": "income_transaction"
+  },
+
+  {
+    "id": 18,
+    "input": "Đặt ngân sách ăn uống 1 triệu tháng này",
+    "expect": "set_budget"
+  },
+  {
+    "id": 19,
+    "input": "Thiết lập ngân sách di chuyển 300k",
+    "expect": "set_budget"
+  },
+  {
+    "id": 20,
+    "input": "Ngân sách học tập 500k cho tháng này",
+    "expect": "set_budget"
+  },
+  {
+    "id": 21,
+    "input": "Đặt ngân sách 2 triệu cho ăn uống",
+    "expect": "set_budget"
+  },
+  { "id": 22, "input": "Ngân sách xem phim 200k", "expect": "set_budget" },
+
+  {
+    "id": 23,
+    "input": "Đặt mục tiêu tiết kiệm mua laptop 15 triệu",
+    "expect": "set_saving_goal"
+  },
+  {
+    "id": 24,
+    "input": "Đặt mục tiêu tiết kiệm đi du lịch 3 triệu",
+    "expect": "set_saving_goal"
+  },
+  {
+    "id": 25,
+    "input": "Tạo mục tiêu tiết kiệm 2 triệu cho học phí",
+    "expect": "set_saving_goal"
+  },
+  {
+    "id": 26,
+    "input": "Thêm 200k vào mục tiêu laptop",
+    "expect": "update_saving_goal"
+  },
+  {
+    "id": 27,
+    "input": "Cộng 500k vào mục tiêu tiết kiệm mua xe đạp",
+    "expect": "update_saving_goal"
+  },
+  {
+    "id": 28,
+    "input": "Góp 100k tiết kiệm tháng này",
+    "expect": "update_saving_goal"
+  },
+
+  { "id": 29, "input": "Mở trang chi tiêu", "expect": "go_expense" },
+  { "id": 30, "input": "Xem thu nhập", "expect": "go_income" },
+  { "id": 31, "input": "Đến trang ngân sách", "expect": "go_budget" },
+  { "id": 32, "input": "Tới mục tiêu tiết kiệm", "expect": "go_saving" },
+  { "id": 33, "input": "Xem phân tích tài chính", "expect": "go_analytics" },
+  { "id": 34, "input": "Quay về trang chủ", "expect": "go_dashboard" },
+
+  {
+    "id": 35,
+    "input": "Tìm giao dịch trà sữa",
+    "expect": "search_transaction"
+  },
+  {
+    "id": 36,
+    "input": "Cho mình xem các khoản chi ăn uống",
+    "expect": "search_transaction"
+  },
+  { "id": 37, "input": "Tìm giao dịch xăng", "expect": "search_transaction" },
+  {
+    "id": 38,
+    "input": "Tìm chi tiêu mua sắm tuần này",
+    "expect": "search_transaction"
+  },
+  {
+    "id": 39,
+    "input": "Cho mình xem các khoản thu nhập gần đây",
+    "expect": "search_transaction"
+  },
+
+  {
+    "id": 40,
+    "input": "Chi tiêu ăn uống tháng 11/2025",
+    "expect": "ask_report"
+  },
+  {
+    "id": 41,
+    "input": "Tổng chi tiêu tháng này là bao nhiêu?",
+    "expect": "ask_report"
+  },
+  {
+    "id": 42,
+    "input": "Tháng này mình tiêu nhiều nhất vào đâu?",
+    "expect": "ask_report"
+  },
+  {
+    "id": 43,
+    "input": "So sánh chi tiêu tháng này với tháng trước",
+    "expect": "ask_report"
+  },
+  {
+    "id": 44,
+    "input": "Thu nhập tháng vừa rồi bao nhiêu?",
+    "expect": "ask_report"
+  },
+  { "id": 45, "input": "Tổng tiền mua sắm tháng này", "expect": "ask_report" },
+  {
+    "id": 46,
+    "input": "Báo cáo chi tiêu tuần này giúp mình",
+    "expect": "ask_report"
+  },
+
+  {
+    "id": 47,
+    "input": "Mình tiêu nhiều quá phải không?",
+    "expect": "ask_analysis"
+  },
+  {
+    "id": 48,
+    "input": "Chi tiêu tháng này ổn không?",
+    "expect": "ask_analysis"
+  },
+  { "id": 49, "input": "Mình nên cắt giảm ở đâu?", "expect": "ask_analysis" },
+  {
+    "id": 50,
+    "input": "Giúp mình phân tích chi tiêu tổng thể",
+    "expect": "ask_analysis"
+  },
+  {
+    "id": 51,
+    "input": "Cho mình lời khuyên tiết kiệm tháng này",
+    "expect": "ask_analysis"
+  },
+  { "id": 52, "input": "Nên giảm chi tiêu mục nào?", "expect": "ask_analysis" },
+  {
+    "id": 53,
+    "input": "Có phải mình chi vượt mức không?",
+    "expect": "ask_analysis"
+  },
+  {
+    "id": 54,
+    "input": "Đánh giá chi tiêu của mình giúp với",
+    "expect": "ask_analysis"
+  }
+]

@@ -117,41 +117,62 @@ const BudgetPage = (() => {
     state.items.forEach((it) => {
       const limit = Number(it.amount ?? it.limit ?? 0);
       const spent = Number(it.spent ?? it.used ?? 0);
-      const pct = Number.isFinite(it.percent_used)
-        ? Math.round(it.percent_used)
-        : limit
-        ? Math.min(100, Math.round((spent * 100) / limit))
-        : 0;
-      const remain = Math.max(0, limit - spent);
-      const barCls =
-        pct < 70 ? "bg-success" : pct < 90 ? "bg-warning" : "bg-danger";
+
+      // % thực tế có thể >100 cho NHÃN
+      const rawPct = limit ? Math.round((spent * 100) / limit) : 0;
+      // % cho thanh progress (0–100)
+      const pctBar = Math.max(0, Math.min(100, rawPct));
+      const pctLabel = `${rawPct}% đã dùng`;
+      const remain = limit - spent; // có thể âm
+
+      // Xử lý trạng thái còn lại
+      let remainLabel = "";
+      if (rawPct === 100) {
+        remainLabel = "đã hết ngân sách hiện có";
+      } else if (remain < 0) {
+        remainLabel = "đã quá ngân sách hiện có";
+      } else {
+        remainLabel = `${money(remain)} còn lại`;
+      }
+      // Màu thanh tiến độ đỏ khi >=90, vàng khi >=80, mặc định xanh
+      const barClass =
+        rawPct >= 90 ? "bg-danger" : rawPct >= 80 ? "bg-warning" : "bg-primary";
 
       const card = document.createElement("div");
       card.className = "card card-rounded border-0 shadow-sm";
+      card.id = `budget-card-${it.category_id}`; // ← thêm ID để AI tìm đúng card
+
       card.innerHTML = `
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-1">
-            <div class="fw-semibold">${
-              it.category || it.category_name || "Danh mục"
-            }</div>
-            <div class="d-flex align-items-center gap-2 text-muted small">
-              <span>${money(spent)} / ${money(limit)}</span>
-              <i class="bi bi-pencil-square action-btn" data-action="edit" data-id="${
-                it.id
-              }" title="Sửa"></i>
-              <i class="bi bi-trash action-btn" data-action="del" data-id="${
-                it.id
-              }" title="Xóa"></i>
-            </div>
-          </div>
-          <div class="progress" style="height:10px">
-            <div class="progress-bar ${barCls}" style="width:${pct}%"></div>
-          </div>
-          <div class="d-flex justify-content-between small mt-1">
-            <span>${pct}% đã dùng</span>
-            <span>${money(remain)} còn lại</span>
-          </div>
-        </div>`;
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+      <div class="fw-semibold">${
+        it.category || it.category_name || "Danh mục"
+      }</div>
+      <div class="d-flex align-items-center gap-2 text-muted small">
+        <span>${money(spent)} / ${money(limit)}</span>
+        <i class="bi bi-pencil-square action-btn" data-action="edit" data-id="${
+          it.id
+        }" title="Sửa"></i>
+        <i class="bi bi-trash action-btn" data-action="del" data-id="${
+          it.id
+        }" title="Xóa"></i>
+      </div>
+    </div>
+
+    <div class="progress" style="height:10px">
+      <div class="progress-bar ${barClass}" style="width:${pctBar}%"></div>
+    </div>
+
+    <div class="d-flex justify-content-between small mt-1">
+      <span>${pctLabel}</span>
+      <span>${remainLabel}</span>
+    </div>
+
+    <!-- container cảnh báo AI -->
+    <div class="ai-warning mt-2 small"></div>
+
+  </div>`;
+
       wrap.appendChild(card);
     });
   }
@@ -182,6 +203,7 @@ const BudgetPage = (() => {
     };
     renderKPIs();
     renderList();
+    await loadBudgetAIWarnings();
 
     // --- GHI DỮ LIỆU CHO CHUÔNG CẢNH BÁO ---
     try {
@@ -200,6 +222,41 @@ const BudgetPage = (() => {
       window.BudgetNotify.render();
     }
   }
+  // ---- Load AI cảnh báo ngân sách
+  async function loadBudgetAIWarnings() {
+    let data = await apiGet(`/api/budgets/ai/warnings`);
+
+    if (!data || !data.items) return;
+
+    data.items.forEach((info) => {
+      const el = document.querySelector(
+        `#budget-card-${info.category_id} .ai-warning`
+      );
+      if (!el) return;
+
+      let text = "";
+      let color = "";
+
+      if (info.status === "danger") {
+        text = `⚠ Chi tiêu dự kiến vượt ${info.overshoot.toLocaleString(
+          "vi-VN"
+        )} đ`;
+        color = "text-danger fw-bold";
+      } else if (info.status === "warning") {
+        text = `⚠ Sắp vượt ngân sách (${info.overshoot.toLocaleString(
+          "vi-VN"
+        )} đ)`;
+        color = "text-warning fw-semibold";
+      } else {
+        text = `✓ An toàn. Tốc độ chi: ${info.velocity.toLocaleString(
+          "vi-VN"
+        )} đ/ngày`;
+        color = "text-success fw-semibold";
+      }
+
+      el.innerHTML = `<span class="${color}">${text}</span>`;
+    });
+  }
 
   function bind() {
     qs("#btnAddBudget")?.addEventListener("click", () => openModal("add"));
@@ -209,6 +266,11 @@ const BudgetPage = (() => {
   async function init() {
     bind();
     await load();
+    await loadBudgetAIWarnings();
   }
   return { init };
 })();
+
+document.addEventListener("DOMContentLoaded", () => {
+  BudgetPage.init();
+});

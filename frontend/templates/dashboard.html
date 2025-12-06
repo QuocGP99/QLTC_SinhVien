@@ -43,14 +43,37 @@
 <div class="row g-3 mb-3">
   <div class="col-12 col-md-6 col-lg-3">
     <div class="card kpi-card kpi-green">
-      <div class="card-body">
-        <div class="d-flex align-items-center justify-content-between">
-          <div>
-            <div class="small opacity-75">Số dư tổng</div>
-            <div id="kpiBalance" class="kpi-value">₫2.847.500</div>
-            <div class="small opacity-75">+2.1% so với tháng trước</div>
+      <div class="card kpi-card kpi-green">
+        <div class="card-body position-relative">
+          <!-- [UPDATE] thêm position-relative để đặt nút tuyệt đối -->
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <!-- [UPDATE] Bỏ nút con mắt ở bên trái tiêu đề (tránh trùng ID) -->
+              <div class="small opacity-75">Số dư tổng</div>
+              <!-- [UPDATE] Hiển thị giá trị có thể ẩn/hiện -->
+              <div id="kpiBalance" class="kpi-value mt-1" data-amount="0">
+                ********
+              </div>
+              <div class="small opacity-75">+2.1% so với tháng trước</div>
+            </div>
+
+            <!-- [UPDATE] Icon ví giữ nguyên, KHÔNG bọc nút con mắt ở đây -->
+            <i class="bi bi-wallet2 fs-2 opacity-75"></i>
           </div>
-          <i class="bi bi-wallet2 fs-2 opacity-75"></i>
+
+          <!-- [ADD] Nút con mắt DUY NHẤT đặt ở góc phải trên card-body -->
+          <button
+            id="toggleBalance"
+            type="button"
+            class="btn btn-sm p-0 border-0 bg-transparent position-absolute"
+            title="Ẩn/Hiện số dư"
+            style="top: 10px; right: 12px; line-height: 1"
+          >
+            <i
+              class="bi bi-eye-slash fs-5 text-white opacity-75"
+              id="toggleBalanceIcon"
+            ></i>
+          </button>
         </div>
       </div>
     </div>
@@ -92,8 +115,8 @@
         <div class="d-flex align-items-center justify-content-between">
           <div>
             <div class="small opacity-75">Điểm AI</div>
-            <div id="kpiAiScore" class="kpi-value">8.2/10</div>
-            <div class="small opacity-75">Sức khỏe tài chính tốt</div>
+            <div id="kpiAiScore" class="kpi-value">0/10</div>
+            <div id="kpiAiStatus" class="small opacity-75">Đang tải...</div>
           </div>
           <i class="bi bi-lightbulb fs-2 opacity-75"></i>
         </div>
@@ -150,274 +173,241 @@
   </div>
 
   <!-- AI Insights -->
-  <div class="col-lg-5">
-    <div class="card card-rounded shadow-sm mb-3">
-      <div class="card-body">
-        <div class="fw-semibold mb-2">Gợi ý từ AI</div>
+<div class="col-lg-5">
+  <div class="card card-rounded shadow-sm mb-3">
+    <div class="card-body">
+      <div class="fw-semibold mb-2">Gợi ý từ AI</div>
 
-        <div class="p-3 rounded-3 mb-2 border" style="background: #fff7ed">
-          <div class="d-flex justify-content-between">
-            <div class="fw-semibold">Chi cho ăn uống cao</div>
-            <span class="pill bg-danger-subtle text-danger-emphasis">cao</span>
-          </div>
-          <div class="small text-muted">
-            Bạn chi nhiều hơn 23% so với tháng trước. Nên nấu ăn tại nhà.
-          </div>
-          <div class="small text-primary mt-1">
-            Tiềm năng tiết kiệm: ₫150.000/tháng
-          </div>
+      <div id="aiTipsList" class="vstack gap-2">
+        <div class="text-muted small fst-italic">
+          Đang tải đề xuất từ AI...
         </div>
+      </div>
 
-        <div class="p-3 rounded-3 mb-2 border" style="background: #ecfeff">
-          <div class="d-flex justify-content-between">
-            <div class="fw-semibold">Tối ưu di chuyển</div>
-            <span class="pill bg-success-subtle text-success-emphasis"
-              >thấp</span
-            >
+      <div class="p-3 rounded-3 border mt-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="fw-semibold">Điểm sức khỏe tài chính</div>
+            <div id="aiPanelStatus" class="small text-muted">Đang tải...</div>
           </div>
-          <div class="small text-muted">Cân nhắc đi xe buýt/thẻ tháng.</div>
-          <div class="small text-primary mt-1">Tiềm năng: ₫80.000/tháng</div>
-        </div>
-
-        <div class="p-3 rounded-3 mb-2 border" style="background: #faf5ff">
-          <div class="d-flex justify-content-between">
-            <div class="fw-semibold">Tiết kiệm giáo trình</div>
-            <span class="pill bg-warning-subtle text-warning-emphasis"
-              >trung bình</span
-            >
-          </div>
-          <div class="small text-muted">
-            Thuê/mua lại sách cũ để giảm chi phí.
-          </div>
-          <div class="small text-primary mt-1">Tiềm năng: ₫120.000/tháng</div>
-        </div>
-
-        <div class="p-3 rounded-3 border">
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <div class="fw-semibold">Điểm sức khỏe tài chính</div>
-              <div class="small text-muted">Giữ thói quen tốt để đạt 9.0</div>
-            </div>
-            <div class="fs-4 fw-bold text-primary">8.2/10</div>
-          </div>
+          <div id="aiPanelScore" class="fs-4 fw-bold text-primary">0.0/10</div>
         </div>
       </div>
     </div>
   </div>
+</div>
+</div>
 
-  <!-- Bottom row: recent, budget, savings -->
+<!-- ================== HÀNG 2: 3 CARD NHỎ ================== -->
+<div class="row g-3 mt-1">
+
+  <!-- Giao dịch gần đây -->
   <div class="col-lg-4">
     <div class="card card-rounded shadow-sm h-100">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <div class="fw-semibold">Giao dịch gần đây</div>
-          <button
-            class="btn btn-sm btn-outline-secondary"
-            id="viewAllTransactionsBtn"
-          >
+          <button class="btn btn-sm btn-outline-secondary" id="viewAllTransactionsBtn">
             Xem tất cả
           </button>
         </div>
-        <div id="recentList" class="vstack gap-2">
-          <!-- JS render -->
-        </div>
+        <div id="recentList" class="vstack gap-2"></div>
       </div>
     </div>
   </div>
 
+  <!-- Tổng quan ngân sách -->
   <div class="col-lg-4">
     <div class="card card-rounded shadow-sm h-100">
       <div class="card-body">
+
         <div class="d-flex justify-content-between align-items-center mb-2">
           <div class="fw-semibold">Tổng quan ngân sách</div>
-          <button
-            class="btn btn-link p-0 text-muted small"
-            id="openBudgetPageBtn"
-            style="text-decoration: none"
-            title="Quản lý ngân sách"
-          >
+          <button class="btn btn-link p-0 text-muted small" id="openBudgetPageBtn">
             <i class="bi bi-gear"></i>
           </button>
         </div>
 
-        <!-- Nhãn tháng/năm -->
-        <div class="small text-muted mb-1" id="budgetMonthLabel">
-          Ngân sách tháng
-        </div>
+        <div class="small text-muted mb-1" id="budgetMonthLabel">Ngân sách tháng</div>
 
-        <!-- Tổng đã dùng / hạn mức + % -->
         <div class="d-flex align-items-center justify-content-between">
           <div class="fw-semibold" id="budgetUsedVsLimit">₫0 / ₫0</div>
           <div class="small text-muted" id="budgetPercentUsed">0% sử dụng</div>
         </div>
 
-        <!-- Thanh tiến độ tổng -->
-        <div class="progress my-2" style="height: 10px">
-          <div
-            class="progress-bar"
-            id="budgetProgressBar"
-            style="width: 0%"
-          ></div>
+        <div class="progress my-2" style="height:10px">
+          <div class="progress-bar" id="budgetProgressBar"></div>
         </div>
 
-        <!-- Danh mục -->
         <div class="mt-3">
           <div class="fw-semibold small mb-2">Phân bổ theo danh mục</div>
-          <div id="budgetList" class="vstack gap-2">
-            <!-- JS render -->
-          </div>
+          <div id="budgetList" class="vstack gap-2"></div>
         </div>
+
       </div>
     </div>
   </div>
 
+  <!-- Mục tiêu tiết kiệm -->
   <div class="col-lg-4">
     <div class="card card-rounded shadow-sm h-100">
       <div class="card-body">
+
         <div class="d-flex justify-content-between align-items-center mb-2">
           <div class="fw-semibold">Mục tiêu tiết kiệm</div>
-          <button
-            class="btn btn-sm btn-outline-secondary"
-            id="dashViewSavingsBtn"
-          >
+          <button class="btn btn-sm btn-outline-secondary" id="dashViewSavingsBtn">
             Xem chi tiết
           </button>
         </div>
 
-        <!-- Tổng tiến độ tất cả goals -->
         <div class="small text-muted mb-1">Tiến độ tổng</div>
-        <div class="progress mb-2" style="height: 10px">
-          <div
-            class="progress-bar bg-success"
-            id="savingsTotalBar"
-            style="width: 0%"
-          ></div>
+
+        <div class="progress mb-2" style="height:10px">
+          <div class="progress-bar bg-success" id="savingsTotalBar"></div>
         </div>
+
         <div class="small" id="savingsTotalText">₫0 / ₫0</div>
 
-        <!-- Danh sách mục tiêu cụ thể -->
-        <div class="mt-3 vstack gap-2" id="savingsGoals">
-          <!-- JS render -->
+        <div class="mt-3 vstack gap-2" id="savingsGoals"></div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+      <!-- ========== MODALS (phải ở trong DOM trước khi JS chạy) ========== -->
+
+      <!-- Modal chọn loại giao dịch -->
+      <div
+        class="modal fade"
+        id="chooseTypeModal"
+        tabindex="-1"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content rounded-3">
+            <div class="modal-header">
+              <h5 class="modal-title">Thêm giao dịch mới</h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Đóng"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <p class="mb-3 fw-semibold">Bạn muốn thêm loại giao dịch nào?</p>
+              <div class="d-grid gap-2">
+                <button class="btn btn-danger" id="btnChooseExpense">
+                  <i class="bi bi-cash-stack me-1"></i> Chi tiêu
+                </button>
+                <button class="btn btn-success" id="btnChooseIncome">
+                  <i class="bi bi-cash-coin me-1"></i> Thu nhập
+                </button>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                data-bs-dismiss="modal"
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
 
-<!-- ========== MODALS (phải ở trong DOM trước khi JS chạy) ========== -->
-
-<!-- Modal chọn loại giao dịch -->
-<div class="modal fade" id="chooseTypeModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content rounded-3">
-      <div class="modal-header">
-        <h5 class="modal-title">Thêm giao dịch mới</h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
-          aria-label="Đóng"
-        ></button>
-      </div>
-      <div class="modal-body">
-        <p class="mb-3 fw-semibold">Bạn muốn thêm loại giao dịch nào?</p>
-        <div class="d-grid gap-2">
-          <button class="btn btn-danger" id="btnChooseExpense">
-            <i class="bi bi-cash-stack me-1"></i> Chi tiêu
-          </button>
-          <button class="btn btn-success" id="btnChooseIncome">
-            <i class="bi bi-cash-coin me-1"></i> Thu nhập
-          </button>
+      <!-- Modal xác nhận loại giao dịch -->
+      <div
+        class="modal fade"
+        id="confirmAddModal"
+        tabindex="-1"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content rounded-3">
+            <div class="modal-header">
+              <h5 class="modal-title">Xác nhận thêm giao dịch</h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Đóng"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <p class="mb-0" id="confirmMessage"></p>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+                id="btnNoConfirm"
+              >
+                Không
+              </button>
+              <button type="button" class="btn btn-primary" id="btnYesConfirm">
+                OK
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button
-          type="button"
-          class="btn btn-outline-secondary"
-          data-bs-dismiss="modal"
-        >
-          Hủy
-        </button>
+
+      <!-- Modal xác nhận thêm mục tiêu tiết kiệm -->
+      <div
+        class="modal fade"
+        id="confirmAddSavingModal"
+        tabindex="-1"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content rounded-3">
+            <div class="modal-header">
+              <h5 class="modal-title">Xác nhận thêm mục tiêu</h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Đóng"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <p class="mb-0 fw-semibold">
+                Bạn chắc chắn muốn thêm mục tiêu tiết kiệm?
+              </p>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+                id="btnNoAddSaving"
+              >
+                Không
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                id="btnYesAddSaving"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {% include 'transactions/expense_form.html' %} {% include
+      'transactions/income_form.html' %} {% endblock %} {% block scripts %}
+      <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+      <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+      {% endblock %}
     </div>
   </div>
 </div>
-
-<!-- Modal xác nhận loại giao dịch -->
-<div class="modal fade" id="confirmAddModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content rounded-3">
-      <div class="modal-header">
-        <h5 class="modal-title">Xác nhận thêm giao dịch</h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
-          aria-label="Đóng"
-        ></button>
-      </div>
-      <div class="modal-body">
-        <p class="mb-0" id="confirmMessage"></p>
-      </div>
-      <div class="modal-footer">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          data-bs-dismiss="modal"
-          id="btnNoConfirm"
-        >
-          Không
-        </button>
-        <button type="button" class="btn btn-primary" id="btnYesConfirm">
-          OK
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal xác nhận thêm mục tiêu tiết kiệm -->
-<div
-  class="modal fade"
-  id="confirmAddSavingModal"
-  tabindex="-1"
-  aria-hidden="true"
->
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content rounded-3">
-      <div class="modal-header">
-        <h5 class="modal-title">Xác nhận thêm mục tiêu</h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
-          aria-label="Đóng"
-        ></button>
-      </div>
-      <div class="modal-body">
-        <p class="mb-0 fw-semibold">
-          Bạn chắc chắn muốn thêm mục tiêu tiết kiệm?
-        </p>
-      </div>
-      <div class="modal-footer">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          data-bs-dismiss="modal"
-          id="btnNoAddSaving"
-        >
-          Không
-        </button>
-        <button type="button" class="btn btn-primary" id="btnYesAddSaving">
-          OK
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-{% include 'transactions/expense_form.html' %} {% include
-'transactions/income_form.html' %} {% endblock %} {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
-{% endblock %}

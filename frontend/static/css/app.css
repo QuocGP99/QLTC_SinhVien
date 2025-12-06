@@ -96,3 +96,477 @@ body {
   border-radius: 0.5rem;
   padding: 0.6rem 0.8rem;
 }
+
+/* ===========================
+   🎨 START: SECTION COLOR THEME
+   (Tổng hợp màu từ Dashboard, Expenses, Income, Savings + Category chips)
+   =========================== */
+/* =====================================================================
+SVFinance – APP.CSS (BẢN HỢP NHẤT + CHÚ THÍCH)
+[Mục tiêu]
+- Gom màu sắc/định dạng theo module vào một nơi.
+- Giữ variables.css cho biến theme toàn cục.
+- Giữ tên class hiện có để không vỡ HTML/JS.
+
+[Chú thích chính]
+[GLOBAL]    : Dùng chung toàn site
+[DASHBOARD] : Trang bảng điều khiển
+[EXPENSES]  : Giao diện Chi tiêu
+[INCOME]    : Giao diện Thu nhập
+[SAVINGS]   : Mục tiêu Tiết kiệm
+[CATEGORY]  : Huy hiệu danh mục dùng ở nhiều nơi
+===================================================================== */
+
+/* ==============================
+   [GLOBAL] Token & màu nền/viền
+   ============================== */
+:root {
+  --border-soft-1: #edf0f5; /* viền card mềm (expenses/income) */
+  --border-soft-2: #eef1f4; /* viền card mềm (savings goals)   */
+  --text-muted-1: #64748b; /* chữ xám trung tính (savings)    */
+  --bg-surface-1: #ffffff; /* nền bề mặt trắng                */
+  --bg-hover-1: #f8fafc; /* hover nhẹ                       */
+
+  /* Gradient KPI – dùng ở nhiều trang */
+  --kpi-green-from: #22c55e;
+  --kpi-green-to: #16a34a;
+  --kpi-blue-from: #3b82f6;
+  --kpi-blue-to: #2563eb;
+  --kpi-purple-from: #a855f7;
+  --kpi-purple-to: #7c3aed;
+  --kpi-orange-from: #f97316;
+  --kpi-orange-to: #ea580c;
+
+  /* Soft BG cho khối nổi bật */
+  --soft-lavender: #faf5ff;
+  --soft-cyan: #ecfeff;
+  --soft-peach: #fff7ed;
+}
+
+/* [GLOBAL] Card & helper */
+.card-rounded {
+  border-radius: 16px;
+}
+.muted-on-dark {
+  color: rgba(255, 255, 255, 0.85);
+}
+.bg-soft-lavender {
+  background: var(--soft-lavender);
+}
+.bg-soft-cyan {
+  background: var(--soft-cyan);
+}
+.bg-soft-peach {
+  background: var(--soft-peach);
+}
+
+/* [GLOBAL] KPI chung */
+.kpi-card {
+  border: 0;
+  border-radius: 16px;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+.kpi-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+.kpi-green {
+  background: linear-gradient(
+    135deg,
+    var(--kpi-green-from),
+    var(--kpi-green-to)
+  );
+}
+.kpi-blue {
+  background: linear-gradient(135deg, var(--kpi-blue-from), var(--kpi-blue-to));
+}
+.kpi-purple {
+  background: linear-gradient(
+    135deg,
+    var(--kpi-purple-from),
+    var(--kpi-purple-to)
+  );
+}
+.kpi-orange {
+  background: linear-gradient(
+    135deg,
+    var(--kpi-orange-from),
+    var(--kpi-orange-to)
+  );
+}
+
+/* [DASHBOARD] */
+.pill {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+}
+
+/* [EXPENSES] Transactions/Expenses */
+.expense-card {
+  border: 1px solid var(--border-soft-1);
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+  background: var(--bg-surface-1);
+}
+.kpi-expenses-total {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+} /* Tổng chi */
+.kpi-expenses-count {
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
+} /* Số giao dịch */
+.kpi-expenses-avg {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+} /* Trung bình */
+
+/* [INCOME] Transactions/Income */
+.income-card {
+  border: 1px solid var(--border-soft-1);
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+  background: var(--bg-surface-1);
+}
+.kpi-income-total {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+} /* Tổng thu */
+.kpi-income-count {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+} /* Số giao dịch */
+.kpi-income-avg {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+} /* Trung bình */
+
+/* [SAVINGS] Goals */
+.bg-radial-dots {
+  background: radial-gradient(
+      1200px 600px at 60% -200px,
+      rgba(0, 0, 0, 0.03),
+      transparent
+    )
+    fixed;
+}
+.goal-card {
+  border: 1px solid var(--border-soft-2);
+  border-radius: 16px;
+  background: var(--bg-surface-1);
+}
+.muted {
+  color: var(--text-muted-1);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
+}
+.chip.low {
+  background: #ecfdf5;
+  border-color: #d7f6e2;
+  color: #15803d;
+}
+.chip.medium {
+  background: #fff8e7;
+  border-color: #fde1a5;
+  color: #a16207;
+}
+.chip.high {
+  background: #fff0f0;
+  border-color: #ffd1d1;
+  color: #b91c1c;
+}
+
+.goal-actions .icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid #e9edf2;
+  background: var(--bg-surface-1);
+}
+.goal-actions .icon-btn:hover {
+  background: var(--bg-hover-1);
+}
+
+/* [CATEGORY] Chip danh mục */
+:root {
+  --cat-text-dark: #1f2937;
+  --cat-text-light: #ffffff;
+  --cat-border: rgba(0, 0, 0, 0.06);
+}
+.cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  border: 1px solid var(--cat-border);
+  background-color: var(--cat-bg, #f3f4f6);
+  color: var(--cat-fg, var(--cat-text-dark));
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+  white-space: nowrap;
+  color: var(--cat-fg, #0f172a);
+  background-color: var(--cat-bg, #f3f4f6);
+}
+.cat--an-uong {
+  --cat-bg: #e8f2ff;
+  --cat-fg: #5ca7ff;
+}
+
+/* Di chuyển */
+.cat--di-chuyen {
+  --cat-bg: #e6fcf4;
+  --cat-fg: #2ecc71;
+}
+
+/* Giải trí */
+.cat--giai-tri {
+  --cat-bg: #ffe6f3;
+  --cat-fg: #ff66b3;
+}
+
+/* Học tập */
+.cat--hoc-tap {
+  --cat-bg: #fff7d9;
+  --cat-fg: #ffc233;
+}
+
+.cat--nha-o {
+  --cat-bg: #fff2e6;
+  --cat-fg: #ff8f33;
+}
+
+/* Mua sắm */
+.cat--mua-sam {
+  --cat-bg: #f5eafc;
+  --cat-fg: #9b59b6;
+}
+
+/* Sức khỏe (đổi sang màu đỏ) */
+.cat--suc-khoe {
+  --cat-bg: #ffe9e9;
+  --cat-fg: #dc2626;
+}
+
+/* Khác (đổi sang màu xám) */
+.cat--khac {
+  --cat-bg: #f3f4f6;
+  --cat-fg: #6b7280;
+}
+/* ====== INCOME CATEGORIES (đồng bộ với combobox: Học bổng, Khác, Lương, Thưởng) ====== */
+
+/* Lương */
+.cat--luong {
+  --cat-bg: #e9fbef;
+  --cat-fg: #16a34a;
+}
+
+/* Thưởng */
+.cat--thuong {
+  --cat-bg: #e6fffb;
+  --cat-fg: #0ea5e9;
+}
+
+/* Học bổng */
+.cat--hoc-bong {
+  --cat-bg: #f3e8ff;
+  --cat-fg: #a855f7;
+}
+/* Khác / Thu nhập khác */
+.cat--khac,
+.cat--thu-nhap-khac {
+  --cat-bg: #f3f4f6;
+  --cat-fg: #6b7280;
+}
+
+/* Badge used in transactions list */
+.cat-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.4;
+  background: #f1f5f9; /* fallback */
+  color: #0f172a; /* slate-900 */
+  border: 0;
+}
+.cat-badge.white-text {
+  color: #fff;
+}
+
+.cat-chip.is-solid {
+  background-color: var(--cat-fg);
+  color: var(--cat-text-light);
+  border-color: transparent;
+}
+.cat-chip.xs {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.45rem;
+}
+.cat-chip.sm {
+  font-size: 0.8125rem;
+  padding: 0.25rem 0.5rem;
+}
+.cat-chip.lg {
+  font-size: 0.9375rem;
+  padding: 0.4rem 0.75rem;
+}
+.cat-chip {
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+  white-space: nowrap;
+}
+
+/* ===========================
+   🎨 END: SECTION COLOR THEME
+   =========================== */
+.chatbot {
+  position: fixed;
+  right: 20px;
+  bottom: 92px; /* chừa chỗ cho FAB */
+  width: 340px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  border-radius: 16px;
+  overflow: hidden;
+  z-index: 1045;
+}
+.chatbot.hidden {
+  display: none;
+}
+
+.chatbot__header {
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-bottom: 1px solid #eef2f7;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chatbot__suggestions {
+  padding: 8px 12px 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chatbot-chip {
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #374151;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+.chatbot-chip:hover {
+  background: #f3f4f6;
+}
+
+.chatbot__body {
+  padding: 12px;
+  overflow: auto;
+  flex: 1;
+  background: #ffffff;
+}
+.chatbot__input {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid #eef2f7;
+  background: #fff;
+}
+
+/* Bubbles */
+.chat-msg {
+  display: inline-block;
+  max-width: 90%;
+  padding: 8px 10px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  line-height: 1.35;
+  word-break: break-word;
+}
+.chat-msg.user {
+  background: #e8f2ff;
+  color: #1d4ed8;
+  border-top-right-radius: 4px;
+  align-self: flex-end;
+}
+.chat-msg.bot {
+  background: #f3f4f6;
+  color: #111827;
+  border-top-left-radius: 4px;
+}
+
+/* List layout */
+.chat-row {
+  display: flex;
+  margin-bottom: 6px;
+}
+.chat-row.user {
+  justify-content: flex-end;
+}
+.chat-row.bot {
+  justify-content: flex-start;
+}
+
+/* FAB */
+.chatbot-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
+  z-index: 1045;
+}
+.chatbot-fab:hover {
+  filter: brightness(0.95);
+}
+
+/* Dark mode */
+:root[data-bs-theme="dark"] .chatbot {
+  background: #101214;
+  border-color: #1f2937;
+}
+:root[data-bs-theme="dark"] .chatbot__header {
+  background: #0b0c0d;
+  border-bottom-color: #1f2937;
+}
+:root[data-bs-theme="dark"] .chatbot__body,
+:root[data-bs-theme="dark"] .chatbot__input {
+  background: #101214;
+  border-top-color: #1f2937;
+}
+:root[data-bs-theme="dark"] .chat-msg.bot {
+  background: #0f172a;
+  color: #e5e7eb;
+}
+:root[data-bs-theme="dark"] .chat-msg.user {
+  background: #0b3b8f;
+  color: #e8f2ff;
+}
+:root[data-bs-theme="dark"] .chatbot-chip {
+  background: #111827;
+  color: #e5e7eb;
+  border-color: #243042;
+}

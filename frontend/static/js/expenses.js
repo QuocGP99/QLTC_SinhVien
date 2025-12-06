@@ -8,6 +8,7 @@ const ExpensesPage = (() => {
     filtered: [],
     currentCategoryId: "",
     editId: null,
+    groupByMonth: true,
   };
 
   // ===== Date utils =====
@@ -16,7 +17,6 @@ const ExpensesPage = (() => {
 
   function toISODate(s) {
     if (!s) return "";
-    // "dd/mm/yyyy" -> "yyyy-mm-dd"
     if (s.includes("/")) {
       const [d, m, y] = s.split("/");
       const pad = (n) => String(n).padStart(2, "0");
@@ -25,12 +25,13 @@ const ExpensesPage = (() => {
     return s;
   }
 
+  // ===== FIXED DATEPICKER (FULL SUPPORT) =====
   function ensureDatepicker() {
     const el = document.getElementById("expenseDate");
     const btn = document.getElementById("btnOpenExpenseCalendar");
     if (!el) return;
 
-    // ưu tiên bootstrap-datepicker (jquery)
+    // 1. Bootstrap Datepicker
     if (window.jQuery && jQuery.fn?.datepicker) {
       const $ = window.jQuery;
       $(el).datepicker({
@@ -44,7 +45,7 @@ const ExpensesPage = (() => {
       return;
     }
 
-    // fallback vanilla datepicker lib (Datepicker global)
+    // 2. Vanilla Datepicker
     if (window.Datepicker) {
       dp =
         dp ||
@@ -59,25 +60,15 @@ const ExpensesPage = (() => {
       return;
     }
 
-    // cuối cùng: không có datepicker -> disable nút mở lịch
-    dateMode = "none";
-    if (btn) btn.disabled = true;
-  }
-
-  function setDateField(dateObj) {
-    const el = document.getElementById("expenseDate");
-    if (!el) return;
-    const pad = (n) => String(n).padStart(2, "0");
-
-    if (dateMode === "bootstrap") {
-      window.jQuery(el).datepicker("setDate", dateObj);
-    } else if (dateMode === "vanilla") {
-      ensureDatepicker();
-      dp.setDate(dateObj);
-    } else {
-      el.value = `${pad(dateObj.getDate())}/${pad(
-        dateObj.getMonth() + 1
-      )}/${dateObj.getFullYear()}`;
+    // 3. Native fallback
+    el.type = "date";
+    dateMode = "native";
+    if (btn) {
+      btn.disabled = false;
+      btn.onclick = () => {
+        if (el.showPicker) el.showPicker();
+        else el.focus();
+      };
     }
   }
 
@@ -88,6 +79,27 @@ const ExpensesPage = (() => {
       return window.jQuery(el).datepicker("getFormattedDate", "dd/mm/yyyy");
     }
     return el.value || "";
+  }
+
+  function setDateField(dateObj) {
+    const el = document.getElementById("expenseDate");
+    if (!el) return;
+
+    const pad = (n) => String(n).padStart(2, "0");
+    const yyyy = dateObj.getFullYear();
+    const mm = pad(dateObj.getMonth() + 1);
+    const dd = pad(dateObj.getDate());
+
+    if (dateMode === "bootstrap") {
+      window.jQuery(el).datepicker("setDate", dateObj);
+    } else if (dateMode === "vanilla") {
+      ensureDatepicker();
+      dp.setDate(dateObj);
+    } else if (dateMode === "native") {
+      el.value = `${yyyy}-${mm}-${dd}`;
+    } else {
+      el.value = `${dd}/${mm}/${yyyy}`;
+    }
   }
 
   // ===== API =====
@@ -157,7 +169,7 @@ const ExpensesPage = (() => {
     meta: () => apiGet("/api/expenses/meta"),
   };
 
-  // ===== Helpers & render =====
+  // ===== Helpers =====
   const money = (n) =>
     (Number(n) || 0).toLocaleString("vi-VN", {
       style: "currency",
@@ -186,42 +198,131 @@ const ExpensesPage = (() => {
     if (kpiAvg) kpiAvg.textContent = money(total / cnt);
   }
 
-  function renderList() {
-    const wrap = document.getElementById("txList");
-    if (!wrap) return;
+  // ===== Group-by-Month =====
+  function monthKey(isoDate) {
+    const d = new Date(isoDate);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    return `${y}-${m}`;
+  }
 
-    wrap.innerHTML = "";
-    if (!state.filtered.length) {
-      wrap.innerHTML =
-        '<div class="text-muted small fst-italic">Chưa có chi tiêu.</div>';
+  function monthTitleFromKey(key) {
+    const [y, m] = key.split("-");
+    return `Tháng ${Number(m)}/${y}`;
+  }
+
+  function sumAmount(rows) {
+    return rows.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  }
+
+  function formatDateVN(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  }
+
+  function groupByMonth(rows) {
+    const map = new Map();
+    rows.forEach((r) => {
+      const key = monthKey(r.date);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(r);
+    });
+    for (const key of map.keys()) {
+      map.get(key).sort((a, b) => new Date(b.date) - new Date(a.date));
+    }
+    return [...map.entries()]
+      .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+      .map(([key, items]) => ({
+        key,
+        title: monthTitleFromKey(key),
+        items,
+        total: sumAmount(items),
+      }));
+  }
+
+  function renderTransactionsMonthly(rows) {
+    const acc = document.getElementById("monthlyAccordion");
+    if (!acc) return;
+
+    if (!rows.length) {
+      acc.innerHTML = `<div class="text-center text-muted py-4">Không có giao dịch nào</div>`;
       return;
     }
 
-    state.filtered.forEach((tx) => {
-      const dateFormatted = tx.date
-        ? new Date(tx.date).toLocaleDateString("vi-VN")
-        : "";
+    const groups = groupByMonth(rows);
+    acc.innerHTML = "";
+    const frag = document.createDocumentFragment();
 
-      const el = document.createElement("div");
-      el.className = "expense-card";
-      el.innerHTML = `
-        <div class="card-body d-flex align-items-start justify-content-between">
-          <div class="me-3">
-            <div class="fw-semibold">${escapeHtml(
-              tx.description || tx.desc || tx.note || ""
-            )}</div>
-            <div class="small text-muted">
-              ${dateFormatted} · ${tx.method_name || tx.method || "Tiền mặt"}
-            </div>
-          </div>
+    groups.forEach((g) => {
+      const item = document.createElement("div");
+      item.className = "accordion-item mb-2 border-0";
 
-          <div class="d-flex align-items-center gap-3">
-            <span class="badge badge-soft" data-cat-id="${tx.category_id}">
-              ${escapeHtml(tx.category || tx.category_name || "")}
+      const collapseId = `mcollapse-${g.key}`;
+      const headingId = `mheading-${g.key}`;
+
+      item.innerHTML = `
+      <h2 class="accordion-header" id="${headingId}">
+        <button class="accordion-button collapsed py-3" type="button"
+                data-bs-toggle="collapse" data-bs-target="#${collapseId}"
+                aria-expanded="false" aria-controls="${collapseId}">
+          <div class="d-flex w-100 justify-content-between align-items-center">
+            <span class="fw-semibold">${g.title}</span>
+            <span class="badge text-bg-light month-total-badge">
+              Tổng chi: ${money(g.total)}
             </span>
+          </div>
+        </button>
+      </h2>
+      <div id="${collapseId}" class="accordion-collapse collapse"
+           aria-labelledby="${headingId}" data-bs-parent="#monthlyAccordion">
+        <div class="accordion-body pt-2"></div>
+      </div>
+    `;
 
-            <div class="amount text-danger">${moneyNeg(tx.amount)}</div>
+      const body = item.querySelector(".accordion-body");
+      const bodyFrag = document.createDocumentFragment();
 
+      g.items.forEach((tx) => {
+        const isIncome =
+          String(tx.type || tx.kind || "").toLowerCase() === "income";
+        const sign = isIncome ? "+" : "−";
+        const cls = isIncome ? "text-success" : "text-danger";
+        const catName = tx.category || tx.category_name || "";
+        const method = tx.method_name || tx.method || "Tiền mặt";
+        const catSlug = (catName || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/đ/g, "d")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "");
+
+        const row = document.createElement("div");
+        row.className = "expense-card p-3 mb-2";
+        row.innerHTML = `
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="fw-medium">
+              ${escapeHtml(tx.description || tx.desc || tx.note || "")}
+              ${
+                catName
+                  ? `<span class="cat-chip cat--${catSlug} ms-2"
+                      data-cat-id="${tx.category_id}">
+                      ${escapeHtml(catName)}
+                    </span>`
+                  : ""
+              }
+            </div>
+            <div class="text-muted small">${formatDateVN(
+              tx.date
+            )} · ${escapeHtml(method)}</div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <div class="fw-semibold ${cls}">${sign}${money(tx.amount)}</div>
             <div class="text-muted d-flex gap-2">
               <button class="btn btn-sm btn-link text-muted px-1"
                       title="Sửa"
@@ -237,17 +338,127 @@ const ExpensesPage = (() => {
               </button>
             </div>
           </div>
-        </div>`;
+        </div>
+      `;
+        bodyFrag.appendChild(row);
+      });
+
+      body.appendChild(bodyFrag);
+      frag.appendChild(item);
+    });
+
+    acc.appendChild(frag);
+  }
+
+  function expandAllMonths() {
+    document
+      .querySelectorAll("#monthlyAccordion .accordion-collapse")
+      .forEach((el) => {
+        const c = new bootstrap.Collapse(el, { toggle: false });
+        c.show();
+      });
+  }
+
+  function collapseAllMonths() {
+    document
+      .querySelectorAll("#monthlyAccordion .accordion-collapse")
+      .forEach((el) => {
+        const c = new bootstrap.Collapse(el, { toggle: false });
+        c.hide();
+      });
+  }
+  // ===== FLAT LIST =====
+  function renderListFlat(rows) {
+    const wrap = document.getElementById("txList");
+    if (!wrap) return;
+
+    wrap.innerHTML = "";
+    if (!rows.length) {
+      wrap.innerHTML =
+        '<div class="text-muted small fst-italic">Chưa có chi tiêu.</div>';
+      return;
+    }
+
+    rows.forEach((tx) => {
+      const dateFormatted = tx.date
+        ? new Date(tx.date).toLocaleDateString("vi-VN")
+        : "";
+
+      const catName = tx.category || tx.category_name || "";
+      const catSlug = catName
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      const catClass = catSlug ? `cat-chip cat--${catSlug}` : "cat-chip";
+
+      const el = document.createElement("div");
+      el.className = "expense-card";
+      el.innerHTML = `
+      <div class="card-body d-flex align-items-start justify-content-between">
+        <div class="me-3">
+          <div class="fw-semibold">${escapeHtml(
+            tx.description || tx.desc || tx.note || ""
+          )}</div>
+          <div class="small text-muted">
+            ${dateFormatted} · ${tx.method_name || tx.method || "Tiền mặt"}
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+          <span class="${catClass}" data-cat-id="${tx.category_id}">
+            ${escapeHtml(catName)}
+          </span>
+
+          <div class="amount text-danger">${moneyNeg(tx.amount)}</div>
+
+          <div class="text-muted d-flex gap-2">
+            <button class="btn btn-sm btn-link text-muted px-1"
+                    title="Sửa"
+                    data-action="edit"
+                    data-id="${tx.id}">
+              <i class="bi bi-pencil-square"></i>
+            </button>
+            <button class="btn btn-sm btn-link text-muted px-1"
+                    title="Xóa"
+                    data-action="del"
+                    data-id="${tx.id}">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>`;
       wrap.appendChild(el);
     });
   }
 
+  function renderList() {
+    const monthlyAcc = document.getElementById("monthlyAccordion");
+    const listFlat = document.getElementById("txList");
+    const rows = state.filtered;
+
+    if (state.groupByMonth && monthlyAcc) {
+      monthlyAcc.style.display = "";
+      if (listFlat) listFlat.style.display = "none";
+      renderTransactionsMonthly(rows);
+    } else {
+      if (monthlyAcc) monthlyAcc.style.display = "none";
+      if (listFlat) {
+        listFlat.style.display = "";
+        renderListFlat(rows);
+      }
+    }
+  }
+
+  // ===== LOAD META =====
   async function loadMeta() {
     const data = await API.meta();
     state.categories = data?.categories || [];
     state.methods = data?.methods || [];
 
-    // Đổ danh mục vào select trong modal
+    // Danh mục
     const selCat = document.getElementById("expenseCategory");
     if (selCat) {
       selCat.innerHTML = `<option value="">-- Chọn danh mục chi tiêu --</option>`;
@@ -262,7 +473,7 @@ const ExpensesPage = (() => {
         });
     }
 
-    // Đổ phương thức thanh toán
+    // Phương thức thanh toán
     const selPm = document.getElementById("expensePaymentMethod");
     if (selPm) {
       selPm.innerHTML = `<option value="">-- Chọn phương thức thanh toán --</option>`;
@@ -282,7 +493,6 @@ const ExpensesPage = (() => {
     const btn = document.getElementById("categoryFilterBtn");
     if (!menu || !btn) return;
 
-    // clear tất cả item cũ ngoại trừ dòng đầu tiên
     menu.querySelectorAll("li:not(:first-child)").forEach((li) => li.remove());
 
     const cats = state.categories
@@ -326,10 +536,9 @@ const ExpensesPage = (() => {
       : [...state.items];
 
     renderList();
-    setKPIs(state.items); // KPI theo toàn bộ tháng, không chỉ filter
+    setKPIs(state.items);
   }
-
-  // ===== Modal / Form =====
+  // ===== MODAL / FORM =====
   function expenseModalEl() {
     return document.getElementById("expenseModal");
   }
@@ -338,7 +547,6 @@ const ExpensesPage = (() => {
     return bootstrap.Modal.getOrCreateInstance(expenseModalEl());
   }
 
-  // mở modal thêm mới
   function openAdd() {
     state.editId = null;
     const form = document.getElementById("expenseForm");
@@ -348,7 +556,6 @@ const ExpensesPage = (() => {
     ensureDatepicker();
     setDateField(new Date());
 
-    // đặt tiêu đề modal + nút submit
     const titleEl = expenseModalEl().querySelector(".modal-title");
     if (titleEl) titleEl.textContent = "Thêm chi tiêu mới";
 
@@ -363,29 +570,26 @@ const ExpensesPage = (() => {
     if (!tx) return;
     state.editId = tx.id;
 
-    // đảm bảo meta đã load để có options
     await loadMeta();
 
     const form = document.getElementById("expenseForm");
     if (!form) return;
     form.reset();
 
-    // fill form
-    if (form.desc) form.desc.value = tx.description || tx.desc || tx.note || "";
-    if (form.amount) form.amount.value = tx.amount;
-    if (form.category_id) form.category_id.value = tx.category_id;
+    form.desc.value = tx.description || tx.desc || tx.note || "";
+    form.amount.value = tx.amount;
+    form.category_id.value = tx.category_id;
+
     if (form.payment_method_id) {
       form.payment_method_id.value =
         tx.payment_method_id ||
         tx.method_id ||
-        (state.methods[0] && state.methods[0].id) ||
-        "";
+        (state.methods[0] && state.methods[0].id);
     }
 
     ensureDatepicker();
     setDateField(tx.date ? new Date(tx.date) : new Date());
 
-    // UI modal
     const titleEl = expenseModalEl().querySelector(".modal-title");
     if (titleEl) titleEl.textContent = "Cập nhật chi tiêu";
 
@@ -405,31 +609,31 @@ const ExpensesPage = (() => {
     state.items = state.items.filter((x) => x.id !== Number(id));
     buildFilterMenu();
     applyFilter();
+
+    if (window.BudgetNotify?.refresh)
+      window.BudgetNotify.refresh({ sync: true });
   }
 
+  // ===== UI BIND =====
   function bindUI() {
-    // nút "Thêm chi tiêu"
-    const btnAdd = document.getElementById("addExpenseBtn");
-    if (btnAdd) {
-      btnAdd.addEventListener("click", (e) => {
-        e.preventDefault();
-        openAdd();
-      });
-    }
+    document.getElementById("addExpenseBtn")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      openAdd();
+    });
 
-    // click Sửa / Xóa trong danh sách
-    const listWrap = document.getElementById("txList");
-    if (listWrap) {
-      listWrap.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-action]");
-        if (!btn) return;
-        const id = btn.dataset.id;
-        if (btn.dataset.action === "edit") openEdit(id);
-        if (btn.dataset.action === "del") removeItem(id);
-      });
-    }
+    const onActionClick = (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn) return;
+      const id = btn.dataset.id;
+      if (btn.dataset.action === "edit") openEdit(id);
+      if (btn.dataset.action === "del") removeItem(id);
+    };
 
-    // submit form chi tiêu
+    document.getElementById("txList")?.addEventListener("click", onActionClick);
+    document
+      .getElementById("monthlyAccordion")
+      ?.addEventListener("click", onActionClick);
+
     const form = document.getElementById("expenseForm");
     if (form) {
       form.addEventListener("submit", async (e) => {
@@ -452,7 +656,7 @@ const ExpensesPage = (() => {
         }
 
         const submitBtn = document.getElementById("expenseSubmitBtn");
-        if (submitBtn) submitBtn.disabled = true;
+        submitBtn.disabled = true;
 
         try {
           if (state.editId) {
@@ -460,7 +664,6 @@ const ExpensesPage = (() => {
             if (!res?.success)
               throw new Error(res?.message || "Cập nhật thất bại");
 
-            // cập nhật item trong state
             const idx = state.items.findIndex((t) => t.id === state.editId);
             if (idx !== -1) state.items[idx] = res.item;
           } else {
@@ -468,17 +671,16 @@ const ExpensesPage = (() => {
             if (!res?.success)
               throw new Error(res?.message || "Tạo chi tiêu thất bại");
 
-            // thêm item mới lên đầu
             state.items.unshift(res.item);
           }
 
+          if (window.BudgetNotify?.refresh)
+            window.BudgetNotify.refresh({ sync: true });
+
           buildFilterMenu();
           applyFilter();
-
-          // đóng modal
           getExpenseModal().hide();
 
-          // reset form + state.editId
           form.reset();
           ensureDatepicker();
           setDateField(new Date());
@@ -486,35 +688,41 @@ const ExpensesPage = (() => {
         } catch (err) {
           alert(err.message || "Có lỗi xảy ra");
         } finally {
-          if (submitBtn) submitBtn.disabled = false;
+          submitBtn.disabled = false;
         }
       });
     }
+
+    document
+      .getElementById("toggleGroupByMonth")
+      ?.addEventListener("change", (e) => {
+        state.groupByMonth = !!e.target.checked;
+        renderList();
+      });
+
+    document
+      .getElementById("btnExpandAll")
+      ?.addEventListener("click", () => expandAllMonths());
+
+    document
+      .getElementById("btnCollapseAll")
+      ?.addEventListener("click", () => collapseAllMonths());
   }
 
   // ===== INIT =====
   async function init(opts = {}) {
-    // 1. Chuẩn datepicker trước
     ensureDatepicker();
-
-    // 2. Load danh mục & phương thức thanh toán & dựng dropdown filter
     await loadMeta();
 
-    // 3. Lấy danh sách chi tiêu từ BE
     const exp = await API.list({});
     state.items = (exp?.items || []).map((x) => ({ ...x, type: "expense" }));
-    // sort mới nhất lên đầu
     state.items.sort(
       (a, b) => (b.date || "").localeCompare(a.date || "") || b.id - a.id
     );
 
-    // 4. Gắn sự kiện UI
     bindUI();
-
-    // 5. Render list ban đầu + KPI
     applyFilter();
 
-    // 6. Autofill focus input mô tả sau khi modal show (UX)
     const modal = expenseModalEl();
     if (modal) {
       modal.addEventListener(
@@ -528,9 +736,8 @@ const ExpensesPage = (() => {
         document.getElementById("expenseForm")?.reset();
       });
     }
-    if (opts.autoOpen) {
-      openAdd(); // openAdd() sẽ set default date, reset form, và show modal
-    }
+
+    if (opts.autoOpen) openAdd();
   }
 
   return { init };

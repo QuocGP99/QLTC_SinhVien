@@ -136,7 +136,6 @@
 </nav>
 
 <script>
-  // Navbar runtime logic: đọc localStorage để quyết định hiển thị
   (function () {
     try {
       const userRaw = localStorage.getItem("user") || "null";
@@ -145,20 +144,32 @@
 
       const navUserWrapper = document.getElementById("navUserWrapper");
       const navLoginWrapper = document.getElementById("navLoginWrapper");
+      const badgeAI = document.querySelector(
+        ".nav-item .badge.text-bg-secondary"
+      );
+      const notiItem = document.querySelector(".nav-item.dropdown.me-2");
       const avatarEl = document.getElementById("navUserAvatar");
       const avatarLgEl = document.getElementById("navUserAvatarLg");
       const nameEl = document.getElementById("navUserName");
       const emailEl = document.getElementById("navUserEmail");
       const btnLogout = document.getElementById("btnLogout");
 
-      // nếu chưa login -> cứ để nút Đăng nhập
+      // nếu chưa login
       if (!user || !token) {
+        // Ẩn AI badge & chuông
+        badgeAI?.classList.add("d-none");
+        notiItem?.classList.add("d-none");
+
+        // Hiện nút Đăng nhập, ẩn dropdown user
         navLoginWrapper?.classList.remove("d-none");
         navUserWrapper?.classList.add("d-none");
         return;
       }
 
-      // nếu đã login -> hiển thị dropdown user, ẩn nút Đăng nhập
+      // nếu đã login
+      badgeAI?.classList.remove("d-none");
+      notiItem?.classList.remove("d-none");
+
       navLoginWrapper?.classList.add("d-none");
       navUserWrapper?.classList.remove("d-none");
 
@@ -179,11 +190,17 @@
         emailEl.textContent = user.email || "";
       }
 
-      // Logout: clear localStorage và quay về /login
+      if (
+        window.BudgetNotify &&
+        typeof window.BudgetNotify.init === "function"
+      ) {
+        window.BudgetNotify.init();
+      }
+
+      // Logout
       btnLogout?.addEventListener("click", async (e) => {
         e.preventDefault();
 
-        // optional: ping API /api/auth/logout để revoke token trong blocklist
         try {
           const token = localStorage.getItem("access_token");
           if (token) {

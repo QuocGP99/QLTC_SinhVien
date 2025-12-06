@@ -15,10 +15,15 @@ class TimestampMixin:
 
 class BaseModel(db.Model, TimestampMixin):
     __abstract__ = True
-    id = db.Column(db.Integer, primary_key=True)
+
+    # THÊM AUTOINCREMENT
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+        autoincrement=True  # <<< CẦN THIẾT CHO POSTGRES
+    )
 
     def to_dict(self):
-        # tuỳ bạn mở rộng thêm từng model
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 # Import để Alembic thấy metadata
@@ -31,7 +36,6 @@ from .budget import Budget
 from .saving import SavingsGoal
 
 def register_models():
-    # Hàm này chỉ để giữ API cũ nếu các nơi khác có gọi
     pass
 
 __all__ = [

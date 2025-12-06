@@ -1,8 +1,119 @@
+/* ===== Brand chung ===== */
 :root {
   --brand: #3b82f6;
   --brand-ink: #0b1736;
 }
+
+/* ===== Light (mặc định) ===== */
+:root {
+  --bg: #f6f7fb;
+  --text: #111827;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+
+  --surface: #ffffff;
+  --surface-2: #f9fafb;
+
+  --nav-bg: #ffffff;
+  --nav-fg: #111827;
+  --side-bg: #ffffff;
+  --side-fg: #111827;
+
+  --chip-bg: #eef2ff;
+  --chip-fg: #3730a3;
+}
+
+/* ===== Dark ===== */
+:root[data-theme="dark"] {
+  --bg: #0b0f17;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --border: #1f2937;
+
+  --surface: #121725;
+  --surface-2: #0f1420;
+
+  --nav-bg: #0f1420;
+  --nav-fg: #e5e7eb;
+  --side-bg: #0f1420;
+  --side-fg: #e5e7eb;
+
+  --chip-bg: #1e293b;
+  --chip-fg: #cbd5e1;
+}
+
+/* ===== Bridge: áp các biến vào UI (toàn site) ===== */
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+a {
+  color: var(--brand);
+}
+.text-muted {
+  color: var(--muted) !important;
+}
+
+.card,
+.modal-content,
+.dropdown-menu {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+.form-control,
+.form-select,
+.input-group-text {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+.form-control::placeholder {
+  color: var(--muted);
+}
+.table,
+.table * {
+  border-color: var(--border) !important;
+}
+hr {
+  color: var(--border);
+  border-color: var(--border);
+}
+
+.navbar {
+  background: var(--nav-bg) !important;
+  color: var(--nav-fg);
+  border-bottom: 1px solid var(--border);
+}
+.navbar .nav-link,
+.navbar .navbar-brand {
+  color: var(--nav-fg) !important;
+}
+
+.app-sidebar {
+  background: var(--side-bg);
+  color: var(--side-fg);
+  border-right: 1px solid var(--border);
+}
+
+.badge-soft {
+  background: var(--chip-bg);
+  color: var(--chip-fg);
+  border: 1px solid var(--border);
+}
+
+/* Buttons */
 .btn-primary {
   --bs-btn-bg: var(--brand);
   --bs-btn-border-color: var(--brand);
+}
+
+/* Input focus tone phù hợp dark */
+:root[data-theme="dark"] .form-control:focus,
+:root[data-theme="dark"] .form-select:focus {
+  color: var(--text);
+  background: var(--surface);
+  border-color: #334155;
+  box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.15);
 }

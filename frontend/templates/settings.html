@@ -79,6 +79,7 @@
           <div class="col-md-4">
             <label class="form-label">Giao diện</label>
             <select class="form-select" name="theme">
+              <option value="auto">Tự động (theo hệ thống)</option>
               <option value="light">Sáng</option>
               <option value="dark">Tối</option>
             </select>
@@ -284,13 +285,6 @@
     showToast("Đã lưu cài đặt.");
   };
 
-  function applyTheme(theme) {
-    document.documentElement.setAttribute(
-      "data-bs-theme",
-      theme === "dark" ? "dark" : "light"
-    );
-  }
-
   (function () {
     const st = load();
 
@@ -309,15 +303,23 @@
     const pr = document.getElementById("prefsForm");
     pr.lang.value = st.lang || "vi";
     pr.currency.value = st.currency || "VND";
-    pr.theme.value = st.theme || "light";
+    pr.theme.value = st.theme || localStorage.getItem("theme_pref") || "auto"; // sync lần đầu
     pr.compact.checked = !!st.compact;
-    applyTheme(pr.theme.value);
+
+    // áp current theme (ThemeManager đã boot trong base)
+    if (window.ThemeManager) ThemeManager.applyCurrent();
+
     pr.addEventListener("submit", (e) => {
       e.preventDefault();
-      Object.assign(st, Object.fromEntries(new FormData(pr).entries()), {
-        compact: pr.compact.checked,
-      });
-      applyTheme(st.theme);
+      const data = Object.fromEntries(new FormData(pr).entries());
+      st.lang = data.lang;
+      st.currency = data.currency;
+      st.theme = data.theme; // lưu trữ thêm trong settings
+      st.compact = pr.compact.checked;
+
+      // đổi theme ngay + lưu vào localStorage (key: theme_pref)
+      if (window.ThemeManager) ThemeManager.setPref(st.theme);
+
       save(st);
     });
 
@@ -346,7 +348,6 @@
       st.ai_classify = it.ai_classify.checked;
       st.ai_suggest = it.ai_suggest.checked;
       st.charts = it.charts.checked;
-      // Có thể expose global config cho FE khác dùng
       window.APP_CONFIG = {
         BASE_API_URL: st.apiUrl,
         FEATURE_FLAGS: {

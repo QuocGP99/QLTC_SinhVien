@@ -7,6 +7,7 @@ from ..models.category import Category
 from ..models.payment_method import PaymentMethod
 from datetime import date, datetime
 from decimal import Decimal
+from ..ai.classifier import predict_category_all
 
 bp = Blueprint("expenses_api", __name__, url_prefix="/api/expenses")
 
@@ -240,3 +241,62 @@ def get_meta():
         "categories": [{"id": c.id, "name": c.name} for c in cats],
         "methods": [{"id": m.id, "name": m.name} for m in methods],
     }), 200
+
+@bp.post("/predict_category")
+@jwt_required()
+def predict_category():
+    data = request.get_json()
+    text = data.get("text", "")
+
+    preds = predict_category_all(text)
+
+    # khớp danh mục qua database
+    enriched = []
+    for item in preds:
+        cat = Category.query.filter_by(name=item["label"]).first()
+        enriched.append({
+            "label": item["label"],
+            "prob": item["prob"],
+            "category_id": cat.id if cat else None
+        })
+
+    return jsonify({
+        "success": True,
+        "predictions": enriched
+    })
+
+@bp.post("/ai_feedback")
+@jwt_required()
+def ai_feedback():
+    from ..models.ai_feedback import AIFeedback
+
+    data = request.get_json()
+    desc = data.get("description", "").strip()
+    chosen_category = data.get("chosen_category_id")
+    import json
+    predictions_raw = data.get("predictions", [])
+
+    # Nếu predictions bị gửi lên dạng chuỗi → convert lại thành JSON
+    if isinstance(predictions_raw, str):
+        predictions = json.loads(predictions_raw)
+    else:
+        predictions = predictions_raw
+
+    user_id = get_jwt_identity()
+
+    if not desc or not chosen_category:
+        return jsonify({"success": False, "msg": "missing fields"}), 400
+
+    fb = AIFeedback(
+        user_id=user_id,
+        description=desc,
+        chosen_category_id=chosen_category,
+        ai_predictions=predictions
+    )
+
+    db.session.add(fb)
+    db.session.commit()
+
+    return jsonify({"success": True})
+
+

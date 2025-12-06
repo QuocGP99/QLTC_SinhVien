@@ -16,22 +16,42 @@
     font-size: 1.35rem;
     font-weight: 700;
   }
-  .chip {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    background: #f4f6ff;
-    border: 1px solid #e8ebff;
-    color: #334155;
+  .kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 600;
   }
-  /* tăng chiều cao canvas một chút */
+  .kpi-icon.trend {
+    background: #fff1f2;
+    color: #dc2626;
+  }
+  .kpi-icon.budget {
+    background: #ecfdf5;
+    color: #16a34a;
+  }
+  .kpi-icon.saving {
+    background: #eef2ff;
+    color: #1d4ed8;
+  }
+  .kpi-icon.daily {
+    background: #faf5ff;
+    color: #7e22ce;
+  }
+  .kpi-subtext {
+    font-size: 0.8rem;
+    color: #64748b;
+  }
   .chart-tall {
     height: 240px !important;
-  } /* trước ~150px */
+  }
   .chart-mid {
     height: 200px !important;
-  } /* trước ~120–150px */
+  }
 </style>
 {% endblock %} {% block content %}
 <h1 class="h4 fw-semibold">Phân tích tài chính</h1>
@@ -46,22 +66,15 @@
       <div class="col-md-4">
         <label class="form-label">Khoảng thời gian</label>
         <select id="rangePreset" class="form-select">
-          <option value="this_month">Tháng hiện tại</option>
+          <option value="current_month">Tháng hiện tại</option>
           <option value="last_month">Tháng trước</option>
           <option value="last_3_months" selected>3 tháng gần đây</option>
           <option value="last_6_months">6 tháng gần đây</option>
-          <option value="last_year">1 năm qua</option>
+          <option value="last_12_months">1 năm qua</option>
         </select>
       </div>
-      <div class="col-md-3">
-        <label class="form-label">Loại</label>
-        <select id="filterType" class="form-select">
-          <option value="all">Tất cả</option>
-          <option value="expense">Chi tiêu</option>
-          <option value="income">Thu nhập</option>
-        </select>
-      </div>
-      <div class="col-md-3 d-flex gap-2">
+
+      <div class="col-md-4 d-flex gap-2">
         <button class="btn btn-primary w-100" id="btnApply">
           <i class="bi bi-funnel me-1"></i> Áp dụng
         </button>
@@ -87,52 +100,98 @@
           </ul>
         </div>
       </div>
+
+      <div class="col-md-4 text-end small text-muted">
+        <div>Khoảng đang xem: <span id="rangeLabel"></span></div>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- KPI hàng đầu -->
 <div class="row g-3 mb-3">
-  <div class="col-md-4">
-    <div class="card kpi shadow-sm">
+  <!-- Xu hướng chi tiêu -->
+  <div class="col-12 col-md-6 col-xl-3">
+    <div class="card kpi shadow-sm h-100">
       <div class="card-body">
-        <div class="d-flex justify-content-between">
-          <div class="text-muted small">Tổng chi</div>
-          <span class="chip">Xu hướng</span>
-        </div>
-        <div id="kpiTotal" class="val text-danger">0 ₫</div>
-        <div id="kpiTrend" class="small text-muted">+0% so với tháng trước</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card kpi shadow-sm">
-      <div class="card-body">
-        <div class="d-flex justify-content-between">
-          <div class="text-muted small">Tỷ lệ tiết kiệm</div>
-          <span class="chip">Thu nhập tiết kiệm</span>
-        </div>
-        <div id="kpiSaveRate" class="val text-success">0%</div>
-        <div class="progress my-1" style="height: 10px">
-          <div
-            id="kpiSaveBar"
-            class="progress-bar bg-success"
-            style="width: 0%"
-          ></div>
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="text-muted small fw-semibold">Xu hướng chi tiêu</div>
+            <div id="kpiTrendVal" class="val text-dark">0%</div>
+            <div class="kpi-subtext">so với giai đoạn trước</div>
+          </div>
+          <div class="kpi-icon trend">
+            <i class="bi bi-graph-up-arrow"></i>
+          </div>
         </div>
       </div>
     </div>
   </div>
-  <div class="col-md-4">
-    <div class="card kpi shadow-sm">
+
+  <!-- Hiệu quả ngân sách -->
+  <div class="col-12 col-md-6 col-xl-3">
+    <div class="card kpi shadow-sm h-100">
       <div class="card-body">
-        <div class="d-flex justify-content-between">
-          <div class="text-muted small">Trung bình/ngày</div>
-          <span class="chip">Tháng hiện tại</span>
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="text-muted small fw-semibold">Hiệu quả ngân sách</div>
+            <div id="kpiBudgetEff" class="val text-dark">0%</div>
+            <div class="kpi-subtext">tỷ lệ dùng ngân sách</div>
+          </div>
+          <div class="kpi-icon budget">
+            <i class="bi bi-bullseye"></i>
+          </div>
         </div>
-        <div id="kpiDaily" class="val text-primary">0 ₫</div>
-        <div class="text-muted small">
-          Số giao dịch: <span id="kpiCount">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tỷ lệ tiết kiệm -->
+  <div class="col-12 col-md-6 col-xl-3">
+    <div class="card kpi shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="w-100">
+            <div class="d-flex justify-content-between">
+              <div class="text-muted small fw-semibold">Tỷ lệ tiết kiệm</div>
+              <div class="kpi-icon saving ms-2 d-none d-md-flex">
+                <i class="bi bi-currency-dollar"></i>
+              </div>
+            </div>
+            <div id="kpiSaveRate" class="val text-dark">0%</div>
+            <div class="kpi-subtext">phần trăm thu nhập để dành</div>
+            <div class="progress my-2" style="height: 8px">
+              <div
+                id="kpiSaveBar"
+                class="progress-bar bg-success"
+                style="width: 0%"
+              ></div>
+            </div>
+          </div>
+
+          <div class="kpi-icon saving ms-2 d-md-none">
+            <i class="bi bi-currency-dollar"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chi trung bình/ngày -->
+  <div class="col-12 col-md-6 col-xl-3">
+    <div class="card kpi shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="text-muted small fw-semibold">Chi trung bình/ngày</div>
+            <div id="kpiDaily" class="val text-dark">0 ₫</div>
+            <div class="kpi-subtext">
+              Giao dịch: <span id="kpiCount">0</span>
+            </div>
+          </div>
+          <div class="kpi-icon daily">
+            <i class="bi bi-calendar2-week"></i>
+          </div>
         </div>
       </div>
     </div>
@@ -168,122 +227,157 @@
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Hàng biểu đồ 2 -->
-  <div class="row g-3 mb-3">
-    <div class="col-lg-6">
-      <div class="card card-rounded shadow-sm">
-        <div class="card-body">
-          <div class="fw-semibold mb-2">So sánh theo tháng</div>
-          <canvas id="barMonthly" class="chart-mid"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-lg-6" id="cardPieIncome">
-      <div class="card card-rounded shadow-sm">
-        <div class="card-body">
-          <div class="fw-semibold mb-2 text-center">
-            Cơ cấu thu nhập theo danh mục
-          </div>
-          <div class="row">
-            <div class="col-md-6">
-              <canvas id="pieIncome" class="chart-tall"></canvas>
-            </div>
-            <div class="col-md-6 d-flex align-items-center">
-              <ul
-                id="pieIncomeLegend"
-                class="list-unstyled w-100 mb-0 small"
-              ></ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Hàng biểu đồ 3: Tiết kiệm + Chi tiêu vs Ngân sách -->
-    <div class="row g-3 mb-3">
-      <!-- Theo dõi mục tiêu tiết kiệm -->
-      <div class="col-lg-6">
-        <div class="card card-rounded shadow-sm">
-          <div class="card-body">
-            <div class="fw-semibold mb-2">Theo dõi mục tiêu tiết kiệm</div>
-            <canvas id="savingsTrend" class="chart-tall"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Chi tiêu vs Ngân sách -->
-      <div class="col-lg-6">
-        <div class="card card-rounded shadow-sm">
-          <div class="card-body">
-            <div class="fw-semibold mb-2">Chi tiêu vs Ngân sách</div>
-            <canvas id="barBudget" class="chart-mid"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- AI Panel -->
-    <div class="row g-3 mb-3">
-      <div class="col-md-6">
-        <div class="card card-rounded shadow-sm h-100">
-          <div class="card-body text-center">
-            <h6 class="fw-semibold">Điểm sức khỏe tài chính (AI)</h6>
-            <div id="aiScore" class="display-5 text-primary fw-bold">8.2</div>
-            <div class="progress my-2" style="height: 8px">
-              <div
-                class="progress-bar bg-primary"
-                id="aiScoreBar"
-                style="width: 82%"
-              ></div>
-            </div>
-            <p class="text-muted small">
-              AI đánh giá dựa trên hiệu quả chi tiêu, tiết kiệm và mức tuân thủ
-              ngân sách.
-            </p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="card card-rounded shadow-sm h-100">
-          <div class="card-body">
-            <h6 class="fw-semibold mb-2">Gợi ý hành động từ AI</h6>
-            <ul id="aiTips" class="list-group list-group-flush small"></ul>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Bảng giao dịch -->
+<!-- Hàng biểu đồ 2 -->
+<div class="row g-3 mb-3">
+  <div class="col-lg-6">
     <div class="card card-rounded shadow-sm">
       <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <div class="fw-semibold">Danh sách giao dịch</div>
-          <div class="text-muted small" id="rangeLabel"></div>
+        <div class="fw-semibold mb-2">So sánh theo tháng</div>
+        <canvas id="barMonthly" class="chart-mid"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6" id="cardPieIncome">
+    <div class="card card-rounded shadow-sm">
+      <div class="card-body">
+        <div class="fw-semibold mb-2 text-center">
+          Cơ cấu thu nhập theo danh mục
         </div>
-        <div class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead>
-              <tr>
-                <th>Ngày</th>
-                <th>Mô tả</th>
-                <th>Danh mục</th>
-                <th>Phương thức</th>
-                <th class="text-end">Số tiền</th>
-              </tr>
-            </thead>
-            <tbody id="txTable"></tbody>
-          </table>
+        <div class="row">
+          <div class="col-md-6">
+            <canvas id="pieIncome" class="chart-tall"></canvas>
+          </div>
+          <div class="col-md-6 d-flex align-items-center">
+            <ul
+              id="pieIncomeLegend"
+              class="list-unstyled w-100 mb-0 small"
+            ></ul>
+          </div>
         </div>
       </div>
     </div>
-    {% block scripts %}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script
-      type="module"
-      src="{{ url_for('static', filename='js/analytics.js') }}"
-    ></script>
-    {% endblock %} {% endblock %}
   </div>
 </div>
+
+<!-- Hàng biểu đồ 3 -->
+<div class="row g-3 mb-3">
+  <div class="col-lg-6">
+    <div class="card card-rounded shadow-sm">
+      <div class="card-body">
+        <div class="fw-semibold mb-2">Theo dõi mục tiêu tiết kiệm</div>
+        <canvas id="savingsTrend" class="chart-tall"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card card-rounded shadow-sm">
+      <div class="card-body">
+        <div class="fw-semibold mb-2">Chi tiêu vs Ngân sách</div>
+        <canvas id="barBudget" class="chart-mid"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hàng biểu đồ 4: Dự báo chi tiêu (AI) -->
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="card card-rounded shadow-sm">
+      <div class="card-body">
+        <div
+          class="fw-semibold mb-2 d-flex justify-content-between align-items-center"
+        >
+          <span>Dự báo chi tiêu 30 ngày tới (AI)</span>
+          <span class="badge bg-light text-muted border small">
+            Mô hình: Prophet
+          </span>
+        </div>
+        <canvas id="expenseForecastChart" class="chart-tall"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI Panel -->
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="card card-rounded shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="fw-semibold text-center mb-2">
+          Điểm sức khỏe tài chính (AI)
+        </h6>
+        <div class="text-center">
+          <div id="aiScore" class="display-5 text-primary fw-bold">8.2</div>
+          <div
+            class="progress my-2 mx-auto"
+            style="height: 8px; max-width: 260px"
+          >
+            <div
+              class="progress-bar bg-primary"
+              id="aiScoreBar"
+              style="width: 82%"
+            ></div>
+          </div>
+        </div>
+
+        <p class="text-muted small text-center mb-3">
+          AI đánh giá dựa trên hiệu quả chi tiêu, tiết kiệm và mức tuân thủ ngân
+          sách.
+        </p>
+
+        <hr class="my-3" />
+
+        <!-- KPI Dự báo chi tiêu 30 ngày tới -->
+        <div class="small text-muted mb-1">Dự báo chi tiêu 30 ngày tới</div>
+        <div class="h5 mb-1" id="kpiForecastTotal">—</div>
+        <div class="text-muted small">
+          <span id="kpiForecastLabel">Đang phân tích...</span>
+          &nbsp;·&nbsp;
+          <span id="kpiForecastChange"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card card-rounded shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="fw-semibold mb-2">Gợi ý hành động từ AI</h6>
+        <ul id="aiTips" class="list-group list-group-flush small"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bảng giao dịch -->
+<div class="card card-rounded shadow-sm mb-5">
+  <div class="card-body">
+    <div class="fw-semibold mb-2">Danh sách giao dịch</div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>Ngày</th>
+            <th>Mô tả</th>
+            <th>Danh mục</th>
+            <th>Phương thức</th>
+            <th class="text-end">Số tiền</th>
+          </tr>
+        </thead>
+        <tbody id="txTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script
+  type="module"
+  src="{{ url_for('static', filename='js/analytics.js') }}"
+></script>
+{% endblock %}

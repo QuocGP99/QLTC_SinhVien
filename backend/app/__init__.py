@@ -7,7 +7,7 @@ from .config import Config
 from .extensions import db, migrate, cache, jwt, mail
 from .routes import register_blueprints
 from datetime import datetime
-
+from huggingface_hub import login
 
 # ── Paths
 APP_FILE     = Path(__file__).resolve()
@@ -30,6 +30,7 @@ def register_models():
 def create_app(config_class: type[Config] | None = None):
     # ▶ nạp .env sớm để os.getenv(...) có giá trị
     load_dotenv()
+
 
     app = Flask(
         __name__,
@@ -103,5 +104,10 @@ def create_app(config_class: type[Config] | None = None):
 
     app.jinja_env.filters["vnd"]  = format_vnd
     app.jinja_env.filters["samt"] = sign_amount
+
+    # HuggingFace login (cho huggingface_hub nếu cần)
+    hf_api_key = os.getenv("HF_API_KEY")
+    if hf_api_key:
+        login(hf_api_key)
 
     return app

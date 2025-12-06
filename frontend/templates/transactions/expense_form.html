@@ -1,67 +1,50 @@
-<!-- templates/transactions/expense_form.html -->
+<!-- expense_form.html -->
 <div class="modal fade" id="expenseModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
-      <form id="expenseForm">
-        <div class="modal-header">
-          <h5 class="modal-title">Thêm chi tiêu mới</h5>
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="modal"
-          ></button>
-        </div>
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h5 class="modal-title fw-semibold">Thêm chi tiêu</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
 
-        <div class="modal-body">
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <form id="expenseForm" autocomplete="off">
           <!-- Mô tả -->
           <div class="mb-3">
-            <label class="form-label"
-              >Mô tả <span class="text-danger">*</span></label
-            >
+            <label class="form-label fw-medium">Nội dung chi tiêu</label>
             <input
               type="text"
+              id="expenseDesc"
               name="desc"
               class="form-control"
-              placeholder="vd: Ăn trưa ở căn tin"
+              placeholder="Nhập mô tả..."
               required
             />
+            <div id="aiCatSuggest" class="mt-2"></div>
           </div>
 
           <!-- Số tiền -->
           <div class="mb-3">
-            <label class="form-label"
-              >Số tiền <span class="text-danger">*</span></label
-            >
+            <label class="form-label fw-medium">Số tiền</label>
             <input
               type="number"
+              id="expenseAmount"
               name="amount"
               class="form-control"
-              min="0"
-              step="1000"
-              inputmode="decimal"
+              placeholder="0"
               required
             />
           </div>
 
-          <!-- Danh mục chi tiêu -->
+          <!-- Ngày giao dịch -->
           <div class="mb-3">
-            <label class="form-label"
-              >Danh mục chi tiêu <span class="text-danger">*</span></label
-            >
-            <select
-              name="category_id"
-              id="expenseCategory"
-              class="form-select"
-              required
-            ></select>
-            <div class="form-text">Ví dụ: Ăn uống, Di chuyển, Mua sắm…</div>
-          </div>
-
-          <!-- Ngày -->
-          <div class="mb-3">
-            <label class="form-label"
-              >Ngày <span class="text-danger">*</span></label
-            >
+            <label class="form-label fw-medium">Ngày</label>
             <div class="input-group">
               <input
                 type="text"
@@ -69,59 +52,82 @@
                 name="date"
                 class="form-control"
                 placeholder="dd/mm/yyyy"
-                autocomplete="off"
                 required
               />
               <button
+                id="btnOpenExpenseCalendar"
                 class="btn btn-outline-secondary"
                 type="button"
-                id="btnOpenExpenseCalendar"
-                aria-label="Chọn ngày"
               >
-                <i class="bi bi-calendar3"></i>
+                <i class="bi bi-calendar-event"></i>
               </button>
             </div>
-            <div class="form-text">Nhấp biểu tượng lịch để chọn ngày</div>
+          </div>
+
+          <!-- Danh mục -->
+          <div class="mb-3">
+            <label class="form-label fw-medium">Danh mục chi tiêu</label>
+            <select
+              id="expenseCategory"
+              name="category_id"
+              class="form-select"
+              required
+            >
+              <option value="">-- Chọn danh mục --</option>
+            </select>
           </div>
 
           <!-- Phương thức thanh toán -->
           <div class="mb-3">
-            <label class="form-label"
-              >Phương thức thanh toán <span class="text-danger">*</span></label
-            >
+            <label class="form-label fw-medium">Phương thức thanh toán</label>
             <select
-              name="payment_method_id"
               id="expensePaymentMethod"
+              name="payment_method_id"
               class="form-select"
               required
-            ></select>
+            >
+              <option value="">-- Chọn phương thức --</option>
+            </select>
           </div>
 
-          <!-- Ghi chú -->
+          <!-- Upload Hóa đơn -->
           <div class="mb-3">
-            <label class="form-label">Ghi chú</label>
-            <textarea
-              name="note"
-              class="form-control"
-              rows="2"
-              placeholder="Ghi chú thêm (nếu có)"
-            ></textarea>
-          </div>
-        </div>
+            <label class="form-label fw-medium">Ảnh hóa đơn (tùy chọn)</label>
+            <div class="d-flex gap-3 align-items-center">
+              <button
+                id="btnUploadReceiptInModal"
+                class="btn btn-outline-secondary"
+                type="button"
+              >
+                <i class="bi bi-upload"></i> Tải ảnh lên
+              </button>
 
-        <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            data-bs-dismiss="modal"
-          >
-            Hủy
-          </button>
-          <button type="submit" class="btn btn-primary" id="expenseSubmitBtn">
-            Lưu chi tiêu
-          </button>
-        </div>
-      </form>
+              <input
+                type="file"
+                id="expenseReceiptHidden"
+                accept="image/*"
+                class="d-none"
+              />
+            </div>
+
+            <!-- Preview -->
+            <div id="extReceiptPreview" class="d-none mt-3"></div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button
+          type="submit"
+          form="expenseForm"
+          class="btn btn-primary fw-semibold"
+          id="expenseSubmitBtn"
+        >
+          Lưu chi tiêu
+        </button>
+      </div>
     </div>
   </div>
 </div>
+<script src="{{ url_for('static', filename='js/expense_form.js') }}"></script>

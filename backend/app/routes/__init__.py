@@ -10,6 +10,8 @@ from .savings import bp as savings_bp
 from .dashboard_api import bp as dashboard_api_bp
 from .analytics import bp as analytics_bp
 from .admin_users import bp as admin_users_bp
+from .ocr_api import bp as ocr_api_bp
+from .ai_api import bp as ai_bp
 
 def register_blueprints(app: Flask):
 
@@ -25,3 +27,5 @@ def register_blueprints(app: Flask):
     app.register_blueprint(savings_bp)
     app.register_blueprint(admin_users_bp)
     app.register_blueprint(analytics_bp)
+    app.register_blueprint(ocr_api_bp)
+    app.register_blueprint(ai_bp)

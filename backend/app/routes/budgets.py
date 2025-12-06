@@ -5,8 +5,10 @@ from sqlalchemy import func
 from ..extensions import db
 from ..models.budget import Budget
 from ..models.category import Category
-# ⬇️ dùng lại hàm cộng chi tiêu theo tháng
+
 from ..services.budget_service import spend_used
+from ..services.budget_ai_service import projected_overshoot
+from datetime import date
 
 bp = Blueprint("budgets_api", __name__, url_prefix="/api/budgets")
 
@@ -255,3 +257,26 @@ def delete_budget(bid):
     db.session.delete(b)
     db.session.commit()
     return jsonify({"success": True})
+
+# ai cảnh báo vượt ngân sách
+@bp.route("/ai/warnings", methods=["GET"])
+@jwt_required()
+def budget_ai_warnings():
+    user_id = get_jwt_identity()
+
+    today = date.today()
+
+    budgets = Budget.query.filter_by(
+        user_id=user_id,
+        period_year=today.year,
+        period_month=today.month
+    ).all()
+
+    results = []
+    for b in budgets:
+        info = projected_overshoot(user_id, b)  # dùng tháng hiện tại
+        info["category_id"] = b.category_id
+        info["category_name"] = b.category.name
+        results.append(info)
+
+    return jsonify({"items": results})

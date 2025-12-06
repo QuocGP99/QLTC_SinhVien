@@ -1,13 +1,10 @@
-/* ===== Savings Goals - DEMO first, API optional ===== */
+// frontend/static/js/savings.js
 (() => {
-  // ====== Config / Storage keys ======
   const API_BASE = (window.BASE_API_URL || "").replace(/\/$/, "");
-  const USE_API = !!API_BASE; // khi bạn set BASE_API_URL
-  const STORE = "savings_goals_demo_v3"; // localStorage key
+  const USE_API = !!API_BASE;
   const TOKEN = (localStorage.getItem("access_token") || "").trim();
   const AUTH_HEADERS = TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {};
 
-  // ====== Helpers ======
   const qs = (s, el = document) => el.querySelector(s);
   const qsa = (s, el = document) => [...el.querySelectorAll(s)];
   const fmtVND = (n) =>
@@ -18,7 +15,6 @@
     });
   const pct = (cur, tgt) =>
     tgt > 0 ? Math.min(100, Math.round((cur * 100) / tgt)) : 0;
-  const todayISO = () => new Date().toISOString().slice(0, 10);
 
   const CAT_ICON = {
     emergency: "🧯",
@@ -32,50 +28,32 @@
     "": "💰",
   };
 
-  // ====== State ======
   let GOALS = [];
 
-  // ====== Load / Save ======
-  function saveLocal() {
-    localStorage.setItem(STORE, JSON.stringify(GOALS));
-  }
-  function loadLocal() {
-    try {
-      const raw = localStorage.getItem(STORE);
-      if (raw) GOALS = JSON.parse(raw) || [];
-    } catch {}
-  }
-
+  // ===== API =====
   async function loadFromAPI() {
-    if (!USE_API) return false;
-    try {
-      const res = await fetch(`${API_BASE}/savings`, {
-        headers: { ...AUTH_HEADERS },
-      });
-      if (!res.ok) throw 0;
-      const data = await res.json();
-      GOALS = (data.items || data || []).map((g) => ({
-        id: g.id,
-        title: g.title,
-        desc: g.description || "",
-        target_amount: +g.target_amount || 0,
-        current_amount: +g.current_amount || 0,
-        monthly_contribution: +g.monthly_contribution || 0,
-        category: g.category || "",
-        priority: g.priority || "medium",
-        target_date: g.target_date || "",
-        icon: CAT_ICON[g.category] || "💰",
-      }));
-      return true;
-    } catch {
-      return false;
-    }
+    const res = await fetch(`${API_BASE}/savings?status=active`, {
+      headers: { ...AUTH_HEADERS },
+    });
+    if (!res.ok) throw new Error("load savings fail");
+    const data = await res.json();
+    GOALS = (data.items || []).map((g) => ({
+      id: g.id,
+      title: g.name,
+      desc: g.description || "",
+      target_amount: +g.target_amount || 0,
+      current_amount: +g.current_amount || 0,
+      monthly_contribution: +g.monthly_contribution || 0,
+      target_date: g.deadline || "",
+      status: g.status || "active",
+      auto_contribute: !!g.auto_contribute,
+      contribute_interval: g.contribute_interval || "monthly",
+      icon: "💰",
+    }));
   }
 
   async function apiContribute(id, amount) {
-    // Nếu backend của bạn dùng POST /api/savings/:id/contribute
-    const url = `${API_BASE}/savings/${id}/contribute`;
-    const res = await fetch(url, {
+    const res = await fetch(`${API_BASE}/savings/${id}/contribute`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...AUTH_HEADERS },
       body: JSON.stringify({ amount }),
@@ -84,96 +62,15 @@
     return res.json();
   }
 
-  // Gom lại trình tự boot để có thể gọi lại sau khi contribute thành công
-  async function boot() {
-    loadLocal();
-    const ok = await loadFromAPI(); // nếu có API sẽ ghi đè demo
-    if (!ok) seedDemoIfEmpty();
-    render();
+  async function apiDelete(id) {
+    const res = await fetch(`${API_BASE}/savings/${id}`, {
+      method: "DELETE",
+      headers: { ...AUTH_HEADERS },
+    });
+    if (!res.ok) throw new Error(await res.text());
   }
 
-  function seedDemoIfEmpty() {
-    if (GOALS.length) return;
-    GOALS = [
-      {
-        id: 1,
-        title: "Quỹ khẩn cấp",
-        desc: "3 tháng chi phí dự phòng",
-        target_amount: 2000000,
-        current_amount: 847000,
-        monthly_contribution: 200000,
-        category: "emergency",
-        priority: "high",
-        target_date: todayISO(),
-        icon: "🧯",
-      },
-      {
-        id: 2,
-        title: "Mua MacBook mới",
-        desc: "Phục vụ học tập & dự án",
-        target_amount: 1200000,
-        current_amount: 750000,
-        monthly_contribution: 150000,
-        category: "tech",
-        priority: "medium",
-        target_date: todayISO(),
-        icon: "💻",
-      },
-      {
-        id: 3,
-        title: "Du lịch mùa xuân",
-        desc: "Chuyến đi cùng bạn bè",
-        target_amount: 800000,
-        current_amount: 250000,
-        monthly_contribution: 100000,
-        category: "travel",
-        priority: "low",
-        target_date: todayISO(),
-        icon: "✈️",
-      },
-      {
-        id: 4,
-        title: "Quà tốt nghiệp",
-        desc: "Món quà nhỏ cho người thân",
-        target_amount: 500000,
-        current_amount: 125000,
-        monthly_contribution: 75000,
-        category: "gift",
-        priority: "medium",
-        target_date: todayISO(),
-        icon: "🎁",
-      },
-    ];
-    saveLocal();
-  }
-
-  // ====== KPI ======
-  function renderKPIs() {
-    const totalSaved = GOALS.reduce(
-      (s, g) => s + Number(g.current_amount || 0),
-      0
-    );
-    const totalTarget = GOALS.reduce(
-      (s, g) => s + Number(g.target_amount || 0),
-      0
-    );
-    const monthly = GOALS.reduce(
-      (s, g) => s + Number(g.monthly_contribution || 0),
-      0
-    );
-    qs("#kpiSaved") && (qs("#kpiSaved").textContent = fmtVND(totalSaved));
-    qs("#kpiTarget") && (qs("#kpiTarget").textContent = fmtVND(totalTarget));
-    qs("#kpiMonthly") && (qs("#kpiMonthly").textContent = fmtVND(monthly));
-    qs("#kpiSavedSub") &&
-      (qs("#kpiSavedSub").textContent = `${pct(
-        totalSaved,
-        totalTarget
-      )}% mục tiêu`);
-    qs("#kpiActive") &&
-      (qs("#kpiActive").textContent = `${GOALS.length} mục tiêu đang theo dõi`);
-  }
-
-  // ====== Card ======
+  // ===== RENDER =====
   function badge(pri) {
     const t = pri === "high" ? "Cao" : pri === "low" ? "Thấp" : "Trung bình";
     const cls = pri === "high" ? "high" : pri === "low" ? "low" : "medium";
@@ -182,9 +79,7 @@
 
   function cardHTML(g) {
     const p = pct(g.current_amount, g.target_amount);
-    const overdue =
-      g.target_date &&
-      new Date(g.target_date) < new Date(new Date().toDateString());
+    const overdue = g.status === "failed";
     return `
       <div class="col-xl-6" data-id="${g.id}">
         <div class="card goal-card shadow-sm h-100">
@@ -198,9 +93,14 @@
                 </div>
               </div>
               <div class="d-flex align-items-center gap-2 goal-actions">
-                ${badge(g.priority || "medium")}
+                <button class="icon-btn btn-view-detail" title="Chi tiết"><i class="bi bi-clock-history"></i></button>
                 <button class="icon-btn btn-edit" title="Sửa"><i class="bi bi-pencil"></i></button>
                 <button class="icon-btn btn-del"  title="Xóa"><i class="bi bi-trash"></i></button>
+                ${
+                  g.status === "completed"
+                    ? '<button class="icon-btn btn-withdraw" title="Rút về ví"><i class="bi bi-wallet2"></i></button>'
+                    : ""
+                }
               </div>
             </div>
 
@@ -214,13 +114,14 @@
             <div class="d-flex justify-content-between small">
               <span class="muted">${p}% hoàn thành</span>
               ${
-                overdue
+                g.status === "completed"
+                  ? '<span class="text-success">Hoàn thành</span>'
+                  : overdue
                   ? '<span class="text-danger">Quá hạn</span>'
                   : '<span class="text-success">Đúng tiến độ</span>'
               }
             </div>
 
-            <!-- Ô nhập + Cộng -->
             <div class="input-group mt-3">
               <input type="number" class="form-control add-amount" min="1000" step="1000" placeholder="Nhập số tiền (VND)">
               <button class="btn btn-outline-primary btn-add-custom">
@@ -230,8 +131,16 @@
 
             <div class="border rounded-3 p-2 mt-3 bg-light-subtle small">
               <i class="bi bi-graph-up-arrow me-1"></i>
-              Đóng góp hằng tháng: <b>${fmtVND(g.monthly_contribution || 0)}</b>
-              <span class="muted ms-2">Cố gắng duy trì để đạt mục tiêu đúng hạn</span>
+              Đóng góp ${
+                g.contribute_interval === "weekly" ? "hằng tuần" : "hằng tháng"
+              }:
+              <b>${fmtVND(g.monthly_contribution || 0)}</b>
+              ${
+                g.auto_contribute
+                  ? '<span class="badge text-bg-success ms-2" style="font-size:.7rem">Tự động</span>'
+                  : '<span class="badge text-bg-secondary ms-2" style="font-size:.7rem">Thủ công</span>'
+              }
+              <div class="muted mt-1">Duy trì để đạt mục tiêu đúng hạn</div>
             </div>
           </div>
         </div>
@@ -246,29 +155,38 @@
     bindCardEvents();
   }
 
-  // ====== Modal (create/edit) ======
+  function renderKPIs() {
+    const totalSaved = GOALS.reduce((s, g) => s + (g.current_amount || 0), 0);
+    const totalTarget = GOALS.reduce((s, g) => s + (g.target_amount || 0), 0);
+    const monthly = GOALS.reduce(
+      (s, g) => s + (g.monthly_contribution || 0),
+      0
+    );
+    qs("#kpiSaved") && (qs("#kpiSaved").textContent = fmtVND(totalSaved));
+    qs("#kpiTarget") && (qs("#kpiTarget").textContent = fmtVND(totalTarget));
+    qs("#kpiMonthly") && (qs("#kpiMonthly").textContent = fmtVND(monthly));
+  }
+
+  // ===== Modal =====
   const modalEl = document.getElementById("goalModal");
   const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+
   qs("#newGoalBtn")?.addEventListener("click", () => openModal(null));
 
   function fillForm(g) {
     const f = qs("#goalForm");
-    if (!f) return;
     f.id.value = g?.id || "";
-    f.title.value = g?.title || "";
+    f.name.value = g?.title || "";
     f.description.value = g?.desc || "";
     f.target_amount.value = g?.target_amount || "";
-    f.current_amount.value = g?.current_amount || 0;
-    f.category.value = g?.category || "";
-    f.priority.value = g?.priority || "medium";
-    f.target_date.value = g?.target_date || "";
+    f.deadline.value = window.__SAVINGS_DATE__?.parseISO(g?.target_date) || "";
     f.monthly_contribution.value = g?.monthly_contribution || 0;
+    f.auto_contribute.checked = !!g?.auto_contribute;
+    f.contribute_interval.value = g?.contribute_interval || "monthly";
   }
 
-  function openModal(goalId) {
-    const g = goalId
-      ? GOALS.find((x) => String(x.id) === String(goalId))
-      : null;
+  function openModal(id) {
+    const g = id ? GOALS.find((x) => x.id == id) : null;
     qs("#goalModalTitle").textContent = g
       ? "Chỉnh sửa mục tiêu"
       : "Tạo mục tiêu tiết kiệm mới";
@@ -279,110 +197,68 @@
   qs("#goalForm")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = e.target;
-    const formData = Object.fromEntries(new FormData(f).entries());
-    // normalize
-    ["target_amount", "current_amount", "monthly_contribution"].forEach(
-      (k) => (formData[k] = Number(formData[k] || 0))
-    );
-    formData.icon = CAT_ICON[formData.category] || "💰";
+    const fd = Object.fromEntries(new FormData(f).entries());
+    const dmyToISO = (s) =>
+      (window.__SAVINGS_DATE__?.toISO && window.__SAVINGS_DATE__.toISO(s)) ||
+      (s
+        ? (() => {
+            const [dd, mm, yyyy] = String(s).split("/");
+            return `${yyyy}-${mm}-${dd}`;
+          })()
+        : null);
+    const payload = {
+      name: fd.name || "",
+      description: fd.description || "",
+      target_amount: Number(fd.target_amount || 0),
+      monthly_contribution: Number(fd.monthly_contribution || 0),
+      deadline: dmyToISO(fd.deadline),
+      auto_contribute: !!fd.auto_contribute,
+      contribute_interval: fd.contribute_interval || "monthly",
+    };
 
-    if (!formData.id) {
+    if (!fd.id) {
       // create
-      if (USE_API) {
-        try {
-          const r = await fetch(`${API_BASE}/savings`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", ...AUTH_HEADERS },
-            body: JSON.stringify(formData),
-          });
-          const created = await r.json();
-          formData.id = created.id;
-        } catch {}
-      }
-      formData.id =
-        formData.id || Math.max(0, ...GOALS.map((x) => Number(x.id) || 0)) + 1;
-      GOALS.push(formData);
+      await fetch(`${API_BASE}/savings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...AUTH_HEADERS },
+        body: JSON.stringify(payload),
+      });
     } else {
       // update
-      const id = formData.id;
-      if (USE_API) {
-        try {
-          await fetch(`${API_BASE}/savings/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json", ...AUTH_HEADERS },
-            body: JSON.stringify(formData),
-          });
-        } catch {}
-      }
-      const i = GOALS.findIndex((x) => String(x.id) === String(id));
-      if (i > -1) GOALS[i] = { ...GOALS[i], ...formData, id };
+      await fetch(`${API_BASE}/savings/${fd.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...AUTH_HEADERS },
+        body: JSON.stringify(payload),
+      });
     }
 
-    saveLocal();
     modal?.hide();
-    render();
+    await boot();
   });
 
-  // ====== Card actions ======
+  // ===== bind actions =====
   function bindCardEvents() {
-    qsa("[data-id]").forEach((card) => {
+    qsa("#goalsGrid [data-id]").forEach((card) => {
       const id = card.getAttribute("data-id");
 
-      // Edit
       card
         .querySelector(".btn-edit")
         ?.addEventListener("click", () => openModal(id));
 
-      // Delete
       card.querySelector(".btn-del")?.addEventListener("click", async () => {
-        if (!confirm("Xoá mục tiêu này?")) return;
-        if (USE_API) {
-          try {
-            await fetch(`${API_BASE}/savings/${id}`, {
-              method: "DELETE",
-              headers: { ...AUTH_HEADERS },
-            });
-          } catch {}
-        }
-        GOALS = GOALS.filter((g) => String(g.id) !== String(id));
-        saveLocal();
-        render();
-        input.value = "";
+        if (!confirm("Xóa mục tiêu này?")) return;
+        await apiDelete(id);
+        await boot();
       });
 
-      // Add money: Enter or button
       const input = card.querySelector(".add-amount");
       const btn = card.querySelector(".btn-add-custom");
-
       const doAdd = async () => {
         const inc = Number(input.value || 0);
-        if (!inc || inc <= 0) {
-          input.focus();
-          return;
-        }
-
-        if (USE_API) {
-          try {
-            await apiContribute(id, inc);
-            await boot(); // refresh lại từ server
-            return;
-          } catch (e) {
-            console.error(e);
-            alert("Cộng tiền thất bại.");
-            return;
-          }
-        }
-
-        // Fallback demo (không có API)
-        const g = GOALS.find((x) => String(x.id) === String(id));
-        g.current_amount = Math.min(
-          g.target_amount,
-          (g.current_amount || 0) + inc
-        );
-        saveLocal();
-        render();
+        if (inc <= 0) return;
+        await apiContribute(id, inc);
+        await boot();
       };
-
       btn?.addEventListener("click", doAdd);
       input?.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
@@ -390,7 +266,51 @@
           doAdd();
         }
       });
+
+      card.querySelector(".btn-view-detail")?.addEventListener("click", () => {
+        openModal(id); // tạm dùng modal hiện tại
+      });
+
+      card
+        .querySelector(".btn-withdraw")
+        ?.addEventListener("click", async () => {
+          if (!confirm("Rút toàn bộ số tiền đã tiết kiệm về ví của bạn?"))
+            return;
+          const r = await fetch(`${API_BASE}/savings/${id}/withdraw`, {
+            method: "POST",
+            headers: { ...AUTH_HEADERS },
+          });
+          if (!r.ok) {
+            alert("Rút tiền thất bại");
+            return;
+          }
+          const { withdrawn = 0 } = await r.json();
+          alert(
+            `Đã rút ${Number(withdrawn).toLocaleString(
+              "vi-VN"
+            )} đ về ví của bạn.`
+          );
+          await boot();
+        });
     });
+  }
+
+  // ===== start =====
+  async function boot() {
+    if (USE_API) {
+      try {
+        await loadFromAPI();
+        // nếu BE trả notices: data.notices
+        // (thêm return value trong loadFromAPI nếu muốn)
+        // notices.forEach(n => toastWarning(n.message));
+      } catch (e) {
+        console.error(e);
+        GOALS = [];
+      }
+    } else {
+      GOALS = [];
+    }
+    render();
   }
 
   boot();

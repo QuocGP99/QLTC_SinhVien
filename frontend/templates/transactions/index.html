@@ -9,15 +9,6 @@ block head %}
     max-width: 1100px;
     margin: 0 auto;
   }
-  .feature-card {
-    border: 1px solid #edf0f5;
-    border-radius: 14px;
-    transition: 0.2s;
-  }
-  .feature-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-  }
   .tx-card {
     border: 1px solid #edf0f5;
     border-radius: 10px;
@@ -37,12 +28,14 @@ block head %}
     color: #6b7280;
     font-weight: 500;
   }
+
   .cal {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 0.5rem;
   }
   .cal .cell {
+    position: relative;
     border: 1px solid #edf0f5;
     border-radius: 10px;
     min-height: 95px;
@@ -63,17 +56,25 @@ block head %}
   .cal .cell .inc {
     color: #16a34a;
   }
-  .cal .cell .net.pos {
-    color: #16a34a;
-  }
-  .cal .cell .net.neg {
-    color: #dc2626;
-  }
   .cal .dow {
     font-weight: 600;
     color: #64748b;
     padding: 0.25rem 0.5rem;
   }
+
+  /* nút 3 chấm góc phải trong mỗi ô */
+  .cell .more-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    padding: 2px 6px;
+    line-height: 1;
+    color: #64748b;
+  }
+  .cell .more-btn:hover {
+    color: #111827;
+  }
+
   .filter-wrap .form-select,
   .filter-wrap .form-control {
     min-width: 180px;
@@ -125,6 +126,22 @@ block head %}
           <option value="">Tất cả</option>
         </select>
       </div>
+
+      <!-- [NEW] Danh mục Chi tiêu -->
+      <div>
+        <label class="form-label mb-1">Danh mục Chi tiêu</label>
+        <select id="filterExpenseCat" class="form-select">
+          <option value="">Tất cả</option>
+        </select>
+      </div>
+
+      <!-- [NEW] Nút áp dụng -->
+      <div>
+        <button id="btnApply" class="btn btn-primary mt-3">
+          <i class="bi bi-funnel me-1"></i> Áp dụng
+        </button>
+      </div>
+
       <div class="ms-auto">
         <button id="btnReset" class="btn btn-light">Đặt lại</button>
       </div>
@@ -168,8 +185,29 @@ block head %}
       <div class="fw-semibold" id="recentSection">Giao dịch gần đây</div>
       <div class="text-muted small">Kết hợp Thu nhập & Chi tiêu</div>
     </div>
-    <div class="card-body">
-      <div id="txList"></div>
+    <div class="card-body"><div id="txList"></div></div>
+  </div>
+</div>
+
+<!-- MODAL: Chi tiết giao dịch theo ngày -->
+<div class="modal fade" id="dayDetailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="dayDetailTitle">Chi tiết ngày</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body" id="dayDetailBody">
+        <!-- nội dung JS render -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+      </div>
     </div>
   </div>
 </div>
