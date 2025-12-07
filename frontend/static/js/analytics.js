@@ -1023,7 +1023,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // =========================
-// EXPORT CSV
+// EXPORT CSV (UTF-16LE cho Excel)
 // =========================
 document.getElementById("exportCsv")?.addEventListener("click", () => {
   if (!lastTxRows.length) {
@@ -1048,15 +1048,30 @@ document.getElementById("exportCsv")?.addEventListener("click", () => {
     r.amount,
   ]);
 
-  const csvContent = [header, ...rows]
+  const csv = [header, ...rows]
     .map((row) =>
       row.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")
     )
     .join("\n");
 
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
+  // ---- Encode UTF-16LE (Excel đọc tiếng Việt chuẩn) ----
+  function toUTF16LE(str) {
+    const buf = new ArrayBuffer(str.length * 2);
+    const view = new DataView(buf);
+    for (let i = 0; i < str.length; i++) {
+      view.setUint16(i * 2, str.charCodeAt(i), true); // little-endian
+    }
+    return new Uint8Array(buf);
+  }
 
+  const BOM = new Uint8Array([0xff, 0xfe]); // BOM UTF-16LE
+  const utf16Content = toUTF16LE(csv);
+
+  const blob = new Blob([BOM, utf16Content], {
+    type: "text/csv;charset=utf-16le;",
+  });
+
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = "analytics_transactions.csv";

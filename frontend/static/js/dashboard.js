@@ -603,11 +603,62 @@
     };
   }
 
+  // ===== LOAD TOTAL BALANCE (Tổng thu nhập - Tổng chi tiêu) =====
+  async function loadTotalBalance() {
+    const elBalance = document.getElementById("kpiBalance");
+    if (!elBalance) return;
+
+    try {
+      const res = await apiGet("/api/dashboard/balance");
+      const balance = Number(res.balance || 0);
+
+      // Cập nhật cho KPI (có hỗ trợ ẩn/hiện)
+      if (window.BalanceEyeFeature) {
+        window.BalanceEyeFeature.setAmount(balance);
+      } else {
+        elBalance.textContent = Money.pretty(balance);
+      }
+    } catch (err) {
+      console.error("Lỗi loadTotalBalance:", err);
+    }
+  }
+
+  // ===== Balance Change (% so với tháng trước) =====
+  // ===== Balance Change (% so với tháng trước) =====
+  async function loadBalanceChange() {
+    // Lấy nhóm chứa 3 dòng: "Số dư tổng", số tiền, % so với tháng trước
+    const box = document.querySelector("#kpiBalance")?.parentNode;
+    if (!box) return;
+
+    // Đây mới là dòng % chính xác (thẻ small thứ 2)
+    const pctEl = box.querySelectorAll(".small.opacity-75")[1];
+    if (!pctEl) return;
+
+    try {
+      const res = await apiGet("/api/dashboard/balance_change");
+
+      const current = Number(res.balance_this || 0);
+      const previous = Number(res.balance_prev || 0);
+
+      let pct = 0;
+      if (previous > 0) {
+        pct = ((current - previous) / previous) * 100;
+      }
+
+      pctEl.textContent =
+        (pct >= 0 ? "+" : "") + pct.toFixed(1) + "% so với tháng trước";
+    } catch (err) {
+      console.error("Lỗi loadBalanceChange:", err);
+    }
+  }
+
   // ===== Gọi các loader chính =====
   loadRecentTransactions();
   renderSpendLastMonths();
   renderCategoryPie();
   loadDashboardAI();
+  loadTotalBalance();
+  loadBalanceChange();
 
   // ===== Gọi và cập nhật KPI =====
   (async () => {

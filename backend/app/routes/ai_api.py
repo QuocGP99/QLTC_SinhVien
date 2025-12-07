@@ -133,9 +133,30 @@ def classify_text():
 def ai_chat():
     from ..ai.chat_pipeline import process_chat_message
 
-    data = request.get_json()
-    text = data.get("text")
+    # Lấy JSON gửi lên
+    data = request.get_json() or {}
+    text = (data.get("text") or "").strip()
 
-    result = process_chat_message(text)
+    # Nếu không có text => trả lỗi rõ ràng, KHÔNG gọi pipeline
+    if not text:
+        return jsonify({
+            "error": "Missing 'text' in request body",
+            "example": {"text": "Đặt ngân sách ăn uống 1 triệu"}
+        }), 400
 
-    return jsonify(result)
+    # Lấy user ID từ JWT
+    user_id = _uid()
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    # Gọi pipeline
+    try:
+        result = process_chat_message(user_id, text)
+    except Exception as e:
+        return jsonify({
+            "error": "Pipeline failed",
+            "detail": str(e)
+        }), 500
+
+    return jsonify(result), 200
+

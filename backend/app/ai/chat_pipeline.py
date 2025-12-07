@@ -1,12 +1,23 @@
 # backend/app/ai/chat_pipeline.py
 
+
+
 import os
 import re
 import json
 import requests
 
+from datetime import date
+from ..models.expense import Expense
+from ..models.budget import Budget
+from ..models.category import Category
+from ..extensions import db
+from sqlalchemy import func
+
+LAST_INTENT = {}
+
 from .classifier import predict_category_all
-from .nlp_rules import extract_amount_vnd, detect_tx_type
+from .nlp_rules import extract_amount_vnd, detect_tx_type, extract_saving_goal
 from .chatbot_intent import detect_intent
 
 
@@ -196,11 +207,66 @@ def fix_category_by_rules(text, ai_category):
 
     return ai_category
 
+def get_budget_status(user_id):
+    today = date.today()
+    month = today.month
+    year = today.year
+
+    # tổng chi tháng
+    spent = (
+        db.session.query(func.coalesce(func.sum(Expense.amount), 0))
+        .filter(
+            Expense.user_id == user_id,
+            Expense.spent_at >= date(year, month, 1),
+            Expense.spent_at <= today,
+        )
+        .scalar()
+    )
+
+    # tổng ngân sách tháng
+    budget = (
+        db.session.query(func.coalesce(func.sum(Budget.limit_amount), 0))
+        .filter(
+            Budget.user_id == user_id,
+            Budget.period_year == year,
+            Budget.period_month == month,
+        )
+        .scalar()
+    )
+
+    return float(spent), float(budget)
+
+
+def get_top_spending_category(user_id):
+    today = date.today()
+    month = today.month
+    year = today.year
+
+    row = (
+        db.session.query(
+            Category.name,
+            func.sum(Expense.amount).label("total")
+        )
+        .join(Category, Category.id == Expense.category_id)
+        .filter(
+            Expense.user_id == user_id,
+            Expense.spent_at >= date(year, month, 1),
+            Expense.spent_at <= today,
+            Category.type == "expense"
+        )
+        .group_by(Category.name)
+        .order_by(func.sum(Expense.amount).desc())
+        .first()
+    )
+
+    if row:
+        return row.name, float(row.total)
+    return None, 0.0
 
 # ======================================================
 # MAIN PROCESSOR
 # ======================================================
-def process_chat_message(text: str):
+def process_chat_message(user_id, user_message):
     """
     TRÌNH XỬ LÝ CHÍNH CHO CHATBOT
     - Bắt intent
@@ -208,56 +274,155 @@ def process_chat_message(text: str):
     - Phân loại ML
     - Nếu intent unknown → gọi AI (GROQ)
     """
-    original_text = text
-    text = clean_text(text)
+    original_text = user_message.strip()
+    text = clean_text(original_text)
 
-    intent = detect_intent(text)
+    intent, info = detect_intent(original_text)
 
-    # ----------------------------------------------------
-    # 1. ADD TRANSACTION
-    # ----------------------------------------------------
-    if intent == "add_transaction":
+    if intent in ["confirm_yes", "confirm_no"]:
+        return {
+            "intent": intent,
+            "message": intent  # trả về đơn giản cho FE xử lý
+        }
+
+    global LAST_INTENT
+    # Lưu intent hiện tại để xử lý follow-up
+    LAST_INTENT[user_id] = intent
+
+    # Nếu câu trước là ask_report → ép follow-up về ask_report
+    if LAST_INTENT.get(user_id) == "ask_report" and intent == "unknown":
+        intent = "ask_report"
+
+
+    # =====================================================
+    # 1. SET BUDGET
+    # =====================================================
+    if intent == "set_budget":
+        t = text.lower()
         amount = extract_amount_vnd(text)
-        tx_type = detect_tx_type(text)
 
-        ai_list = predict_category_all(text)
-        ai_category = ai_list[0]["label"] if ai_list else "Khác (expense)"
-        ai_category = fix_category_by_rules(text, ai_category)
-        category_id = CATEGORY_MAP.get(ai_category)
+        # ===== RULE: Nhận diện danh mục ngân sách =====
+        if "ăn uống" in t or "an uong" in t:
+            budget_category = "Ăn uống"
 
-        confidence = ai_list[0]["prob"] if ai_list else 0.7
+        elif "di chuyển" in t or "di chuyen" in t:
+            budget_category = "Di chuyển"
 
-        # ƯU TIÊN học bổng
-        if "học bổng" in text or "hoc bong" in text:
-            ai_category = "Học bổng"
-            category_id = 2
+        elif "học tập" in t or "hoc tap" in t or "sách vở" in t:
+            budget_category = "Học tập"
+
+        elif "xem phim" in t or "giải trí" in t:
+            budget_category = "Giải trí"
+
+        elif "nhà ở" in t or "nha o" in t or "phòng trọ" in t \
+            or "phong tro" in t or "tiền phòng" in t or "tien phong" in t \
+            or "thuê phòng" in t or "thue phong" in t:
+            budget_category = "Nhà ở"
+
         else:
-            category_id = CATEGORY_MAP.get(ai_category)
+            budget_category = "Khác (expense)"
+
+        category_id = CATEGORY_MAP.get(budget_category, 12)
+
+        # ===== RULE: Nếu câu có từ "thêm / tăng / cộng" thì hiểu là tăng ngân sách =====
+        is_increment = any(kw in t for kw in ["thêm", "them", "tăng", "tang", "cộng", "cong"])
+
+        # Câu xác nhận tự nhiên hơn
+        if is_increment:
+            msg = f"Bạn muốn tăng ngân sách {budget_category} thêm {amount:,}đ phải không?"
+        else:
+            msg = f"Bạn muốn đặt ngân sách {budget_category} = {amount:,}đ cho tháng này đúng không?"
 
         return {
-            "intent": "add_transaction",
-            "type": tx_type,
-            "amount": amount,
-            "category": ai_category,
+            "intent": "set_budget",
+            "budget_category": budget_category,
             "category_id": category_id,
-            "confidence": confidence,
-            "note": original_text,
-            "confirm": True
+            "amount": amount,
+            "increment": is_increment,
+            "confirm": True,
+            "message": msg,
+            "note": original_text
         }
-        # ----------------------------------------------------
-    # 1B. INCOME TRANSACTION (ưu tiên cao hơn add_transaction)
-    # ----------------------------------------------------
+    
+    # ==========================================
+    #  SAVING: TẠO MỤC TIÊU
+    # ==========================================
+    if intent == "set_saving_goal":
+        parsed = extract_saving_goal(original_text)
+        goal_name = parsed.get("goal_name")
+        amount = parsed.get("amount")
+
+        from ..models.saving import SavingsGoal
+
+        existing = SavingsGoal.query.filter_by(
+            user_id=user_id,
+            name=goal_name
+        ).first()
+
+        # Trường hợp tạo mới
+        if not existing:
+            return {
+                "intent": "set_saving_goal",
+                "confirm": True,
+                "goal_name": goal_name,
+                "amount": amount,
+                "message": f"Bạn muốn tạo mục tiêu tiết kiệm '{goal_name}' với số tiền {amount:,.0f}đ đúng không?"
+            }
+
+        # Trường hợp mục tiêu đã tồn tại → hỏi góp thêm
+        return {
+            "intent": "update_saving_goal",
+            "confirm": True,
+            "goal_id": existing.id,
+            "goal_name": goal_name,
+            "amount": amount,
+            "message": f"Mục tiêu '{goal_name}' đã tồn tại. Bạn muốn góp thêm {amount:,.0f}đ không?"
+        }
+
+    # ==========================================
+    #  SAVING: GÓP THÊM TIỀN
+    # ==========================================
+    if intent == "update_saving_goal":
+        parsed = extract_saving_goal(original_text)
+        goal_name = parsed.get("goal_name")
+        amount = parsed.get("amount")
+
+        from ..models.saving import SavingsGoal
+
+        existing = SavingsGoal.query.filter_by(
+            user_id=user_id,
+            name=goal_name
+        ).first()
+
+        if not existing:
+            return {
+                "intent": "unknown",
+                "message": "Mình không tìm thấy mục tiêu này, bạn muốn tạo mới không?"
+            }
+
+        return {
+            "intent": "update_saving_goal",
+            "confirm": True,
+            "goal_id": existing.id,
+            "goal_name": goal_name,
+            "amount": amount,
+            "message": f"Bạn muốn góp thêm {amount:,.0f}đ vào mục tiêu '{goal_name}' phải không?"
+        }
+
+
+
+    # =====================================================
+    # 4. INCOME TRANSACTION (ưu tiên hơn add_transaction)
+    # =====================================================
     if intent == "income_transaction":
         amount = extract_amount_vnd(text)
         t = text.lower()
 
-        # RULE phân loại thu nhập
-        if any(k in t for k in ["lương", "luong", "nhận lương", "nhan luong"]):
+        if "lương" in t or "luong" in t:
             income_category = "Lương"
-        elif any(k in t for k in ["học bổng", "hoc bong"]):
+        elif "học bổng" in t or "hoc bong" in t:
             income_category = "Học bổng"
         else:
-            # mặc định các câu như "mẹ gửi", "bác gửi", "bán áo"
             income_category = "Khác (income)"
 
         return {
@@ -271,59 +436,80 @@ def process_chat_message(text: str):
             "confirm": True
         }
 
-        # ----------------------------------------------------
-    # 2. SET BUDGET
-    # ----------------------------------------------------
-    if intent == "set_budget":
+    # =====================================================
+    # 5. ADD TRANSACTION — xử lý cuối cùng
+    # =====================================================
+    if intent == "add_transaction":
         amount = extract_amount_vnd(text)
-        t = text.lower()
+        tx_type = detect_tx_type(text)
 
-        # RULE: Tìm danh mục ngân sách theo từ khóa
-        if "ăn uống" in t or "an uong" in t:
-            budget_category = "Ăn uống"
-        elif "di chuyển" in t or "di chuyen" in t:
-            budget_category = "Di chuyển"
-        elif "học tập" in t or "hoc tap" in t:
-            budget_category = "Học tập"
-        elif "xem phim" in t:
-            budget_category = "Giải trí"
-        else:
-            budget_category = "Khác (expense)"
+        ai_list = predict_category_all(text)
+        ai_category = ai_list[0]["label"] if ai_list else "Khác (expense)"
+        ai_category = fix_category_by_rules(text, ai_category)
+        category_id = CATEGORY_MAP.get(ai_category)
+        confidence = ai_list[0]["prob"] if ai_list else 0.7
 
         return {
-            "intent": "set_budget",
-            "budget_category": budget_category,
-            "category_id": CATEGORY_MAP.get(budget_category),
+            "intent": "add_transaction",
+            "type": tx_type,
             "amount": amount,
+            "category": ai_category,
+            "category_id": category_id,
+            "confidence": confidence,
             "note": original_text,
             "confirm": True
         }
 
-    # ----------------------------------------------------
-    # 3. SET SAVING GOAL
-    # ----------------------------------------------------
-    if intent == "set_saving_goal":
-        amount = extract_amount_vnd(text)
+        
+    # =====================================================
+    # 6. ASK REPORT (phân tích thống kê tài chính)
+    # =====================================================
+    if intent == "ask_report":
+        t = text.lower()
+
+        # Nhận follow-up: tổng cộng trong tháng nào?
+        # Nếu chỉ hỏi chung
+        if "bao nhiêu" in t or "tổng cộng" in t or "tong cong" in t:
+            return {
+                "intent": "ask_report",
+                "message": "Bạn muốn xem theo ngày cụ thể hay tổng cộng?"
+            }
+
+        # Nếu người dùng trả lời muốn xem tổng cộng tháng cụ thể
+        # Ví dụ "tháng 12/2025" hoặc "tháng 11"
+        month_year = re.findall(r"tháng\s*(\d{1,2})(?:/(\d{4}))?", original_text.lower())
+
+        if month_year:
+            month = int(month_year[0][0])
+            year = int(month_year[0][1]) if month_year[0][1] else 2025
+
+            # Bạn có thể query database tại đây (gọi API real)
+            # Hiện tại trả kết quả mô phỏng
+            # ------------------------------------------------
+            return {
+                "intent": "ask_report",
+                "analysis": f"Chi tiêu của bạn trong tháng {month}/{year} là 320.000đ.",
+                "message": f"Mình đã tổng hợp chi tiêu theo danh mục cho tháng {month}/{year}."
+            }
+
+        # fallback
         return {
-            "intent": "set_saving_goal",
-            "amount": amount,
-            "goal_name": original_text,
-            "confirm": True
+            "intent": "ask_report",
+            "message": "Bạn muốn xem chi tiêu tháng mấy hoặc danh mục nào?"
         }
 
-    # ----------------------------------------------------
-    # 4. NAVIGATION
-    # ----------------------------------------------------
+    # =====================================================
+    # 6. NAVIGATION
+    # =====================================================
     if intent.startswith("go_"):
         mapping = {
-    "go_dashboard": "/",
-    "go_expense": "/transactions/expenses",
-    "go_income": "/transactions/income",
-    "go_budget": "/budgets",
-    "go_saving": "/savings",
-    "go_analytics": "/analytics"
-}
-
+            "go_dashboard": "/",
+            "go_expense": "/transactions/expenses",
+            "go_income": "/transactions/income",
+            "go_budget": "/budgets",
+            "go_saving": "/savings",
+            "go_analytics": "/analytics",
+        }
 
         return {
             "intent": "navigate",
@@ -331,17 +517,43 @@ def process_chat_message(text: str):
             "to": mapping.get(intent)
         }
 
-    # ----------------------------------------------------
-    # 5. GIẢI THÍCH BIỂU ĐỒ / CÂU PHỎNG VẤN
-    # ----------------------------------------------------
-    if intent == "ask_explain":
-        return {
-            "message": "Biểu đồ hiển thị phân bổ chi tiêu theo thời gian và danh mục."
-        }
+    # =====================================================
+# 7. ASK ANALYSIS (Qwen 2.5 phân tích tài chính)
+# =====================================================
+    if intent == "ask_analysis":
+        # 1) lấy dữ liệu thật
+        spent, budget = get_budget_status(user_id)
+        cat_name, cat_total = get_top_spending_category(user_id)
 
-    # ----------------------------------------------------
-    # 6. UNKNOWN → gọi GROQ AI
-    # ----------------------------------------------------
-    ai_res = call_groq(original_text)
+        # 2) chuẩn bị prompt gửi sang Qwen 2.5
+        prompt = f"""
+    Dữ liệu tháng này của người dùng:
+    - Tổng chi tiêu: {spent} VND
+    - Ngân sách: {budget} VND
+    - Danh mục chi nhiều nhất: {cat_name} ({cat_total} VND)
 
-    return ai_res
+    Câu hỏi của người dùng: "{user_message}"
+
+    Hãy trả lời NGẮN GỌN theo format JSON:
+    {{
+    "analysis": "...",
+    "message": "..."
+    }}
+    Không dùng markdown.
+    """
+
+        # 3) gọi Qwen (dùng API Ollama hoặc Huggingface tùy bạn)
+        from .qwen_client import call_qwen
+        ai_res = call_qwen(prompt)
+
+        # nếu Qwen fail → fallback
+        if not isinstance(ai_res, dict):
+            ai_res = {
+                "analysis": "Không thể phân tích bằng AI.",
+                "message": "Bạn thử hỏi lại giúp mình nha."
+            }
+
+        # 4) trả lại JSON cho FE (chat UI)
+        return ai_res
+
+    

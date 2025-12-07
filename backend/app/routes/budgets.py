@@ -5,6 +5,7 @@ from sqlalchemy import func
 from ..extensions import db
 from ..models.budget import Budget
 from ..models.category import Category
+from decimal import Decimal
 
 from ..services.budget_service import spend_used
 from ..services.budget_ai_service import projected_overshoot
@@ -280,3 +281,56 @@ def budget_ai_warnings():
         results.append(info)
 
     return jsonify({"items": results})
+
+
+@bp.post("/apply")
+@jwt_required()
+def apply_budget():
+    data = request.get_json()
+    user_id = current_user_id()
+
+    category_id = data.get("category_id")
+    amount = Decimal(str(data.get("amount", 0)))   # ⭐ convert đúng cách
+    increment = data.get("increment", False)
+    month = int(data.get("month"))
+    year = int(data.get("year"))
+
+    if not category_id or amount <= 0:
+        return jsonify({"message": "Thiếu dữ liệu ngân sách"}), 400
+
+    existing = Budget.query.filter_by(
+        user_id=user_id,
+        category_id=category_id,
+        period_month=month,
+        period_year=year
+    ).first()
+
+    # ---- ĐÃ CÓ NGÂN SÁCH → CẬP NHẬT ----
+    if existing:
+        if increment:
+            existing.limit_amount = Decimal(existing.limit_amount) + amount
+        else:
+            existing.limit_amount = amount
+
+        db.session.commit()
+
+        return jsonify({
+            "message": f"Ngân sách đã được cập nhật! Tổng mới = {float(existing.limit_amount):,.0f}đ"
+        }), 200
+
+    # ---- CHƯA CÓ → TẠO MỚI ----
+    new_budget = Budget(
+        user_id=user_id,
+        category_id=category_id,
+        period_month=month,
+        period_year=year,
+        limit_amount=amount,
+        created_at=func.now(),
+    )
+
+    db.session.add(new_budget)
+    db.session.commit()
+
+    return jsonify({
+        "message": f"Đã tạo ngân sách mới = {float(amount):,.0f}đ"
+    }), 201

@@ -202,7 +202,14 @@ SVFinance – APP.CSS (BẢN HỢP NHẤT + CHÚ THÍCH)
   padding: 0.25rem 0.5rem;
   border-radius: 999px;
 }
-
+/* [ADD] Con mắt ẩn/hiện Số dư - góc phải trên icon ví */
+#toggleBalance {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+#toggleBalance:hover {
+  opacity: 1;
+  transform: scale(1.08); /* [UPDATE] gọn gàng vì không cần translate nữa */
+}
 /* [EXPENSES] Transactions/Expenses */
 .expense-card {
   border: 1px solid var(--border-soft-1);
@@ -430,6 +437,11 @@ SVFinance – APP.CSS (BẢN HỢP NHẤT + CHÚ THÍCH)
 /* ===========================
    🎨 END: SECTION COLOR THEME
    =========================== */
+/* =========================
+   [CHATBOT-ADD] Chatbot Widget (UI)
+   - Vị trí: góc phải dưới
+   - Hỗ trợ dark mode qua [data-bs-theme="dark"]
+   ========================= */
 .chatbot {
   position: fixed;
   right: 20px;
@@ -569,4 +581,55 @@ SVFinance – APP.CSS (BẢN HỢP NHẤT + CHÚ THÍCH)
   background: #111827;
   color: #e5e7eb;
   border-color: #243042;
+}
+/* ===== MÀU NỀN RIÊNG CHO TỪNG KHUNG PAIN CARD ===== */
+
+.pain-card.pain-1 {
+  background: #ff8247; /* Cam nhạt */
+  border-color: #cc6633;
+}
+
+.pain-card.pain-2 {
+  background: #98fb98; /* Xanh mint nhạt */
+  border-color: #43cd80;
+}
+
+.pain-card.pain-3 {
+  background: #fefce8; /* Vàng nhạt */
+  border-color: #fde047;
+}
+
+.pain-card.pain-4 {
+  background: #f3e8ff; /* Tím nhạt */
+  border-color: #d8b4fe;
+}
+.testimonial-card.t1 {
+  background: #83c75d; /* Xanh lam nhạt */
+}
+
+.testimonial-card.t2 {
+  background: #fef889; /* Xanh mint */
+}
+
+.testimonial-card.t3 {
+  background: #00b2bf; /* Lavender */
+}
+.step.s1 {
+  background: #6ec3c9;
+  border-color: #bfdbfe;
+}
+
+.step.s2 {
+  background: #6ec3c9;
+  border-color: #a5f3fc;
+}
+
+.step.s3 {
+  background: #6ec3c9;
+  border-color: #fde047;
+}
+
+.step.s4 {
+  background: #6ec3c9;
+  border-color: #e9d5ff;
 }

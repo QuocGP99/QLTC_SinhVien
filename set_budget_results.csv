@@ -1,0 +1,6 @@
+﻿input,expected,detected
+"Đặt ngân sách ăn uống 1 triệu tháng này",set_budget,set_budget
+"Thiết lập ngân sách di chuyển 300k",set_budget,set_budget
+"Ngân sách học tập 500k cho tháng này",set_budget,set_budget
+"Đặt ngân sách 2 triệu cho ăn uống",set_budget,set_budget
+"Ngân sách xem phim 200k",set_budget,set_budget

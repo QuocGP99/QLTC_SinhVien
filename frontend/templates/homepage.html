@@ -1,22 +1,21 @@
-{% extends "base.html" %} {% block title %}Quản lý tín chỉ{% endblock %} {%
-block head %}
+{% extends "base.html" %} {% block title %}SVFinance - Quản lý tài chính sinh
+viên{% endblock %} {% block head %}
 <style>
-  /* Hero */
+  /* ================= HERO ================= */
   .hero {
     position: relative;
-    padding: 72px 0 32px;
+    padding: 80px 0 48px;
     background: radial-gradient(
         1200px 500px at 10% -10%,
-        #e0ebff 0%,
+        rgba(37, 99, 235, 0.18),
         transparent 60%
       ),
-      radial-gradient(1200px 500px at 90% -10%, #ffe8e8 0%, transparent 60%),
+      radial-gradient(
+        1200px 500px at 90% -10%,
+        rgba(124, 58, 237, 0.16),
+        transparent 60%
+      ),
       linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  }
-  .hero .phone {
-    max-width: 360px;
-    filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.15));
-    border-radius: 24px;
   }
   .hero h1 {
     font-weight: 800;
@@ -26,71 +25,254 @@ block head %}
     color: #475569;
   }
 
-  /* Sections */
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    background: #e0ecff;
+    color: #1d4ed8;
+    margin-bottom: 8px;
+  }
+  .hero-tag span.badge-ai {
+    background: #2563eb;
+    color: #fff;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+  }
+
+  .hero-kpis {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .hero-kpi {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #eff6ff;
+    font-size: 0.8rem;
+    color: #1d4ed8;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hero-kpi i {
+    font-size: 0.9rem;
+  }
+
+  .hero-visual {
+    position: relative;
+    max-width: 520px;
+    margin: 0 auto;
+    border-radius: 24px;
+    overflow: visible;
+    background: transparent !important;
+    box-shadow: none;
+  }
+  .hero-main-img {
+    width: 130%;
+    max-width: none;
+    transform: translateX(-8%);
+  }
+  .hero-visual img {
+    width: 100%;
+    display: block;
+  }
+
+  /* ================ Generic sections ================ */
   .section {
     padding: 64px 0;
   }
   .section-title {
     font-weight: 800;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
+  }
+  .section-subtitle {
+    color: #64748b;
+    margin-bottom: 20px;
   }
   .muted {
     color: #64748b;
   }
 
-  /* Feature cards */
+  /* ================ Pain points + Robot AI ================ */
+  .pain-card {
+    border-radius: 18px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    padding: 16px 16px 12px;
+    height: 100%;
+    text-align: left;
+  }
+  .pain-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #eff6ff;
+    color: #2563eb;
+    margin-bottom: 6px;
+    font-size: 1.1rem;
+  }
+
+  .ai-robot-wrap {
+    background: radial-gradient(
+      circle at 0 0,
+      #e0f2fe,
+      #eff6ff 45%,
+      #ffffff 90%
+    );
+    border-radius: 24px;
+    padding: 24px 20px;
+    border: 1px solid #e5e7eb;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .ai-robot-caption {
+    font-size: 0.9rem;
+    color: #475569;
+    margin-top: 8px;
+  }
+  .ai-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    background: rgba(37, 99, 235, 0.06);
+    color: #1d4ed8;
+    margin-bottom: 8px;
+  }
+  .ai-robot-svg {
+    width: 140px;
+    max-width: 100%;
+    animation: floaty 4s ease-in-out infinite;
+  }
+  .ai-robot-img {
+    width: 210px; /* chỉnh lớn/nhỏ tùy bạn */
+    max-width: 100%;
+    display: block;
+    object-fit: contain;
+    animation: floaty 4s ease-in-out infinite; /* dùng luôn hiệu ứng cũ */
+    filter: drop-shadow(0 10px 18px rgba(15, 23, 42, 0.18));
+  }
+  @keyframes floaty {
+    0% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+
+  /* ================ Feature cards ================ */
   .feature-card {
     height: 100%;
     border: 0;
     border-radius: 20px;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    padding: 16px 16px 14px;
   }
   .feature-icon {
-    font-size: 28px;
-    width: 56px;
-    height: 56px;
+    font-size: 24px;
+    width: 52px;
+    height: 52px;
     border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #eef2ff;
+    color: #2563eb;
+  }
+  .feature-thumb {
+    margin-top: 10px;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .feature-thumb img {
+    width: 100%;
+    display: block;
   }
 
-  /* Steps */
+  /* ================ AI Spotlight mini ================ */
+  .ai-spotlight {
+    border-radius: 22px;
+    padding: 22px 20px;
+    background: linear-gradient(135deg, #eff6ff, #f5f3ff);
+    border: 1px solid #e0e7ff;
+  }
+  .ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    font-size: 0.8rem;
+    margin: 4px;
+  }
+
+  /* ================ Steps (Guide) ================ */
   .step {
     border: 1px solid var(--bs-border-color);
     border-radius: 16px;
-    padding: 20px;
+    padding: 18px;
     height: 100%;
     background: #fff;
+    text-align: left;
+  }
+  .step-number {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #eff6ff;
+    color: #2563eb;
+    font-weight: 700;
+    font-size: 0.78rem;
+    margin-bottom: 6px;
   }
 
-  /* Contact block (thay map thật bằng banner) */
-  .map-fake {
-    background: url("https://picsum.photos/1600/400?blur=2") center/cover
-      no-repeat;
-    height: 260px;
+  /* ================ Testimonials ================ */
+  .testimonial-card {
     border-radius: 18px;
-    position: relative;
-    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    padding: 16px;
+    height: 100%;
   }
-  .map-fake::after {
-    content: "Bản đồ minh hoạ — thêm Google Maps sau";
-    position: absolute;
-    bottom: 8px;
-    right: 12px;
-    font-size: 12px;
-    color: #0f172a;
-    background: rgba(255, 255, 255, 0.8);
-    padding: 4px 8px;
-    border-radius: 8px;
+  .testimonial-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: #e5edff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #2563eb;
   }
 
-  /* CTA */
+  /* CONTACT / CTA */
   .cta {
-    background: linear-gradient(180deg, #ffffff, #f1f5f9);
+    background: linear-gradient(120deg, #ffffff, #eff6ff);
     border-radius: 18px;
-    padding: 28px;
+    padding: 22px;
     box-shadow: inset 0 0 0 1px var(--bs-border-color);
   }
 
@@ -98,29 +280,54 @@ block head %}
   html {
     scroll-behavior: smooth;
   }
+
+  @media (max-width: 991.98px) {
+    .hero {
+      padding-top: 56px;
+    }
+  }
 </style>
 {% endblock %} {% block content %}
-<!-- HERO -->
+
+<!-- ================= HERO ================= -->
 <section class="hero">
   <div class="container">
     <div class="row align-items-center g-4">
       <div class="col-lg-6 order-lg-1 order-2">
-        <h1 class="display-5 mb-3">QUẢN LÝ TÍN CHỈ</h1>
-        <p class="lead mb-4">
-          Theo dõi kế hoạch học tập, tín chỉ tích lũy và còn thiếu theo CTĐT. Hỗ
-          trợ phân nhóm học phần, cảnh báo tiến độ, và gợi ý đăng ký kỳ sau.
+        <div class="hero-tag">
+          <span class="badge-ai">AI</span>
+          <span>Ứng dụng quản lý tài chính cho sinh viên</span>
+        </div>
+        <h1 class="display-5 mb-3">
+          Biết rõ tiền đi đâu<br />ngay trên một màn hình
+        </h1>
+        <p class="lead mb-3">
+          Ghi thu chi, đặt ngân sách và xem phân tích với trợ lý AI – tất cả
+          trong SVFinance.
         </p>
 
-        <div class="d-flex gap-2 flex-wrap">
+        <div class="hero-kpis">
+          <div class="hero-kpi">
+            <i class="bi bi-bar-chart-line"></i><span>Dashboard</span>
+          </div>
+          <div class="hero-kpi">
+            <i class="bi bi-cpu"></i><span>AI chi tiêu</span>
+          </div>
+          <div class="hero-kpi">
+            <i class="bi bi-flag"></i><span>Mục tiêu tiết kiệm</span>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap mt-4">
           <a href="#features" class="btn btn-primary btn-lg">
-            Khám phá tính năng
+            Xem nhanh tính năng
           </a>
           {% if not session.get('user') %}
           <a
             href="{{ url_for('web.login') }}"
             class="btn btn-outline-secondary btn-lg"
           >
-            Đăng nhập để vào Dashboard
+            Đăng nhập để trải nghiệm
           </a>
           {% else %}
           <a
@@ -132,149 +339,408 @@ block head %}
           {% endif %}
         </div>
       </div>
+
       <div class="col-lg-6 text-center order-lg-2 order-1">
-        <!-- Hình điện thoại demo (có thể thay bằng ảnh dự án của bạn) -->
-        <img
-          class="phone img-fluid"
-          src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=800&auto=format&fit=crop"
-          alt="App preview"
-        />
+        <div class="hero-visual">
+          <!-- Gợi ý: dùng screenshot dashboard chính -->
+          <img
+            src="{{ url_for('static', filename='img/dashboard-hero.png') }}"
+            alt="SVFinance Dashboard"
+            class="hero-main-img"
+          />
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- NAV local -->
+<!-- ================= LOCAL NAV ================= -->
 <div class="bg-white border-bottom">
   <div class="container">
-    <ul class="nav nav-pills py-2 gap-2">
+    <ul class="nav nav-pills py-2 gap-2 flex-nowrap overflow-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="#problems">Khó khăn</a>
+      </li>
       <li class="nav-item">
         <a class="nav-link" href="#features">Tính năng</a>
       </li>
-      <li class="nav-item"><a class="nav-link" href="#guide">Hướng dẫn</a></li>
-      <li class="nav-item"><a class="nav-link" href="#faq">FAQ</a></li>
+      <li class="nav-item"><a class="nav-link" href="#ai">AI</a></li>
       <li class="nav-item">
-        <a class="nav-link" href="#download">Download</a>
+        <a class="nav-link" href="#guide">4 bước dùng</a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#feedback">Sinh viên nói gì</a>
+      </li>
+      <li class="nav-item"><a class="nav-link" href="#faq">FAQ</a></li>
       <li class="nav-item"><a class="nav-link" href="#contact">Liên hệ</a></li>
     </ul>
   </div>
 </div>
 
-<!-- FEATURES -->
-<section id="features" class="section">
+<!-- ================= PROBLEMS + ROBOT AI ================= -->
+<section id="problems" class="section">
   <div class="container">
-    <h2 class="section-title">Tính năng nổi bật</h2>
-    <div class="row g-3">
-      <div class="col-md-6 col-lg-3">
-        <div class="card feature-card p-3">
-          <div class="d-flex align-items-center gap-3">
-            <div class="feature-icon"><i class="bi bi-grid"></i></div>
-            <div>
-              <div class="fw-bold">Nhóm học phần</div>
-              <div class="muted small">Đại cương, Cơ sở, Chuyên ngành…</div>
+    <div class="row g-4 align-items-stretch">
+      <div class="col-lg-6">
+        <h2 class="section-title">Sinh viên thường gặp vấn đề gì?</h2>
+        <p class="section-subtitle">
+          Một vài tình huống quen thuộc khi quản lý tiền hàng tháng.
+        </p>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="pain-card pain-1">
+              <div class="pain-icon"><i class="bi bi-emoji-frown"></i></div>
+              <h6 class="mb-1">Chi tiêu khó kiểm soát</h6>
+              <p class="small muted mb-0">
+                Đến cuối tháng mới giật mình “tiền đi đâu hết”.
+              </p>
             </div>
           </div>
-          <div class="mt-3 muted">
-            Theo dõi tiến độ từng nhóm và tự tính còn thiếu.
+          <div class="col-md-6">
+            <div class="pain-card pain-2">
+              <div class="pain-icon"><i class="bi bi-hourglass-split"></i></div>
+              <h6 class="mb-1">Ghi chép rời rạc</h6>
+              <p class="small muted mb-0">
+                Vở, Excel, ghi chú điện thoại – mỗi nơi một ít.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="pain-card pain-3">
+              <div class="pain-icon"><i class="bi bi-piggy-bank"></i></div>
+              <h6 class="mb-1">Khó đặt mục tiêu</h6>
+              <p class="small muted mb-0">
+                Muốn mua laptop, đi du lịch nhưng không biết bắt đầu từ đâu.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="pain-card pain-4">
+              <div class="pain-icon"><i class="bi bi-graph-down"></i></div>
+              <h6 class="mb-1">Thiếu cái nhìn tổng quan</h6>
+              <p class="small muted mb-0">
+                Không có biểu đồ nào cho thấy mình đang chi thế nào.
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="col-md-6 col-lg-3">
-        <div class="card feature-card p-3">
-          <div class="d-flex align-items-center gap-3">
-            <div class="feature-icon"><i class="bi bi-graph-up"></i></div>
+      <!-- Robot AI -->
+      <div class="col-lg-6">
+        <div class="ai-robot-wrap">
+          <div class="d-flex align-items-center justify-content-between mb-3">
             <div>
-              <div class="fw-bold">KPI tín chỉ</div>
-              <div class="muted small">Đã đạt / Mục tiêu / Cảnh báo</div>
+              <div class="ai-pill">
+                <i class="bi bi-robot"></i><span>SVFinance AI Assistant</span>
+              </div>
+              <h5 class="mt-1 mb-1">Robot AI đồng hành cùng bạn</h5>
+              <p class="ai-robot-caption mb-0">
+                Hỏi AI về chi tiêu, ngân sách và kế hoạch tiết kiệm – ngay trong
+                trang web.
+              </p>
             </div>
           </div>
-          <div class="mt-3 muted">
-            Biểu đồ trực quan theo kỳ học và toàn khóa.
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-6 col-lg-3">
-        <div class="card feature-card p-3">
-          <div class="d-flex align-items-center gap-3">
-            <div class="feature-icon"><i class="bi bi-lightbulb"></i></div>
-            <div>
-              <div class="fw-bold">Gợi ý đăng ký</div>
-              <div class="muted small">Tối ưu tiến độ đúng hạn</div>
+          <div class="d-flex justify-content-center my-3">
+            <div class="d-flex justify-content-center my-3">
+              <img
+                src="{{ url_for('static', filename='img/ai-robot-3d.png') }}"
+                alt="SVFinance AI Assistant"
+                class="ai-robot-img"
+              />
             </div>
           </div>
-          <div class="mt-3 muted">Đề xuất môn nên học trong kỳ tiếp theo.</div>
-        </div>
-      </div>
-
-      <div class="col-md-6 col-lg-3">
-        <div class="card feature-card p-3">
-          <div class="d-flex align-items-center gap-3">
-            <div class="feature-icon">
-              <i class="bi bi-cloud-arrow-down"></i>
-            </div>
-            <div>
-              <div class="fw-bold">Xuất báo cáo</div>
-              <div class="muted small">PDF/Excel</div>
-            </div>
-          </div>
-          <div class="mt-3 muted">Tải nhanh lộ trình học tập và bảng điểm.</div>
+          <p class="small text-muted mb-1">
+            • Hỏi nhanh: “Tháng này mình vượt ngân sách chưa?”, “Chi nhiều nhất
+            cho danh mục nào?”.
+          </p>
+          <p class="small text-muted mb-0">
+            • Nhận gợi ý tiết kiệm, cảnh báo khi chi quá nhanh.
+          </p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- GUIDE -->
+<!-- ================= FEATURES ================= -->
+<section id="features" class="section bg-light">
+  <div class="container">
+    <h2 class="section-title text-center">Tất cả trong một ứng dụng web</h2>
+    <p class="section-subtitle text-center">
+      Những gì sinh viên cần để theo dõi tiền bạc mỗi tháng.
+    </p>
+
+    <!-- Hàng 1: Thu chi + Ngân sách + Mục tiêu -->
+    <div class="row g-3 mb-2">
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="d-flex align-items-center gap-3">
+            <div class="feature-icon"><i class="bi bi-wallet2"></i></div>
+            <div>
+              <div class="fw-bold">Quản lý thu – chi</div>
+              <div class="muted small">
+                Ghi chép giao dịch theo danh mục sinh viên.
+              </div>
+            </div>
+          </div>
+          <div class="feature-thumb">
+            <!-- Gợi ý: ảnh màn hình trang giao dịch -->
+            <img
+              src="{{ url_for('static', filename='img/feature-transactions.png') }}"
+              alt="Giao dịch SVFinance"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="d-flex align-items-center gap-3">
+            <div class="feature-icon"><i class="bi bi-pie-chart"></i></div>
+            <div>
+              <div class="fw-bold">Ngân sách thông minh</div>
+              <div class="muted small">Giới hạn chi cho từng nhóm.</div>
+            </div>
+          </div>
+          <div class="feature-thumb">
+            <img
+              src="{{ url_for('static', filename='img/feature-budgets.png') }}"
+              alt="Ngân sách SVFinance"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="d-flex align-items-center gap-3">
+            <div class="feature-icon"><i class="bi bi-flag"></i></div>
+            <div>
+              <div class="fw-bold">Mục tiêu tiết kiệm</div>
+              <div class="muted small">Theo dõi tiến độ từng mục tiêu.</div>
+            </div>
+          </div>
+          <div class="feature-thumb">
+            <img
+              src="{{ url_for('static', filename='img/feature-goals.png') }}"
+              alt="Mục tiêu tiết kiệm SVFinance"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hàng 2: Dashboard + Chatbot + OCR/AI -->
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="d-flex align-items-center gap-3">
+            <div class="feature-icon"><i class="bi bi-speedometer2"></i></div>
+            <div>
+              <div class="fw-bold">Dashboard phân tích</div>
+              <div class="muted small">Biểu đồ cột, tròn, đường.</div>
+            </div>
+          </div>
+          <div class="feature-thumb">
+            <img
+              src="{{ url_for('static', filename='img/feature-dashboard.png') }}"
+              alt="Dashboard SVFinance"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="d-flex align-items-center gap-3">
+            <div class="feature-icon"><i class="bi bi-robot"></i></div>
+            <div>
+              <div class="fw-bold">Chatbot tài chính</div>
+              <div class="muted small">Hỏi đáp trực tiếp trong web.</div>
+            </div>
+          </div>
+          <div class="feature-thumb">
+            <img
+              src="{{ url_for('static', filename='img/feature-chatbot.png') }}"
+              alt="Chatbot SVFinance"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="d-flex align-items-center gap-3">
+            <div class="feature-icon"><i class="bi bi-upc-scan"></i></div>
+            <div>
+              <div class="fw-bold">OCR & AI chi tiêu</div>
+              <div class="muted small">Quét bill, AI tự phân loại.</div>
+            </div>
+          </div>
+          <div class="feature-thumb">
+            <img
+              src="{{ url_for('static', filename='img/feature-ocr-ai.png') }}"
+              alt="OCR & AI SVFinance"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= AI SPOTLIGHT MINI ================= -->
+<section id="ai" class="section">
+  <div class="container">
+    <div class="ai-spotlight">
+      <div class="row g-4 align-items-center">
+        <div class="col-lg-4">
+          <h3 class="mb-2">AI hiểu dữ liệu của chính bạn</h3>
+          <p class="muted mb-2">
+            Không chỉ trả lời chung chung, AI dựa trên giao dịch, ngân sách và
+            mục tiêu đã đặt.
+          </p>
+          <p class="muted small mb-0">
+            Phù hợp cho sinh viên muốn quản lý tiền nhưng không rành thuật ngữ
+            tài chính.
+          </p>
+        </div>
+        <div class="col-lg-8">
+          <div class="d-flex flex-wrap">
+            <span class="ai-badge"
+              ><i class="bi bi-tags"></i> Tự phân loại giao dịch</span
+            >
+            <span class="ai-badge"
+              ><i class="bi bi-alarm"></i> Cảnh báo vượt ngân sách</span
+            >
+            <span class="ai-badge"
+              ><i class="bi bi-calendar3"></i> Dự báo tháng tới</span
+            >
+            <span class="ai-badge"
+              ><i class="bi bi-heart-pulse"></i> AI Score tài chính</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FEEDBACK ================= -->
+<section id="feedback" class="section bg-light">
+  <div class="container">
+    <h2 class="section-title text-center">Sinh viên nói gì về SVFinance?</h2>
+    <p class="section-subtitle text-center">
+      Một vài chia sẻ sau khi dùng SVFinance để quản lý chi tiêu.
+    </p>
+
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="testimonial-card t1">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <div class="testimonial-avatar">A</div>
+            <div>
+              <div class="fw-semibold small">An – 21CT4</div>
+              <div class="small muted">Sinh viên năm 3</div>
+            </div>
+          </div>
+          <p class="small mb-0">
+            “Trước đây mình tiêu theo cảm hứng. Từ khi dùng SVFinance và xem
+            dashboard, mình kiểm soát tốt hơn hẳn.”
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="testimonial-card t2">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <div class="testimonial-avatar">B</div>
+            <div>
+              <div class="fw-semibold small">Bình – 21CT2</div>
+              <div class="small muted">Ở trọ Đà Nẵng</div>
+            </div>
+          </div>
+          <p class="small mb-0">
+            “Ngân sách với cảnh báo giúp mình hạn chế order đồ ăn linh tinh.
+            Tháng nào cũng dư được chút ít.”
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="testimonial-card t3">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <div class="testimonial-avatar">C</div>
+            <div>
+              <div class="fw-semibold small">Chi – 21KT</div>
+              <div class="small muted">Yêu thích du lịch</div>
+            </div>
+          </div>
+          <p class="small mb-0">
+            “Mình đặt mục tiêu đi Huế. App chia nhỏ số tiền cần để mỗi tháng,
+            nên không còn lo thiếu tiền phút cuối.”
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= GUIDE ================= -->
 <section id="guide" class="section">
   <div class="container">
-    <h2 class="section-title text-center">Cách sử dụng</h2>
-    <p class="text-center muted mb-4">
-      Chỉ vài bước đơn giản là bắt đầu được ngay.
+    <h2 class="section-title text-center">Bắt đầu trong 4 bước</h2>
+    <p class="section-subtitle text-center">
+      Không cần kiến thức tài chính – chỉ làm theo từng bước đơn giản.
     </p>
+
     <div class="row g-3">
       <div class="col-md-6 col-lg-3">
-        <div class="step h-100">
-          <div class="fw-bold mb-1">Tạo tài khoản</div>
-          <div class="muted small">
-            Đăng ký bằng email hoặc đăng nhập Google.
-          </div>
+        <div class="step s1">
+          <div class="step-number">1</div>
+          <h6 class="mb-1">Tạo tài khoản</h6>
+          <p class="small muted mb-0">
+            Đăng ký bằng email, đăng nhập từ bất kỳ thiết bị nào.
+          </p>
         </div>
       </div>
       <div class="col-md-6 col-lg-3">
-        <div class="step h-100">
-          <div class="fw-bold mb-1">Nhập CTĐT</div>
-          <div class="muted small">
-            Chọn ngành/chuyên ngành để tải khung chương trình.
-          </div>
+        <div class="step s1">
+          <div class="step-number">2</div>
+          <h6 class="mb-1">Thêm giao dịch</h6>
+          <p class="small muted mb-0">
+            Ghi thu/chi hoặc dùng mô tả tự nhiên, OCR để đọc bill.
+          </p>
         </div>
       </div>
       <div class="col-md-6 col-lg-3">
-        <div class="step h-100">
-          <div class="fw-bold mb-1">Cập nhật kết quả</div>
-          <div class="muted small">
-            Nhập điểm/tín chỉ đã đạt để hệ thống tính tiến độ.
-          </div>
+        <div class="step s1">
+          <div class="step-number">3</div>
+          <h6 class="mb-1">Đặt ngân sách & mục tiêu</h6>
+          <p class="small muted mb-0">
+            Chọn giới hạn chi và mục tiêu muốn đạt trong năm.
+          </p>
         </div>
       </div>
       <div class="col-md-6 col-lg-3">
-        <div class="step h-100">
-          <div class="fw-bold mb-1">Theo dõi & đăng ký</div>
-          <div class="muted small">
-            Xem biểu đồ, nhận gợi ý đăng ký môn cho kỳ tới.
-          </div>
+        <div class="step s1">
+          <div class="step-number">4</div>
+          <h6 class="mb-1">Xem phân tích & hỏi AI</h6>
+          <p class="small muted mb-0">
+            Theo dõi biểu đồ, AI Score và trò chuyện với chatbot.
+          </p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- FAQ -->
+<!-- ================= FAQ ================= -->
 <section id="faq" class="section bg-light">
   <div class="container">
-    <h2 class="section-title">FAQ</h2>
+    <h2 class="section-title">Câu hỏi thường gặp</h2>
     <div class="accordion" id="faqAcc">
       <div class="accordion-item">
         <h2 class="accordion-header" id="q1">
@@ -284,7 +750,7 @@ block head %}
             data-bs-toggle="collapse"
             data-bs-target="#a1"
           >
-            Ứng dụng có miễn phí không?
+            SVFinance có miễn phí cho sinh viên không?
           </button>
         </h2>
         <div
@@ -292,7 +758,10 @@ block head %}
           class="accordion-collapse collapse show"
           data-bs-parent="#faqAcc"
         >
-          <div class="accordion-body">Bản sinh viên hoàn toàn miễn phí.</div>
+          <div class="accordion-body">
+            Phiên bản trong đồ án được thiết kế miễn phí cho sinh viên, với đầy
+            đủ chức năng quản lý thu chi, ngân sách, mục tiêu và AI cơ bản.
+          </div>
         </div>
       </div>
 
@@ -304,7 +773,7 @@ block head %}
             data-bs-toggle="collapse"
             data-bs-target="#a2"
           >
-            Có hỗ trợ xuất báo cáo không?
+            AI phân loại chi tiêu như thế nào?
           </button>
         </h2>
         <div
@@ -313,7 +782,78 @@ block head %}
           data-bs-parent="#faqAcc"
         >
           <div class="accordion-body">
-            Có, hỗ trợ PDF/Excel theo từng kỳ và toàn khóa.
+            Khi bạn nhập mô tả (ví dụ “ăn bún bò 35k”), hệ thống dùng mô hình AI
+            để nhận diện số tiền và gợi ý danh mục phù hợp. Bạn vẫn có thể chỉnh
+            sửa lại.
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="q3">
+          <button
+            class="accordion-button collapsed"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#a3"
+          >
+            OCR có đọc được mọi loại hóa đơn không?
+          </button>
+        </h2>
+        <div
+          id="a3"
+          class="accordion-collapse collapse"
+          data-bs-parent="#faqAcc"
+        >
+          <div class="accordion-body">
+            OCR tối ưu cho các hóa đơn, bill phổ biến. Ảnh quá mờ hoặc bị cắt có
+            thể nhận chưa đúng, khi đó bạn chỉnh lại trước khi lưu.
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="q4">
+          <button
+            class="accordion-button collapsed"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#a4"
+          >
+            Dữ liệu tài chính có được bảo mật không?
+          </button>
+        </h2>
+        <div
+          id="a4"
+          class="accordion-collapse collapse"
+          data-bs-parent="#faqAcc"
+        >
+          <div class="accordion-body">
+            Mỗi tài khoản chỉ xem được dữ liệu của chính mình. Khi triển khai
+            thực tế có thể bổ sung HTTPS, JWT và các cơ chế bảo mật nâng cao.
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="q5">
+          <button
+            class="accordion-button collapsed"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#a5"
+          >
+            Có thể xuất báo cáo để nộp cho giảng viên không?
+          </button>
+        </h2>
+        <div
+          id="a5"
+          class="accordion-collapse collapse"
+          data-bs-parent="#faqAcc"
+        >
+          <div class="accordion-body">
+            SVFinance hỗ trợ tổng hợp dữ liệu theo tháng; tuỳ cấu hình triển
+            khai, bạn có thể xuất ra PDF/Excel để nộp kèm báo cáo.
           </div>
         </div>
       </div>
@@ -321,43 +861,59 @@ block head %}
   </div>
 </section>
 
-<!-- DOWNLOAD -->
-<section id="download" class="section">
-  <div class="container">
-    <div
-      class="cta d-flex flex-column flex-lg-row align-items-center justify-content-between gap-3"
-    >
-      <div>
-        <h4 class="mb-1">Tải ứng dụng</h4>
-        <div class="muted">Theo dõi tín chỉ mọi lúc mọi nơi.</div>
-      </div>
-      <div class="d-flex gap-2">
-        <a class="btn btn-dark btn-lg"
-          ><i class="bi bi-apple me-2"></i>App Store</a
-        >
-        <a class="btn btn-success btn-lg"
-          ><i class="bi bi-google-play me-2"></i>Google Play</a
-        >
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- CONTACT -->
-<section id="contact" class="section bg-light">
+<!-- ================= CONTACT / FOOTER ================= -->
+<section id="contact" class="section">
   <div class="container">
     <div class="row g-4">
-      <div class="col-12">
-        <div class="map-fake"></div>
+      <div class="col-lg-6">
+        <div
+          class="cta d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-3"
+        >
+          <div>
+            <h4 class="mb-1">Muốn thử SVFinance ngay?</h4>
+            <p class="muted mb-2">
+              Đăng nhập để bắt đầu ghi chép tài chính và khám phá các tính năng
+              AI.
+            </p>
+            {% if not session.get('user') %}
+            <a href="{{ url_for('web.login') }}" class="btn btn-primary btn-lg">
+              Đăng nhập
+            </a>
+            {% else %}
+            <a
+              href="{{ url_for('web.dashboard') }}"
+              class="btn btn-primary btn-lg"
+            >
+              Vào Dashboard
+            </a>
+            {% endif %}
+          </div>
+          <div class="text-muted small">
+            <div>
+              <i class="bi bi-telephone me-1"></i> SĐT hỗ trợ: 0xxx xxx xxx
+            </div>
+            <div>
+              <i class="bi bi-envelope me-1"></i> Email: svfinance@example.com
+            </div>
+            <div>
+              <i class="bi bi-geo-alt me-1"></i> Trường ĐH Kiến trúc Đà Nẵng
+            </div>
+          </div>
+        </div>
       </div>
+
       <div class="col-lg-6">
         <div class="card p-3">
           <div class="card-body">
-            <h5 class="card-title">Liên hệ với chúng tôi</h5>
+            <h5 class="card-title">Liên hệ & góp ý</h5>
             <form>
               <div class="row g-2">
                 <div class="col-md-6">
-                  <input type="text" class="form-control" placeholder="Tên" />
+                  <input
+                    type="text"
+                    class="form-control"
+                    placeholder="Tên của bạn"
+                  />
                 </div>
                 <div class="col-md-6">
                   <input
@@ -368,51 +924,32 @@ block head %}
                 </div>
                 <div class="col-12">
                   <textarea
-                    rows="5"
+                    rows="4"
                     class="form-control"
-                    placeholder="Tin nhắn..."
+                    placeholder="Nội dung góp ý hoặc câu hỏi của bạn..."
                   ></textarea>
                 </div>
               </div>
               <button type="button" class="btn btn-primary mt-3">
-                Gửi tin nhắn
+                Gửi góp ý
               </button>
             </form>
           </div>
         </div>
-      </div>
-      <div class="col-lg-6">
-        <div class="card p-3">
-          <div class="card-body">
-            <h5 class="card-title">Thông tin liên hệ</h5>
-            <ul class="list-unstyled muted">
-              <li class="mb-2">
-                <i class="bi bi-telephone me-2"></i>+84 000 000 000
-              </li>
-              <li class="mb-2">
-                <i class="bi bi-envelope me-2"></i>contact@svfinance.edu.vn
-              </li>
-              <li>
-                <i class="bi bi-geo-alt me-2"></i>TP. Hồ Chí Minh, Việt Nam
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div class="card p-3 mt-3">
-          <div class="card-body">
-            <h5 class="card-title">Nhận tính năng mới</h5>
-            <div class="input-group">
-              <input
-                type="email"
-                class="form-control"
-                placeholder="Nhập email của bạn..."
-              />
-              <button class="btn btn-outline-primary">Đăng ký</button>
-            </div>
-          </div>
+        <div
+          class="d-flex justify-content-between align-items-center mt-3 text-muted small"
+        >
+          <span>© {{ current_year or 2025 }} SVFinance – Đồ án tốt nghiệp</span>
+          <span>
+            <i class="bi bi-github me-1"></i>Repo:
+            <a href="#" class="link-secondary text-decoration-none"
+              >GitHub SVFinance</a
+            >
+          </span>
         </div>
       </div>
     </div>
   </div>
 </section>
+
 {% endblock %}

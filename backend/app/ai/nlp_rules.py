@@ -73,3 +73,72 @@ def detect_tx_type(text: str) -> str:
         return "income"
 
     return "expense"
+
+def extract_saving_goal(text: str):
+    """
+    Trích xuất tên mục tiêu tiết kiệm + số tiền
+    Ví dụ:
+    - "tạo mục tiêu tiết kiệm mua xe máy SH 100 triệu"
+    - "đặt mục tiêu tiết kiệm đi du lịch 3 triệu"
+    - "tiết kiệm mua laptop 15 triệu"
+    """
+
+    raw = text.lower().strip()
+
+    # -----------------------------
+    # 1) TÁCH SỐ TIỀN
+    # -----------------------------
+    # Match dạng:
+    #   100k
+    #   3 triệu
+    #   15 tr
+    #   15000000
+    money_match = re.search(r"(\d[\d\.]*)(\s*(k|nghìn|ngàn|ngan|tr|triệu|trieu))?", raw)
+
+    amount = None
+    if money_match:
+        num = money_match.group(1).replace(".", "")
+        unit = (money_match.group(3) or "").strip()
+
+        try:
+            value = float(num)
+            if unit in ["k", "nghìn", "ngàn", "ngan"]:
+                value *= 1000
+            elif unit in ["tr", "triệu", "trieu"]:
+                value *= 1_000_000
+            elif value < 1000:
+                # "50" hiểu 50k
+                value *= 1000
+
+            amount = int(value)
+        except:
+            amount = None
+
+    # -----------------------------
+    # 2) TÁCH TÊN MỤC TIÊU TIẾT KIỆM
+    # -----------------------------
+    # Tìm phần sau cụm: "mục tiêu tiết kiệm", "tiết kiệm"
+    patterns = [
+        r"mục tiêu tiết kiệm\s+(.*?)(\d|k|nghìn|ngàn|ngan|triệu|trieu|tr|$)",
+        r"tiết kiệm\s+(.*?)(\d|k|nghìn|ngàn|ngan|triệu|trieu|tr|$)",
+    ]
+
+    goal_name = None
+    for p in patterns:
+        m = re.search(p, raw)
+        if m:
+            goal_name = m.group(1).strip()
+            break
+
+    # Nếu vẫn không tìm được tên → fallback
+    if not goal_name:
+        m2 = re.search(r"(mua|đi|du lịch|học phí|học tập|xe|laptop|macbook)\s+(.*)", raw)
+        if m2:
+            goal_name = raw.replace(money_match.group(0), "").strip()
+
+    return {
+        "goal_name": goal_name,
+        "amount": amount,
+    }
+
+

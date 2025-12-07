@@ -632,3 +632,4 @@ def analytics_health_score():
 
     data = compute_financial_health(user_id, year, month)
     return jsonify(data), 200
+
