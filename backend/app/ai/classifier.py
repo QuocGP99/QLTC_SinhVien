@@ -29,3 +29,15 @@ def predict_category_all(text):
         })
 
     return sorted(result, key=lambda x: x["prob"], reverse=True)
+
+def predict_category(text):
+    """
+    Trả về (label, prob) dạng tuple đơn giản.
+    Dùng trong NLP parser để map category.
+    """
+    all_preds = predict_category_all(text)
+    if not all_preds:
+        return None, 0.0
+
+    top = all_preds[0]
+    return top["label"], top["prob"]

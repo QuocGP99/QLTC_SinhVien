@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 from ...ai.nlp_rules import extract_amount_vnd
-from ...ai.classifier import predict_category_all
+from ...ai.classifier import predict_category
 
 CATEGORY_MAP = {
     5:  ["ăn", "uống", "food", "drink", "coffee", "cafe", "quán", "restaurant", "kfc", "lotteria"],
@@ -30,7 +30,7 @@ def map_category_id(text: str):
             if kw in low:
                 return cid
     # fallback classifier
-    cat, prob = predict_category_all(text)
+    cat, prob = predict_category(text)
     if prob >= 0.55:
         if "ăn" in cat: return 5
         if "siêu thị" in cat or "mua sắm" in cat: return 8
