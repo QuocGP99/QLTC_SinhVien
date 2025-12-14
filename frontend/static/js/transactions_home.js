@@ -43,6 +43,27 @@ const TransactionsHome = (() => {
       currency: "VND",
       maximumFractionDigits: 0,
     });
+  // Helper: Ánh xạ tên danh mục sang class CSS trong app.css
+  const getCategoryClass = (name) => {
+    if (!name) return "cat--khac";
+    const n = name.toLowerCase().trim();
+
+    // Nhóm Chi tiêu
+    if (n.includes("ăn uống")) return "cat--an-uong";
+    if (n.includes("di chuyển")) return "cat--di-chuyen";
+    if (n.includes("giải trí")) return "cat--giai-tri";
+    if (n.includes("học tập")) return "cat--hoc-tap";
+    if (n.includes("nhà ở")) return "cat--nha-o";
+    if (n.includes("mua sắm")) return "cat--mua-sam";
+    if (n.includes("sức khỏe")) return "cat--suc-khoe";
+
+    // Nhóm Thu nhập
+    if (n.includes("lương")) return "cat--luong";
+    if (n.includes("thưởng")) return "cat--thuong";
+    if (n.includes("học bổng")) return "cat--hoc-bong";
+
+    return "cat--khac"; // Mặc định
+  };
   const esc = (s) =>
     String(s ?? "")
       .replace(/&/g, "&amp;")
@@ -80,7 +101,6 @@ const TransactionsHome = (() => {
     method: null,
     note: x.note || "",
   });
-
   // ---- render list ----
   function renderList() {
     const wrap = document.getElementById("txList");
@@ -94,6 +114,25 @@ const TransactionsHome = (() => {
       .sort(
         (a, b) => (b.date || "").localeCompare(a.date || "") || b.id - a.id
       );
+
+    // --- KHỐI HELPER MỚI THÊM ---
+    const getCategoryClass = (name) => {
+      if (!name) return "cat--khac";
+      const n = name.toLowerCase().trim();
+      if (n.includes("ăn uống")) return "cat--an-uong";
+      if (n.includes("di chuyển")) return "cat--di-chuyen";
+      if (n.includes("giải trí")) return "cat--giai-tri";
+      if (n.includes("học tập")) return "cat--hoc-tap";
+      if (n.includes("nhà ở")) return "cat--nha-o";
+      if (n.includes("mua sắm")) return "cat--mua-sam";
+      if (n.includes("sức khỏe")) return "cat--suc-khoe";
+      if (n.includes("lương")) return "cat--luong";
+      if (n.includes("thưởng")) return "cat--thuong";
+      if (n.includes("học bổng")) return "cat--hoc-bong";
+      return "cat--khac";
+    };
+    // ----------------------------
+
     items.forEach((tx) => {
       const dateStr = tx.date
         ? new Date(tx.date).toLocaleDateString("vi-VN")
@@ -106,6 +145,10 @@ const TransactionsHome = (() => {
         ? `<i class="bi bi-cash-stack text-danger me-1"></i>`
         : `<i class="bi bi-wallet2 text-success me-1"></i>`;
       const method = isExp ? ` · ${esc(tx.method || "Tiền mặt")}` : "";
+
+      // Lấy class màu sắc tương ứng
+      const catClass = getCategoryClass(tx.category);
+
       const el = document.createElement("div");
       el.className = "tx-card";
       el.innerHTML = `
@@ -115,9 +158,9 @@ const TransactionsHome = (() => {
             <div class="small text-muted">${dateStr}${method}</div>
           </div>
           <div class="d-flex align-items-center gap-3">
-            <span class="badge badge-soft" title="Danh mục">${esc(
-              tx.category
-            )}</span>
+            <span class="cat-chip ${catClass} sm" title="Danh mục">${esc(
+        tx.category
+      )}</span>
             ${amtHtml}
           </div>
         </div>`;
