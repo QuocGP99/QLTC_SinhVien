@@ -169,7 +169,10 @@
 
   // ===== Modal =====
   const modalEl = document.getElementById("goalModal");
-  const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+  const modal = modalEl ? new bootstrap.Modal(modalEl, {
+    backdrop: 'static',
+    keyboard: false
+  }) : null;
 
   qs("#newGoalBtn")?.addEventListener("click", () => openModal(null));
 
@@ -194,47 +197,8 @@
     modal?.show();
   }
 
-  qs("#goalForm")?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const f = e.target;
-    const fd = Object.fromEntries(new FormData(f).entries());
-    const dmyToISO = (s) =>
-      (window.__SAVINGS_DATE__?.toISO && window.__SAVINGS_DATE__.toISO(s)) ||
-      (s
-        ? (() => {
-            const [dd, mm, yyyy] = String(s).split("/");
-            return `${yyyy}-${mm}-${dd}`;
-          })()
-        : null);
-    const payload = {
-      name: fd.name || "",
-      description: fd.description || "",
-      target_amount: Number(fd.target_amount || 0),
-      monthly_contribution: Number(fd.monthly_contribution || 0),
-      deadline: dmyToISO(fd.deadline),
-      auto_contribute: !!fd.auto_contribute,
-      contribute_interval: fd.contribute_interval || "monthly",
-    };
-
-    if (!fd.id) {
-      // create
-      await fetch(`${API_BASE}/savings`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...AUTH_HEADERS },
-        body: JSON.stringify(payload),
-      });
-    } else {
-      // update
-      await fetch(`${API_BASE}/savings/${fd.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", ...AUTH_HEADERS },
-        body: JSON.stringify(payload),
-      });
-    }
-
-    modal?.hide();
-    await boot();
-  });
+  // Form submit được xử lý trong index.html inline script
+  // Không cần duplicate handler ở đây
 
   // ===== bind actions =====
   function bindCardEvents() {

@@ -27,14 +27,13 @@ def compute_financial_health(user_id: int, year: int, month: int):
     for b in budgets:
         spent_amount = (
             Expense.query.filter_by(
-            user_id=user_id,
-            category_id=b.category_id
-        )
-        .with_entities(db.func.sum(Expense.amount))
-        .scalar()
-    ) or 0
-
-    total_spent += float(spent_amount)
+                user_id=user_id,
+                category_id=b.category_id
+            )
+            .with_entities(db.func.sum(Expense.amount))
+            .scalar()
+        ) or 0
+        total_spent += float(spent_amount)
 
 
     if total_limit > 0:
@@ -54,7 +53,6 @@ def compute_financial_health(user_id: int, year: int, month: int):
     else:
         score_budget = 0
 
-    # ==== 2) TIẾT KIỆM ====
     # ==== 2) TIẾT KIỆM ====
     goals = SavingsGoal.query.filter_by(user_id=user_id).all()
 

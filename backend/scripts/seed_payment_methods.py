@@ -1,6 +1,10 @@
-from backend.app import create_app
-from backend.app.extensions import db
-from backend.app.models import PaymentMethod
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from app import create_app
+from app.extensions import db
+from app.models.payment_method import PaymentMethod
 
 DEFAULT_PM = [
     "Tiền mặt",

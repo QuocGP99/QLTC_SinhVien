@@ -393,10 +393,30 @@ block head %}
           return;
         }
 
-        // đóng modal & refresh
-        bootstrap.Modal.getInstance(
+        // Đóng modal an toàn
+        const modalInstance = bootstrap.Modal.getInstance(
           document.getElementById("goalModal")
-        )?.hide();
+        );
+        if (modalInstance) {
+          modalInstance.hide();
+        }
+        
+        // Cleanup backdrop sau animation
+        setTimeout(() => {
+          document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+          document.body.classList.remove('modal-open');
+          document.body.style.overflow = '';
+          document.body.style.paddingRight = '';
+          
+          const modalEl = document.getElementById("goalModal");
+          if (modalEl) {
+            modalEl.style.display = 'none';
+            modalEl.classList.remove('show');
+            modalEl.setAttribute('aria-hidden', 'true');
+            modalEl.removeAttribute('aria-modal');
+          }
+        }, 300);
+        
         await boot();
       });
     })();

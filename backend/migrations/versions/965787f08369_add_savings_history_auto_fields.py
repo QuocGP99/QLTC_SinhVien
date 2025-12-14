@@ -47,7 +47,6 @@ def upgrade():
     op.create_index("idx_savhist_user", "savings_history", ["user_id"])
     op.create_index("idx_savhist_goal", "savings_history", ["goal_id"])
     op.create_index("idx_savhist_created", "savings_history", ["created_at"])
-
     # bỏ default để DB sạch
     op.alter_column("savings_goals", "auto_contribute", server_default=None)
     op.alter_column("savings_goals", "contribute_interval", server_default=None)
