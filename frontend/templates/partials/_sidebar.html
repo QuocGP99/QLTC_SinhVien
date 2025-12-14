@@ -1,24 +1,44 @@
-<div class="list-group list-group-flush sticky-top" style="top: 72px">
+<div
+  id="sidebar-wrapper"
+  class="list-group list-group-flush sticky-top border-end"
+  style="top: 72px; transition: all 0.3s"
+>
+  <div class="list-group-item d-flex justify-content-end p-2">
+    <button id="btnToggleSidebar" class="btn btn-sm btn-light border-0">
+      <i class="bi bi-chevron-left"></i>
+    </button>
+  </div>
+
   <a
     href="{{ url_for('web.dashboard') }}"
-    class="list-group-item list-group-item-action"
+    class="list-group-item list-group-item-action py-3"
   >
-    <i class="bi bi-speedometer2 me-2"></i>Dashboard
-  </a>
-  <a href="/transactions" class="list-group-item list-group-item-action">
-    <i class="bi bi-wallet2 me-2"></i>Quản lý giao dịch
-  </a>
-  <a href="/budgets" class="list-group-item list-group-item-action">
-    <i class="bi bi-piggy-bank me-2"></i>Ngân sách
-  </a>
-  <a href="/savings" class="list-group-item list-group-item-action">
-    <i class="bi bi-cash-stack me-2"></i>Mục tiêu tiết kiệm
-  </a>
-  <a href="/analytics" class="list-group-item list-group-item-action">
-    <i class="bi bi-graph-up me-2"></i>Phân tích
+    <i class="bi bi-speedometer2 me-2 fs-5"></i>
+    <span class="sb-text">Dashboard</span>
   </a>
 
-  <a href="/settings" class="list-group-item list-group-item-action">
-    <i class="bi bi-gear me-2"></i>Cài đặt
+  <a href="/transactions" class="list-group-item list-group-item-action py-3">
+    <i class="bi bi-wallet2 me-2 fs-5"></i>
+    <span class="sb-text">Quản lý giao dịch</span>
+  </a>
+
+  <a href="/budgets" class="list-group-item list-group-item-action py-3">
+    <i class="bi bi-piggy-bank me-2 fs-5"></i>
+    <span class="sb-text">Ngân sách</span>
+  </a>
+
+  <a href="/savings" class="list-group-item list-group-item-action py-3">
+    <i class="bi bi-cash-stack me-2 fs-5"></i>
+    <span class="sb-text">Mục tiêu tiết kiệm</span>
+  </a>
+
+  <a href="/analytics" class="list-group-item list-group-item-action py-3">
+    <i class="bi bi-graph-up me-2 fs-5"></i>
+    <span class="sb-text">Phân tích</span>
+  </a>
+
+  <a href="/settings" class="list-group-item list-group-item-action py-3">
+    <i class="bi bi-gear me-2 fs-5"></i>
+    <span class="sb-text">Cài đặt</span>
   </a>
 </div>

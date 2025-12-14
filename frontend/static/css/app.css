@@ -54,7 +54,45 @@ body {
     )
     fixed;
 }
+/* static/css/app.css */
 
+/* --- SIDEBAR TOGGLE STYLES --- */
+
+/* Mặc định Sidebar */
+#sidebar-wrapper {
+  width: 250px; /* Chiều rộng mặc định */
+  min-height: calc(100vh - 72px);
+  background: #fff;
+  overflow-x: hidden;
+}
+
+/* Trạng thái THU GỌN */
+body.sb-collapsed #sidebar-wrapper {
+  width: 70px; /* Chiều rộng khi thu gọn */
+}
+
+/* Ẩn chữ khi thu gọn */
+body.sb-collapsed #sidebar-wrapper .sb-text {
+  display: none;
+  opacity: 0;
+}
+
+/* Căn giữa icon khi thu gọn */
+body.sb-collapsed #sidebar-wrapper .list-group-item {
+  text-align: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+body.sb-collapsed #sidebar-wrapper .list-group-item i {
+  margin-right: 0 !important; /* Bỏ margin phải của icon */
+}
+
+/* Xoay nút mũi tên khi thu gọn */
+body.sb-collapsed #btnToggleSidebar i {
+  transform: rotate(180deg);
+  display: inline-block;
+}
 /* KPI cards */
 .kpi .kpi-title {
   font-weight: 600;

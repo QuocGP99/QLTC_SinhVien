@@ -146,34 +146,31 @@
 
     {% include 'partials/_navbar.html' %}
 
-    <div class="container-fluid">
-      <div class="row">
-        {% if not hide_sidebar %}
+    <div class="d-flex w-100">
+      {% if not hide_sidebar %}
+      <div
+        class="app-sidebar border-end vh-100 overflow-y-auto bg-white sticky-top"
+        style="top: 56px; z-index: 100"
+      >
+        {% include 'partials/_sidebar.html' %}
+      </div>
+      {% endif %}
+
+      <div class="flex-grow-1 p-4" style="min-width: 0">
+        {% with messages = get_flashed_messages(with_categories=true) %} {% if
+        messages %} {% for category, message in messages %}
         <div
-          class="col-md-3 col-lg-2 app-sidebar border-end vh-100 overflow-auto"
+          class="alert alert-{{ category }} alert-dismissible fade show"
+          role="alert"
         >
-          {% include 'partials/_sidebar.html' %}
+          {{ message }}
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="alert"
+          ></button>
         </div>
-        {% endif %}
-        <div
-          class="{% if not hide_sidebar %}col-md-9 col-lg-10{% else %}col-12{% endif %} p-4"
-        >
-          {% with messages = get_flashed_messages(with_categories=true) %} {% if
-          messages %} {% for category, message in messages %}
-          <div
-            class="alert alert-{{ category }} alert-dismissible fade show"
-            role="alert"
-          >
-            {{ message }}
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="alert"
-            ></button>
-          </div>
-          {% endfor %} {% endif %} {% endwith %} {% block content %}{% endblock
-          %}
-        </div>
+        {% endfor %} {% endif %} {% endwith %} {% block content %}{% endblock %}
       </div>
     </div>
 
@@ -189,7 +186,33 @@
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <!-- [FIX] app.js KHÔNG phải module -->
     <script src="{{ url_for('static', filename='js/notify.js') }}"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const btn = document.getElementById("btnToggleSidebar");
+        const body = document.body;
+        const STATE_KEY = "sidebar_state";
 
+        // 1. Kiểm tra trạng thái cũ từ LocalStorage
+        const savedState = localStorage.getItem(STATE_KEY);
+        if (savedState === "collapsed") {
+          body.classList.add("sb-collapsed");
+        }
+
+        // 2. Sự kiện click
+        if (btn) {
+          btn.addEventListener("click", function () {
+            body.classList.toggle("sb-collapsed");
+
+            // Lưu lại trạng thái mới
+            if (body.classList.contains("sb-collapsed")) {
+              localStorage.setItem(STATE_KEY, "collapsed");
+            } else {
+              localStorage.setItem(STATE_KEY, "expanded");
+            }
+          });
+        }
+      });
+    </script>
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         if (typeof BudgetNotify !== "undefined") BudgetNotify.render();
