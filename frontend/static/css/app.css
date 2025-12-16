@@ -671,3 +671,38 @@ SVFinance – APP.CSS (BẢN HỢP NHẤT + CHÚ THÍCH)
   background: #6ec3c9;
   border-color: #e9d5ff;
 }
+
+/* ĐOẠN CODE BẠN MUỐN THÊM VÀO */
+/* Tôi đã chuyển khối này thành phần ghi đè riêng cho Dark Mode để tránh xung đột với các màu nền cứng hiện có */
+
+:root[data-theme="dark"] {
+  /* Màu nền KPI icon (Soft background) */
+  --kpi-trend-bg: rgba(220, 38, 38, 0.15); /* Đỏ mềm */
+  --kpi-budget-bg: rgba(34, 197, 94, 0.15); /* Xanh lá mềm */
+  --kpi-saving-bg: rgba(59, 130, 246, 0.15); /* Xanh dương mềm */
+  --kpi-daily-bg: rgba(126, 34, 206, 0.15); /* Tím mềm */
+
+  /* Đảm bảo các thành phần nền mềm khác cũng tối */
+  --soft-lavender: rgba(126, 34, 206, 0.1);
+  --soft-cyan: rgba(6, 182, 212, 0.1);
+  --soft-peach: rgba(251, 146, 60, 0.1);
+
+  /* Ghi đè nền trắng cứng cho các class cụ thể */
+  .auth-card {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+  }
+  .subtle-box {
+    background: var(--surface-2) !important;
+    border-color: var(--border) !important;
+  }
+  .goal-card .goal-icon {
+    background: var(--surface-2) !important;
+    border-color: var(--border) !important;
+  }
+  /* Ghi đè màu nền cứng của goal-actions icon */
+  .goal-actions .icon-btn {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+  }
+}

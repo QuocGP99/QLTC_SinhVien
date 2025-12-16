@@ -1,11 +1,9 @@
 <nav class="navbar navbar-expand-lg bg-white border-bottom">
   <div class="container-fluid">
-    <!-- Logo -->
     <a class="navbar-brand fw-semibold" href="{{ url_for('web.index') }}">
       SVFinance
     </a>
 
-    <!-- Toggle mobile -->
     <button
       class="navbar-toggler"
       type="button"
@@ -17,14 +15,25 @@
 
     <div class="collapse navbar-collapse" id="topNav">
       <ul class="navbar-nav ms-auto align-items-center">
-        <!-- Badge AI -->
-        <li class="nav-item me-3">
-          <span class="badge text-bg-secondary">
-            AI {{ 'On' if 'ai' in FEATURE_FLAGS else 'Off' }}
-          </span>
+        <li
+          class="nav-item me-3 d-flex align-items-center"
+          id="navThemeToggleWrapper"
+        >
+          <i class="bi bi-sun-fill text-muted small me-2"></i>
+
+          <div class="form-check form-switch p-0">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="themeToggle"
+              role="switch"
+              onclick="ThemeManager.toggleTheme()"
+            />
+          </div>
+
+          <i class="bi bi-moon-fill text-muted small ms-2"></i>
         </li>
 
-        <!-- Chuông thông báo -->
         <li class="nav-item dropdown me-2">
           <button
             id="btnNoti"
@@ -59,8 +68,6 @@
           </div>
         </li>
 
-        <!-- KHU VỰC USER / LOGIN: sẽ toggle bằng JS -->
-        <!-- 1. Dropdown user (ẩn mặc định) -->
         <li class="nav-item dropdown d-none" id="navUserWrapper">
           <a
             class="nav-link d-flex align-items-center gap-2"
@@ -126,7 +133,6 @@
           </ul>
         </li>
 
-        <!-- 2. Link Đăng nhập (hiện mặc định) -->
         <li class="nav-item" id="navLoginWrapper">
           <a class="nav-link" href="{{ url_for('web.login') }}">Đăng nhập</a>
         </li>
@@ -142,11 +148,11 @@
       const user = JSON.parse(userRaw);
       const token = localStorage.getItem("access_token");
 
+      const navThemeToggleWrapper = document.getElementById(
+        "navThemeToggleWrapper"
+      );
       const navUserWrapper = document.getElementById("navUserWrapper");
       const navLoginWrapper = document.getElementById("navLoginWrapper");
-      const badgeAI = document.querySelector(
-        ".nav-item .badge.text-bg-secondary"
-      );
       const notiItem = document.querySelector(".nav-item.dropdown.me-2");
       const avatarEl = document.getElementById("navUserAvatar");
       const avatarLgEl = document.getElementById("navUserAvatarLg");
@@ -156,8 +162,8 @@
 
       // nếu chưa login
       if (!user || !token) {
-        // Ẩn AI badge & chuông
-        badgeAI?.classList.add("d-none");
+        // Ẩn Theme toggle & chuông
+        navThemeToggleWrapper?.classList.add("d-none");
         notiItem?.classList.add("d-none");
 
         // Hiện nút Đăng nhập, ẩn dropdown user
@@ -167,7 +173,7 @@
       }
 
       // nếu đã login
-      badgeAI?.classList.remove("d-none");
+      navThemeToggleWrapper?.classList.remove("d-none");
       notiItem?.classList.remove("d-none");
 
       navLoginWrapper?.classList.add("d-none");
@@ -195,6 +201,11 @@
         typeof window.BudgetNotify.init === "function"
       ) {
         window.BudgetNotify.init();
+      }
+
+      // Khởi tạo trạng thái nút toggle (để đảm bảo trạng thái đúng sau khi login)
+      if (window.ThemeManager) {
+        window.ThemeManager.applyCurrent();
       }
 
       // Logout

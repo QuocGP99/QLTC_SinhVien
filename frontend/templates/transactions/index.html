@@ -10,7 +10,7 @@ block head %}
     margin: 0 auto;
   }
   .tx-card {
-    border: 1px solid #edf0f5;
+    border: 1px solid var(--border);
     border-radius: 10px;
     margin-bottom: 0.5rem;
   }
@@ -23,9 +23,9 @@ block head %}
     font-weight: 600;
   }
   .badge-soft {
-    background: #f6f7fb;
-    border: 1px solid #f8f8f8ff;
-    color: #6b7280;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--muted);
     font-weight: 500;
   }
 
@@ -36,15 +36,15 @@ block head %}
   }
   .cal .cell {
     position: relative;
-    border: 1px solid #edf0f5;
+    border: 1px solid var(--border);
     border-radius: 10px;
     min-height: 95px;
     padding: 0.5rem;
-    background: #fff;
+    background: var(--surface);
   }
   .cal .cell .d {
     font-size: 0.9rem;
-    color: #6b7280;
+    color: var(--muted);
   }
   .cal .cell .sum {
     margin-top: 0.35rem;
@@ -58,7 +58,7 @@ block head %}
   }
   .cal .dow {
     font-weight: 600;
-    color: #64748b;
+    color: var(--muted);
     padding: 0.25rem 0.5rem;
   }
 
@@ -69,7 +69,7 @@ block head %}
     right: 4px;
     padding: 2px 6px;
     line-height: 1;
-    color: #64748b;
+    color: var(--muted);
   }
   .cell .more-btn:hover {
     color: #111827;
@@ -78,6 +78,10 @@ block head %}
   .filter-wrap .form-select,
   .filter-wrap .form-control {
     min-width: 180px;
+  }
+  .card-header {
+    background: var(--surface) !important;
+    border-bottom-color: var(--border) !important;
   }
 </style>
 {% endblock %} {% block content %}
@@ -143,16 +147,14 @@ block head %}
       </div>
 
       <div class="ms-auto">
-        <button id="btnReset" class="btn btn-light">Đặt lại</button>
+        <button id="btnReset" class="btn btn-outline-secondary">Đặt lại</button>
       </div>
     </div>
   </div>
 
   <!-- Lịch trực quan -->
   <div class="card border-0 shadow-sm mb-3">
-    <div
-      class="card-header bg-white d-flex align-items-center justify-content-between"
-    >
+    <div class="card-header d-flex align-items-center justify-content-between">
       <div class="fw-semibold">Lịch giao dịch theo ngày</div>
       <div class="text-muted small" id="calMonthLabel"></div>
     </div>

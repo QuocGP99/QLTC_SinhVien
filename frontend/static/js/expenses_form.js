@@ -59,12 +59,54 @@ function fillForm(data) {
     document.getElementById("expenseDesc").value = data.description;
     predictCategory(data.description);
   }
-  if (data.date) document.getElementById("expenseDate").value = data.date;
+  if (data.date) {
+    // Normalize date to DD/MM/YYYY format
+    const normalizedDate = normalizeDateFormat(data.date);
+    document.getElementById("expenseDate").value = normalizedDate;
+  }
   if (data.category_id)
     document.getElementById("expenseCategory").value = data.category_id;
   if (data.payment_method_id)
     document.getElementById("expensePaymentMethod").value =
       data.payment_method_id;
+}
+
+// Normalize date to DD/MM/YYYY format from various input formats (ISO, US, etc)
+function normalizeDateFormat(dateStr) {
+  if (!dateStr) return "";
+
+  // Try YYYY-MM-DD format (ISO)
+  if (dateStr.includes("-")) {
+    const [yyyy, mm, dd] = dateStr.split("-");
+    return `${String(dd).padStart(2, "0")}/${String(mm).padStart(
+      2,
+      "0"
+    )}/${yyyy}`;
+  }
+
+  // Try slash format
+  if (dateStr.includes("/")) {
+    const parts = dateStr.split("/");
+    if (parts.length === 3) {
+      const [p1, p2, p3] = parts;
+      const pad = (n) => String(n).padStart(2, "0");
+      const p1Num = parseInt(p1);
+      const p2Num = parseInt(p2);
+
+      // If p1 > 12, it's definitely day (DD/MM/YYYY)
+      // If p2 > 12, it's MM/DD/YYYY format and needs conversion
+      if (p1Num > 12) {
+        return `${pad(p1)}/${pad(p2)}/${p3}`; // DD/MM/YYYY ✓
+      } else if (p2Num > 12) {
+        return `${pad(p2)}/${pad(p1)}/${p3}`; // MM/DD/YYYY → DD/MM/YYYY
+      } else {
+        // Default: assume DD/MM/YYYY
+        return `${pad(p1)}/${pad(p2)}/${p3}`;
+      }
+    }
+  }
+
+  return dateStr; // Return as-is if can't parse
 }
 
 //Lắng nghe khi người dùng gõ mô tả

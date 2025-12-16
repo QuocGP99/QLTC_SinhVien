@@ -17,12 +17,15 @@ const ExpensesPage = (() => {
 
   function toISODate(s) {
     if (!s) return "";
+    // Xử lý format DD/MM/YYYY → YYYY-MM-DD (ISO)
     if (s.includes("/")) {
-      const [d, m, y] = s.split("/");
+      const [dd, mm, yyyy] = s.split("/");
       const pad = (n) => String(n).padStart(2, "0");
-      return `${y}-${pad(m)}-${pad(d)}`;
+      // Ensure yyyy is 4 digits, convert 2-digit year to 4-digit if needed
+      const fullYear = yyyy.length === 2 ? `20${yyyy}` : yyyy;
+      return `${fullYear}-${pad(mm)}-${pad(dd)}`;
     }
-    return s;
+    return s; // Already ISO format (YYYY-MM-DD)
   }
 
   // ===== FIXED DATEPICKER (FULL SUPPORT) =====
@@ -31,44 +34,51 @@ const ExpensesPage = (() => {
     const btn = document.getElementById("btnOpenExpenseCalendar");
     if (!el) return;
 
-    // 1. Bootstrap Datepicker
-    if (window.jQuery && jQuery.fn?.datepicker) {
-      const $ = window.jQuery;
-      $(el).datepicker({
-        format: "dd/mm/yyyy",
-        autoclose: true,
-        todayHighlight: true,
-        language: "vi",
-      });
+    // 1. Bootstrap Datepicker (jQuery-based)
+    if (typeof jQuery !== "undefined" && jQuery.fn?.datepicker) {
+      const $ = jQuery;
+      if (!$(el).data("datepicker")) {
+        $(el).datepicker({
+          format: "dd/mm/yyyy",
+          autoclose: true,
+          todayHighlight: true,
+          language: "vi",
+        });
+      }
       dateMode = "bootstrap";
-      if (btn) btn.onclick = () => $(el).datepicker("show");
+      if (btn) {
+        btn.onclick = () => $(el).datepicker("show");
+        btn.disabled = false;
+      }
       return;
     }
 
     // 2. Vanilla Datepicker
-    if (window.Datepicker) {
-      dp =
-        dp ||
-        new Datepicker(el, {
+    if (typeof Datepicker !== "undefined") {
+      if (!dp) {
+        dp = new Datepicker(el, {
           language: "vi",
           format: "dd/mm/yyyy",
           autohide: true,
           buttonClass: "btn btn-sm btn-outline-secondary",
         });
+      }
       dateMode = "vanilla";
-      if (btn) btn.onclick = () => dp.show();
+      if (btn) {
+        btn.onclick = () => dp.show();
+        btn.disabled = false;
+      }
       return;
     }
 
-    // 3. Native fallback
-    el.type = "date";
-    dateMode = "native";
+    // 3. Fallback: Plain text input với DD/MM/YYYY format
+    // KHÔNG chuyển type thành "date" vì sẽ hiển thị theo browser locale
+    el.type = "text";
+    el.placeholder = "dd/mm/yyyy";
+    dateMode = "text";
     if (btn) {
       btn.disabled = false;
-      btn.onclick = () => {
-        if (el.showPicker) el.showPicker();
-        else el.focus();
-      };
+      btn.onclick = () => el.focus();
     }
   }
 
@@ -95,9 +105,8 @@ const ExpensesPage = (() => {
     } else if (dateMode === "vanilla") {
       ensureDatepicker();
       dp.setDate(dateObj);
-    } else if (dateMode === "native") {
-      el.value = `${yyyy}-${mm}-${dd}`;
     } else {
+      // LUÔN hiển thị DD/MM/YYYY format, không dùng native date input
       el.value = `${dd}/${mm}/${yyyy}`;
     }
   }

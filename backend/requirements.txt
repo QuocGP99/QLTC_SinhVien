@@ -35,5 +35,6 @@ openpyxl==3.1.5
 
 # --- Optional: nếu dùng AI Panel hoặc phân tích sau này ---
 pandas==2.2.3
+plotly==6.5.0
 
 Flask-Mail>=0.10.0
