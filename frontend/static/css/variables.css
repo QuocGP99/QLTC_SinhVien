@@ -27,7 +27,7 @@
 :root[data-theme="dark"] {
   --bg: #0b0f17;
   --text: #e5e7eb;
-  --muted: #9ca3af;
+  --muted: #a3aab8;
   --border: #1f2937;
 
   --surface: #121725;
@@ -54,7 +54,12 @@ a {
 .text-muted {
   color: var(--muted) !important;
 }
-
+.text-dark {
+  color: #111827 !important; /* Light Mode: Màu tối */
+}
+:root[data-theme="dark"] .text-dark {
+  color: var(--text) !important; /* Dark Mode: Màu sáng (kế thừa từ --text) */
+}
 .card,
 .modal-content,
 .dropdown-menu {

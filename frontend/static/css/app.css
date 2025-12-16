@@ -54,7 +54,45 @@ body {
     )
     fixed;
 }
+/* static/css/app.css */
 
+/* --- SIDEBAR TOGGLE STYLES --- */
+
+/* Mặc định Sidebar */
+#sidebar-wrapper {
+  width: 250px; /* Chiều rộng mặc định */
+  min-height: calc(100vh - 72px);
+  background: #fff;
+  overflow-x: hidden;
+}
+
+/* Trạng thái THU GỌN */
+body.sb-collapsed #sidebar-wrapper {
+  width: 70px; /* Chiều rộng khi thu gọn */
+}
+
+/* Ẩn chữ khi thu gọn */
+body.sb-collapsed #sidebar-wrapper .sb-text {
+  display: none;
+  opacity: 0;
+}
+
+/* Căn giữa icon khi thu gọn */
+body.sb-collapsed #sidebar-wrapper .list-group-item {
+  text-align: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+body.sb-collapsed #sidebar-wrapper .list-group-item i {
+  margin-right: 0 !important; /* Bỏ margin phải của icon */
+}
+
+/* Xoay nút mũi tên khi thu gọn */
+body.sb-collapsed #btnToggleSidebar i {
+  transform: rotate(180deg);
+  display: inline-block;
+}
 /* KPI cards */
 .kpi .kpi-title {
   font-weight: 600;
@@ -632,4 +670,39 @@ SVFinance – APP.CSS (BẢN HỢP NHẤT + CHÚ THÍCH)
 .step.s4 {
   background: #6ec3c9;
   border-color: #e9d5ff;
+}
+
+/* ĐOẠN CODE BẠN MUỐN THÊM VÀO */
+/* Tôi đã chuyển khối này thành phần ghi đè riêng cho Dark Mode để tránh xung đột với các màu nền cứng hiện có */
+
+:root[data-theme="dark"] {
+  /* Màu nền KPI icon (Soft background) */
+  --kpi-trend-bg: rgba(220, 38, 38, 0.15); /* Đỏ mềm */
+  --kpi-budget-bg: rgba(34, 197, 94, 0.15); /* Xanh lá mềm */
+  --kpi-saving-bg: rgba(59, 130, 246, 0.15); /* Xanh dương mềm */
+  --kpi-daily-bg: rgba(126, 34, 206, 0.15); /* Tím mềm */
+  
+  /* Đảm bảo các thành phần nền mềm khác cũng tối */
+  --soft-lavender: rgba(126, 34, 206, 0.1);
+  --soft-cyan: rgba(6, 182, 212, 0.1);
+  --soft-peach: rgba(251, 146, 60, 0.1);
+
+  /* Ghi đè nền trắng cứng cho các class cụ thể */
+  .auth-card {
+      background: var(--surface) !important;
+      border-color: var(--border) !important;
+  }
+  .subtle-box {
+    background: var(--surface-2) !important;
+    border-color: var(--border) !important;
+  }
+  .goal-card .goal-icon {
+    background: var(--surface-2) !important;
+    border-color: var(--border) !important;
+  }
+  /* Ghi đè màu nền cứng của goal-actions icon */
+  .goal-actions .icon-btn {
+      background: var(--surface) !important;
+      border-color: var(--border) !important;
+  }
 }

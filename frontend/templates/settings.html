@@ -7,306 +7,466 @@
   .card-rounded {
     border-radius: 16px;
   }
+  .icon-square {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 1.25rem;
+  }
+
+  /* Màu nền icon mềm mại (Soft colors) */
+  .bg-soft-primary {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+  }
+  .bg-soft-danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+  }
+  .bg-soft-success {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+  }
+
+  /* [FIX] DARK MODE CHO FORM INPUT */
+  /* Ghi đè màu nền trắng mặc định của Bootstrap bằng biến theme */
+  .form-control,
+  .form-select {
+    background-color: var(--surface) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Khi click vào input */
+  .form-control:focus,
+  .form-select:focus {
+    background-color: var(--surface) !important;
+    color: var(--text) !important;
+    border-color: var(--brand) !important; /* Màu viền khi focus */
+    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.15);
+  }
+
+  /* Input bị khóa (như Email) */
+  .form-control[readonly],
+  .form-control[disabled] {
+    background-color: var(--surface-2) !important; /* Màu nền tối hơn chút */
+    opacity: 1;
+    color: var(--muted) !important;
+  }
+
+  /* Thay thế bg-light bằng class này để thích ứng Dark Mode */
+  .bg-box {
+    background-color: var(--surface-2); /* Sáng: xám nhạt | Tối: đen mờ */
+  }
 </style>
 {% endblock %} {% block content %}
-<h1 class="h4 fw-semibold">Cài đặt</h1>
-<p class="text-muted mb-3">
-  Quản lý hồ sơ, tuỳ chọn ứng dụng, thông báo và tích hợp.
-</p>
-
-<div class="row g-3">
-  <!-- Hồ sơ -->
-  <div class="col-lg-6">
-    <div class="card card-rounded shadow-sm">
-      <div class="card-body">
-        <div class="fw-semibold mb-2">Hồ sơ cá nhân</div>
-        <form id="profileForm" class="vstack gap-2">
-          <div class="row g-2">
-            <div class="col-md-6">
-              <label class="form-label">Họ tên</label>
-              <input
-                class="form-control"
-                name="fullName"
-                placeholder="Nguyễn Văn A"
-              />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Email</label>
-              <input
-                type="email"
-                class="form-control"
-                name="email"
-                placeholder="you@email.com"
-              />
-            </div>
-          </div>
-          <div>
-            <label class="form-label">Ảnh đại diện (URL)</label>
-            <input
-              class="form-control"
-              name="avatar"
-              placeholder="https://..."
-            />
-          </div>
-          <button class="btn btn-primary align-self-start mt-2">
-            Lưu hồ sơ
-          </button>
-        </form>
-      </div>
-    </div>
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h1 class="h4 fw-bold mb-1">Cài đặt</h1>
+    <p class="text-muted small mb-0">
+      Quản lý hồ sơ, tuỳ chọn ứng dụng và dữ liệu.
+    </p>
   </div>
+</div>
 
-  <!-- Tuỳ chọn -->
+<div class="row g-4">
   <div class="col-lg-6">
-    <div class="card card-rounded shadow-sm">
-      <div class="card-body">
-        <div class="fw-semibold mb-2">Tuỳ chọn ứng dụng</div>
-        <form id="prefsForm" class="row g-2">
-          <div class="col-md-4">
-            <label class="form-label">Ngôn ngữ</label>
-            <select class="form-select" name="lang">
-              <option value="vi">Tiếng Việt</option>
-              <option value="en">English</option>
-            </select>
+    <div class="vstack gap-4">
+      <div class="card card-rounded shadow-sm border-0">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="icon-square bg-soft-primary">
+              <i class="bi bi-person"></i>
+            </div>
+            <h6 class="fw-bold mb-0">Hồ sơ cá nhân</h6>
           </div>
-          <div class="col-md-4">
-            <label class="form-label">Tiền tệ</label>
-            <select class="form-select" name="currency">
-              <option value="VND">VND</option>
-              <option value="USD">USD</option>
-            </select>
+
+          <form id="profileForm" class="vstack gap-3">
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label small fw-medium">Họ tên</label>
+                <input
+                  class="form-control"
+                  name="fullName"
+                  placeholder="Nguyễn Văn A"
+                />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-medium">Email</label>
+                <input
+                  type="email"
+                  class="form-control"
+                  name="email"
+                  placeholder="you@email.com"
+                  readonly
+                />
+              </div>
+            </div>
+            <div class="text-end">
+              <button class="btn btn-primary btn-sm px-3">
+                <i class="bi bi-floppy me-1"></i> Lưu hồ sơ
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card card-rounded shadow-sm border-0">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="icon-square bg-soft-primary">
+              <i class="bi bi-sliders"></i>
+            </div>
+            <h6 class="fw-bold mb-0">Tuỳ chọn ứng dụng</h6>
           </div>
-          <div class="col-md-4">
-            <label class="form-label">Giao diện</label>
-            <select class="form-select" name="theme">
-              <option value="auto">Tự động (theo hệ thống)</option>
-              <option value="light">Sáng</option>
-              <option value="dark">Tối</option>
-            </select>
+
+          <form id="prefsForm" class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-medium">Ngôn ngữ</label>
+              <select class="form-select" name="lang">
+                <option value="vi">Tiếng Việt</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-medium">Tiền tệ</label>
+              <select class="form-select" name="currency">
+                <option value="VND">VND (₫)</option>
+                <option value="USD">USD ($)</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <div class="form-check form-switch bg-box p-2 rounded">
+                <input
+                  class="form-check-input ms-0 me-2"
+                  type="checkbox"
+                  id="compactMode"
+                  name="compact"
+                />
+                <label class="form-check-label small" for="compactMode"
+                  >Chế độ bảng biểu gọn (Compact Mode)</label
+                >
+              </div>
+            </div>
+            <div class="col-12 text-end">
+              <button class="btn btn-primary btn-sm px-3">Lưu tuỳ chọn</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card card-rounded shadow-sm border-0">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="icon-square bg-soft-primary">
+              <i class="bi bi-bell"></i>
+            </div>
+            <h6 class="fw-bold mb-0">Thông báo</h6>
           </div>
-          <div class="col-12">
-            <div class="form-check form-switch mt-2">
+          <form id="notifyForm" class="vstack gap-2">
+            <div class="form-check form-switch">
               <input
                 class="form-check-input"
                 type="checkbox"
-                id="compactMode"
-                name="compact"
+                id="n1"
+                name="emailTx"
               />
-              <label class="form-check-label" for="compactMode"
-                >Chế độ bảng biểu gọn</label
+              <label class="form-check-label" for="n1"
+                >Email khi có giao dịch lớn (>1tr)</label
               >
             </div>
-          </div>
-          <div class="col-12">
-            <button class="btn btn-primary">Lưu tuỳ chọn</button>
-          </div>
-        </form>
+            <div class="form-check form-switch">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="n2"
+                name="budgetAlert"
+              />
+              <label class="form-check-label" for="n2"
+                >Cảnh báo khi vượt ngân sách</label
+              >
+            </div>
+            <div class="form-check form-switch">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="n3"
+                name="savingReminder"
+              />
+              <label class="form-check-label" for="n3"
+                >Nhắc đóng góp mục tiêu (cuối tháng)</label
+              >
+            </div>
+            <div class="text-end mt-2">
+              <button class="btn btn-primary btn-sm px-3">Lưu thông báo</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Thông báo -->
   <div class="col-lg-6">
-    <div class="card card-rounded shadow-sm">
-      <div class="card-body">
-        <div class="fw-semibold mb-2">Thông báo</div>
-        <form id="notifyForm" class="vstack gap-2">
-          <div class="form-check form-switch">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              id="n1"
-              name="emailTx"
-            />
-            <label class="form-check-label" for="n1"
-              >Email khi có giao dịch lớn</label
-            >
+    <div class="vstack gap-4">
+      <div class="card card-rounded shadow-sm border-0">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="icon-square bg-soft-success">
+              <i class="bi bi-database-check"></i>
+            </div>
+            <h6 class="fw-bold mb-0">Quản lý dữ liệu</h6>
           </div>
-          <div class="form-check form-switch">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              id="n2"
-              name="budgetAlert"
-            />
-            <label class="form-check-label" for="n2"
-              >Cảnh báo vượt ngân sách</label
-            >
-          </div>
-          <div class="form-check form-switch">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              id="n3"
-              name="savingReminder"
-            />
-            <label class="form-check-label" for="n3"
-              >Nhắc góp mục tiêu hàng tháng</label
-            >
-          </div>
-          <button class="btn btn-primary align-self-start">
-            Lưu thông báo
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
 
-  <!-- Tích hợp / API -->
-  <div class="col-lg-6">
-    <div class="card card-rounded shadow-sm">
-      <div class="card-body">
-        <div class="fw-semibold mb-2">Tích hợp & AI</div>
-        <form id="integrForm" class="vstack gap-2">
-          <div>
-            <label class="form-label">BASE_API_URL</label>
-            <input
-              class="form-control"
-              name="apiUrl"
-              placeholder="http://127.0.0.1:8000/api"
-            />
-          </div>
-          <div class="row g-2">
-            <div class="col-md-4">
-              <div class="form-check form-switch">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  id="ff1"
-                  name="ai_classify"
-                />
-                <label class="form-check-label" for="ff1"
-                  >AI phân loại chi</label
+          <form id="dataForm">
+            <div class="vstack gap-3">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <div class="fw-medium">Xuất dữ liệu</div>
+                  <div class="small text-muted">
+                    Tải về danh sách giao dịch (.csv)
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-outline-success btn-sm"
+                  onclick="exportData()"
                 >
+                  <i class="bi bi-download me-1"></i> Tải về
+                </button>
               </div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-check form-switch">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  id="ff2"
-                  name="ai_suggest"
-                />
-                <label class="form-check-label" for="ff2"
-                  >AI gợi ý tiết kiệm</label
-                >
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-check form-switch">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  id="ff3"
-                  name="charts"
-                />
-                <label class="form-check-label" for="ff3">Bật biểu đồ</label>
-              </div>
-            </div>
-          </div>
-          <button class="btn btn-primary align-self-start">Lưu tích hợp</button>
-        </form>
-      </div>
-    </div>
-  </div>
 
-  <!-- Đổi mật khẩu (demo) -->
-  <div class="col-lg-6">
-    <div class="card card-rounded shadow-sm">
-      <div class="card-body">
-        <div class="fw-semibold mb-2">Đổi mật khẩu</div>
-        <form id="pwdForm" class="row g-2">
-          <div class="col-md-4">
-            <label class="form-label">Mật khẩu hiện tại</label>
-            <input
-              type="password"
-              name="old"
-              class="form-control"
-              required
-              minlength="6"
-            />
+              <div
+                class="d-flex align-items-center justify-content-between p-2 rounded border border-danger border-opacity-25 bg-soft-danger"
+              >
+                <div>
+                  <div class="fw-medium text-danger">Vùng nguy hiểm</div>
+                  <div class="small text-danger opacity-75">
+                    Xóa toàn bộ dữ liệu và bắt đầu lại
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-danger btn-sm"
+                  onclick="confirmReset()"
+                >
+                  <i class="bi bi-trash me-1"></i> Reset
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="card card-rounded shadow-sm border-0">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="icon-square bg-soft-primary">
+              <i class="bi bi-shield-lock"></i>
+            </div>
+            <h6 class="fw-bold mb-0">Đổi mật khẩu</h6>
           </div>
-          <div class="col-md-4">
-            <label class="form-label">Mật khẩu mới</label>
-            <input
-              type="password"
-              name="new1"
-              class="form-control"
-              required
-              minlength="6"
-            />
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Nhập lại</label>
-            <input
-              type="password"
-              name="new2"
-              class="form-control"
-              required
-              minlength="6"
-            />
-          </div>
-          <div class="col-12">
-            <button class="btn btn-primary">Đổi mật khẩu</button>
-          </div>
-        </form>
-        <div class="small text-muted mt-2">
-          * Demo: chỉ kiểm tra trùng khớp và độ dài, không gọi API.
+          <form id="pwdForm" class="row g-2">
+            <div class="col-12">
+              <label class="form-label small fw-medium"
+                >Mật khẩu hiện tại</label
+              >
+              <input
+                type="password"
+                name="old"
+                class="form-control"
+                required
+                minlength="6"
+              />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-medium">Mật khẩu mới</label>
+              <input
+                type="password"
+                name="new1"
+                class="form-control"
+                required
+                minlength="6"
+              />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-medium">Nhập lại</label>
+              <input
+                type="password"
+                name="new2"
+                class="form-control"
+                required
+                minlength="6"
+              />
+            </div>
+            <div class="col-12 mt-3 text-end">
+              <button class="btn btn-primary btn-sm px-3">
+                Cập nhật mật khẩu
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Toast -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
   <div
     id="setToast"
-    class="toast"
+    class="toast align-items-center text-bg-dark border-0"
     role="alert"
     aria-live="assertive"
     aria-atomic="true"
   >
-    <div class="toast-body">Đã lưu cài đặt.</div>
+    <div class="d-flex">
+      <div class="toast-body">Đã lưu cài đặt.</div>
+      <button
+        type="button"
+        class="btn-close btn-close-white me-2 m-auto"
+        data-bs-dismiss="toast"
+      ></button>
+    </div>
   </div>
 </div>
+
+<div class="modal fade" id="resetModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger fw-bold">Xác nhận xóa dữ liệu?</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Hành động này sẽ xóa toàn bộ lịch sử giao dịch, ngân sách và cài đặt
+          của bạn.
+        </p>
+        <p class="mb-0 fw-bold">Bạn không thể hoàn tác hành động này.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+          Hủy
+        </button>
+        <button type="button" class="btn btn-danger" id="btnConfirmReset">
+          Xóa ngay
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %} {% block scripts %}
 <script>
   const TKEY = "sf_settings_v1";
-  const showToast = (msg) => {
+
+  // Toast Helper
+  const showToast = (msg, isError = false) => {
     const el = document.getElementById("setToast");
-    el.querySelector(".toast-body").textContent = msg;
-    new bootstrap.Toast(el, { delay: 1500 }).show();
+    const body = el.querySelector(".toast-body");
+    body.textContent = msg;
+
+    el.className = `toast align-items-center border-0 text-bg-${
+      isError ? "danger" : "success"
+    }`;
+    new bootstrap.Toast(el, { delay: 2000 }).show();
   };
+
   const load = () => JSON.parse(localStorage.getItem(TKEY) || "{}");
   const save = (obj) => {
     localStorage.setItem(TKEY, JSON.stringify(obj));
-    showToast("Đã lưu cài đặt.");
+    showToast("Đã lưu cài đặt thành công!");
+  };
+
+  // --- Chức năng Xuất dữ liệu (Giả lập) ---
+  window.exportData = function () {
+    const headers = ["ID", "Ngày", "Loại", "Danh mục", "Số tiền", "Ghi chú"];
+    const rows = [
+      ["1", "2023-12-01", "Chi tiêu", "Ăn uống", "30000", "Ăn sáng"],
+      ["2", "2023-12-02", "Thu nhập", "Lương", "5000000", "Lương tháng 11"],
+      ["3", "2023-12-05", "Chi tiêu", "Di chuyển", "50000", "Xăng xe"],
+    ];
+
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+    csvContent += headers.join(",") + "\r\n";
+    rows.forEach((r) => (csvContent += r.join(",") + "\r\n"));
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute(
+      "download",
+      `SVFinance_Data_${new Date().toISOString().slice(0, 10)}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast("Đang tải xuống file dữ liệu...");
+  };
+
+  // --- Chức năng Reset Data ---
+  window.confirmReset = function () {
+    const m = new bootstrap.Modal(document.getElementById("resetModal"));
+    m.show();
+
+    document.getElementById("btnConfirmReset").onclick = () => {
+      localStorage.removeItem(TKEY);
+      m.hide();
+      showToast("Đã xóa dữ liệu. Đang tải lại...", true);
+      setTimeout(() => location.reload(), 1500);
+    };
   };
 
   (function () {
     const st = load();
 
-    // ===== Hồ sơ =====
+    // Khởi tạo trạng thái của nút toggle theme trên Navbar
+    const initThemeToggle = () => {
+        const themePref = localStorage.getItem("theme_pref") || "auto";
+        const currentTheme = document.documentElement.getAttribute("data-theme");
+        // Kiểm tra xem giao diện có đang ở chế độ Tối (Dark) hay không
+        const isDark = (themePref === "dark" || (themePref === "auto" && currentTheme === "dark"));
+        const toggle = document.getElementById("themeToggle");
+        if (toggle) {
+            toggle.checked = isDark;
+        }
+    };
+
+    // Cập nhật lại ThemeManager.toggleTheme() để sau khi chuyển đổi,
+    // nút toggle trên Navbar cũng được cập nhật trạng thái (nếu có ở trang này)
+    if (window.ThemeManager && !window.ThemeManager.toggleThemeOriginal) {
+        window.ThemeManager.toggleThemeOriginal = window.ThemeManager.toggleTheme;
+        window.ThemeManager.toggleTheme = () => {
+            ThemeManager.toggleThemeOriginal();
+            // Cần đợi ThemeManager hoàn thành việc chuyển đổi
+            setTimeout(initThemeToggle, 50); 
+        };
+    }
+    
+    // ===== 1. Hồ sơ =====
     const pf = document.getElementById("profileForm");
     pf.fullName.value = st.fullName || "";
-    pf.email.value = st.email || "";
-    pf.avatar.value = st.avatar || "";
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    pf.email.value = user.email || st.email || "sinhvien@school.edu.vn";
+
     pf.addEventListener("submit", (e) => {
       e.preventDefault();
       Object.assign(st, Object.fromEntries(new FormData(pf).entries()));
       save(st);
     });
 
-    // ===== Tuỳ chọn =====
+    // ===== 2. Tuỳ chọn (Đã xóa theme) =====
     const pr = document.getElementById("prefsForm");
     pr.lang.value = st.lang || "vi";
     pr.currency.value = st.currency || "VND";
-    pr.theme.value = st.theme || localStorage.getItem("theme_pref") || "auto"; // sync lần đầu
     pr.compact.checked = !!st.compact;
 
-    // áp current theme (ThemeManager đã boot trong base)
     if (window.ThemeManager) ThemeManager.applyCurrent();
 
     pr.addEventListener("submit", (e) => {
@@ -314,16 +474,12 @@
       const data = Object.fromEntries(new FormData(pr).entries());
       st.lang = data.lang;
       st.currency = data.currency;
-      st.theme = data.theme; // lưu trữ thêm trong settings
       st.compact = pr.compact.checked;
-
-      // đổi theme ngay + lưu vào localStorage (key: theme_pref)
-      if (window.ThemeManager) ThemeManager.setPref(st.theme);
 
       save(st);
     });
 
-    // ===== Thông báo =====
+    // ===== 3. Thông báo =====
     const nf = document.getElementById("notifyForm");
     nf.emailTx.checked = !!st.emailTx;
     nf.budgetAlert.checked = !!st.budgetAlert;
@@ -336,45 +492,25 @@
       save(st);
     });
 
-    // ===== Tích hợp / AI =====
-    const it = document.getElementById("integrForm");
-    it.apiUrl.value = st.apiUrl || "";
-    it.ai_classify.checked = !!st.ai_classify;
-    it.ai_suggest.checked = !!st.ai_suggest;
-    it.charts.checked = st.charts ?? true;
-    it.addEventListener("submit", (e) => {
-      e.preventDefault();
-      st.apiUrl = it.apiUrl.value;
-      st.ai_classify = it.ai_classify.checked;
-      st.ai_suggest = it.ai_suggest.checked;
-      st.charts = it.charts.checked;
-      window.APP_CONFIG = {
-        BASE_API_URL: st.apiUrl,
-        FEATURE_FLAGS: {
-          ai_classify: st.ai_classify,
-          ai_suggest: st.ai_suggest,
-          charts: st.charts,
-        },
-      };
-      save(st);
-    });
-
-    // ===== Đổi mật khẩu (demo) =====
+    // ===== 4. Đổi mật khẩu =====
     const pw = document.getElementById("pwdForm");
     pw.addEventListener("submit", (e) => {
       e.preventDefault();
       const f = Object.fromEntries(new FormData(pw).entries());
       if (f.new1 !== f.new2) {
-        alert("Mật khẩu nhập lại không khớp.");
+        showToast("Mật khẩu nhập lại không khớp!", true);
         return;
       }
       if ((f.new1 || "").length < 6) {
-        alert("Mật khẩu mới tối thiểu 6 ký tự.");
+        showToast("Mật khẩu mới tối thiểu 6 ký tự.", true);
         return;
       }
-      showToast("Đổi mật khẩu (demo) thành công.");
+      showToast("Đổi mật khẩu thành công!");
       pw.reset();
     });
+
+    // Khởi tạo nút toggle khi DOM load xong
+    initThemeToggle();
   })();
 </script>
 {% endblock %}

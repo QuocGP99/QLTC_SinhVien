@@ -10,7 +10,6 @@
   .kpi {
     border: 0;
     border-radius: 16px;
-    background: #fff;
   }
   .kpi .val {
     font-size: 1.35rem;
@@ -26,20 +25,21 @@
     font-size: 1.25rem;
     font-weight: 600;
   }
+  /* CẬP NHẬT: Thay thế màu nền cứng bằng biến CSS đã được cập nhật cho Dark Mode */
   .kpi-icon.trend {
-    background: #fff1f2;
+    background: var(--kpi-trend-bg, #fff1f2);
     color: #dc2626;
   }
   .kpi-icon.budget {
-    background: #ecfdf5;
+    background: var(--kpi-budget-bg, #ecfdf5);
     color: #16a34a;
   }
   .kpi-icon.saving {
-    background: #eef2ff;
+    background: var(--kpi-saving-bg, #eef2ff);
     color: #1d4ed8;
   }
   .kpi-icon.daily {
-    background: #faf5ff;
+    background: var(--kpi-daily-bg, #faf5ff);
     color: #7e22ce;
   }
   .kpi-subtext {
@@ -117,7 +117,7 @@
         <div class="d-flex justify-content-between align-items-start">
           <div>
             <div class="text-muted small fw-semibold">Xu hướng chi tiêu</div>
-            <div id="kpiTrendVal" class="val text-dark">0%</div>
+            <div id="kpiTrendVal" class="val">0%</div>
             <div class="kpi-subtext">so với giai đoạn trước</div>
           </div>
           <div class="kpi-icon trend">
@@ -135,7 +135,7 @@
         <div class="d-flex justify-content-between align-items-start">
           <div>
             <div class="text-muted small fw-semibold">Hiệu quả ngân sách</div>
-            <div id="kpiBudgetEff" class="val text-dark">0%</div>
+            <div id="kpiBudgetEff" class="val">0%</div>
             <div class="kpi-subtext">tỷ lệ dùng ngân sách</div>
           </div>
           <div class="kpi-icon budget">
@@ -158,7 +158,7 @@
                 <i class="bi bi-currency-dollar"></i>
               </div>
             </div>
-            <div id="kpiSaveRate" class="val text-dark">0%</div>
+            <div id="kpiSaveRate" class="val">0%</div>
             <div class="kpi-subtext">phần trăm thu nhập để dành</div>
             <div class="progress my-2" style="height: 8px">
               <div
@@ -184,7 +184,7 @@
         <div class="d-flex justify-content-between align-items-start">
           <div>
             <div class="text-muted small fw-semibold">Chi trung bình/ngày</div>
-            <div id="kpiDaily" class="val text-dark">0 ₫</div>
+            <div id="kpiDaily" class="val">0 ₫</div>
             <div class="kpi-subtext">
               Giao dịch: <span id="kpiCount">0</span>
             </div>

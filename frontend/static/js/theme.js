@@ -33,6 +33,17 @@
       apply._onChange = onChange;
     }
   }
+  
+  // Hàm bổ sung: Khởi tạo trạng thái nút toggle
+  function initThemeToggle() {
+    const themePref = localStorage.getItem(KEY) || "auto";
+    const currentTheme = document.documentElement.getAttribute("data-theme");
+    const isDark = (themePref === "dark" || (themePref === "auto" && currentTheme === "dark"));
+    const toggle = document.getElementById("themeToggle");
+    if (toggle) {
+        toggle.checked = isDark;
+    }
+  }
 
   window.ThemeManager = {
     getPref() {
@@ -41,9 +52,22 @@
     setPref(pref) {
       localStorage.setItem(KEY, pref);
       apply(pref);
+      initThemeToggle(); // Cập nhật trạng thái nút sau khi đặt
     },
     applyCurrent() {
       apply(this.getPref());
+      initThemeToggle(); // Cập nhật trạng thái nút khi khởi động
     },
+    toggleTheme() {
+        // Lấy theme hiện tại đang được áp dụng
+        const currentAppliedTheme = document.documentElement.getAttribute("data-theme");
+        // Đặt theme mới ngược lại
+        const nextTheme = currentAppliedTheme === "dark" ? "light" : "dark";
+        // Lưu và áp dụng theme mới
+        this.setPref(nextTheme);
+    }
   };
+  
+  // Gọi initThemeToggle một lần sau khi ThemeManager được định nghĩa
+  document.addEventListener('DOMContentLoaded', initThemeToggle);
 })();
