@@ -1,0 +1,449 @@
+{% extends "base.html" %}
+{% block title %}Quản lý Subscription{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<style>
+  .subscription-card {
+    border: 1px solid #eef1f4;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+  .subscription-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+  .subscription-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    object-fit: contain;
+    background: #f8f9fa;
+    padding: 4px;
+  }
+  .category-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+  .billing-soon {
+    background-color: #fff3cd;
+  }
+  .status-active {
+    color: #198754;
+  }
+  .status-paused {
+    color: #ffc107;
+  }
+  .status-cancelled {
+    color: #dc3545;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-0">Quản lý Subscription</h2>
+      <p class="text-muted mb-0">Theo dõi các dịch vụ đăng ký hàng kỳ của bạn</p>
+    </div>
+    <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#addSubModal">
+      <i class="bi bi-plus-lg me-1"></i> Thêm Subscription
+    </button>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-lg-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <p class="text-muted small mb-1">Đang hoạt động</p>
+              <h3 class="mb-0" id="activeCount">0</h3>
+            </div>
+            <i class="bi bi-play-circle text-success" style="font-size: 1.5rem;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <p class="text-muted small mb-1">Chi phí hàng tháng</p>
+              <h3 class="mb-0" id="monthlyCost">₫0</h3>
+            </div>
+            <i class="bi bi-cash-coin text-info" style="font-size: 1.5rem;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <p class="text-muted small mb-1">Chi phí hàng năm</p>
+              <h3 class="mb-0" id="yearlyCost">₫0</h3>
+            </div>
+            <i class="bi bi-calendar-event text-warning" style="font-size: 1.5rem;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <p class="text-muted small mb-1">Sắp thanh toán</p>
+              <h3 class="mb-0" id="upcomingCount">0</h3>
+            </div>
+            <i class="bi bi-exclamation-circle text-warning" style="font-size: 1.5rem;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subscriptions List -->
+  <div class="row g-3" id="subscriptionsList">
+    <div class="col-12 text-center py-5">
+      <p class="text-muted">Đang tải...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="addSubModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">Thêm Subscription mới</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="subForm">
+        <div class="modal-body">
+          <input type="hidden" name="id" />
+          
+          <div class="mb-3">
+            <label class="form-label">Tên dịch vụ <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="name" required placeholder="vd. Netflix, Spotify...">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Giá tiền (VND) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" name="price" required min="1000" step="1000" placeholder="Nhập giá tiền">
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Chu kỳ lặp lại <span class="text-danger">*</span></label>
+              <select class="form-select" name="cycle_months" required>
+                <option value="1">1 tháng</option>
+                <option value="3">3 tháng</option>
+                <option value="6">6 tháng</option>
+                <option value="12">12 tháng (1 năm)</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Danh mục</label>
+              <select class="form-select" name="category" id="categorySelect">
+                <option value="Other" selected>Khác</option>
+                <option value="Entertainment">Giải trí</option>
+                <option value="Work">Công việc</option>
+                <option value="Productivity">Năng suất</option>
+                <option value="Streaming">Phát trực tuyến</option>
+                <option value="Education">Giáo dục</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Ngày bắt đầu <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" name="start_date" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Ghi chú</label>
+            <textarea class="form-control" name="notes" rows="2" placeholder="Thêm ghi chú (tùy chọn)"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-primary">Lưu</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (() => {
+    const API_BASE = "/api";
+    const TOKEN = localStorage.getItem("access_token") || "";
+    const AUTH = TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {};
+    
+    const qs = (s, el = document) => el.querySelector(s);
+    const qsa = (s, el = document) => [...el.querySelectorAll(s)];
+    const fmtVND = (n) => Number(n || 0).toLocaleString('vi-VN', { 
+      style: 'currency', 
+      currency: 'VND', 
+      maximumFractionDigits: 0 
+    });
+
+    let subscriptions = [];
+
+    async function loadSubscriptions() {
+      try {
+        const res = await fetch(`${API_BASE}/subscriptions`, { headers: AUTH });
+        if (!res.ok) throw new Error("Load failed");
+        const data = await res.json();
+        subscriptions = data.items || [];
+        renderSubscriptions();
+        updateKPIs(data.stats || {});
+      } catch (err) {
+        console.error(err);
+        qs("#subscriptionsList").innerHTML = `<div class="col-12 alert alert-danger">Lỗi tải dữ liệu</div>`;
+      }
+    }
+
+    function updateKPIs(stats) {
+      qs("#monthlyCost").textContent = fmtVND(stats.monthly_cost || 0);
+      qs("#yearlyCost").textContent = fmtVND((stats.monthly_cost || 0) * 12);
+      qs("#activeCount").textContent = stats.total_count || 0;
+      // Upcoming will be calculated on render
+    }
+
+    function renderSubscriptions() {
+      const list = qs("#subscriptionsList");
+      if (subscriptions.length === 0) {
+        list.innerHTML = `
+          <div class="col-12 text-center py-5">
+            <p class="text-muted">Chưa có subscription nào</p>
+          </div>
+        `;
+        return;
+      }
+
+      let upcomingCount = 0;
+      const html = subscriptions.map(sub => {
+        const isSoon = sub.days_until_billing <= 7 && sub.days_until_billing > 0;
+        if (isSoon) upcomingCount++;
+        
+        return `
+          <div class="col-lg-6 col-xl-4">
+            <div class="card subscription-card ${isSoon ? 'billing-soon' : ''}">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div class="d-flex gap-2 align-items-start flex-grow-1">
+                    <img src="${sub.logo_url}" alt="${sub.name}" class="subscription-logo" onerror="this.src='https://via.placeholder.com/48'">
+                    <div class="flex-grow-1">
+                      <h6 class="mb-1">${sub.name}</h6>
+                      <small class="text-muted">${sub.category}</small>
+                    </div>
+                  </div>
+                  <div class="dropdown">
+                    <button class="btn btn-sm btn-link" type="button" data-bs-toggle="dropdown">
+                      <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                      <li><a class="dropdown-item btn-edit" href="#" data-id="${sub.id}"><i class="bi bi-pencil me-2"></i>Sửa</a></li>
+                      <li><a class="dropdown-item btn-delete" href="#" data-id="${sub.id}"><i class="bi bi-trash me-2"></i>Xóa</a></li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <div class="d-flex justify-content-between mb-1">
+                    <span class="small">Giá</span>
+                    <strong>${fmtVND(sub.price)}</strong>
+                  </div>
+                  <div class="d-flex justify-content-between mb-1">
+                    <span class="small">Chu kỳ</span>
+                    <strong>${sub.cycle_months} tháng</strong>
+                  </div>
+                  <div class="d-flex justify-content-between">
+                    <span class="small">Thanh toán tiếp</span>
+                    <strong>${sub.next_billing_date}</strong>
+                  </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                  <span class="status-${sub.status}">${sub.status === 'active' ? '✓ Hoạt động' : sub.status === 'paused' ? '⏸ Tạm dừng' : '✕ Hủy'}</span>
+                  <span class="badge ${sub.days_until_billing <= 7 ? 'bg-warning' : 'bg-secondary'}">
+                    ${sub.days_until_billing} ngày
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+      
+      list.innerHTML = html;
+      qs("#upcomingCount").textContent = upcomingCount;
+      bindEvents();
+    }
+
+    function bindEvents() {
+      qsa(".btn-edit").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          const id = parseInt(btn.dataset.id);
+          const sub = subscriptions.find(s => s.id === id);
+          if (sub) openModal(sub);
+        });
+      });
+
+      qsa(".btn-delete").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          const id = parseInt(btn.dataset.id);
+          if (confirm("Bạn chắc chắn muốn xóa?")) {
+            try {
+              const res = await fetch(`${API_BASE}/subscriptions/${id}`, { method: "DELETE", headers: AUTH });
+              if (res.ok) loadSubscriptions();
+              else alert("Xóa thất bại");
+            } catch (err) {
+              alert("Lỗi: " + err.message);
+            }
+          }
+        });
+      });
+    }
+
+    function openModal(sub = null) {
+      const form = qs("#subForm");
+      const modal = new bootstrap.Modal(qs("#addSubModal"));
+      
+      if (sub) {
+        qs("#modalTitle").textContent = "Sửa Subscription";
+        form.id.value = sub.id;
+        form.name.value = sub.name;
+        form.price.value = sub.price;
+        form.cycle_months.value = sub.cycle_months;
+        form.category.value = sub.category;
+        form.start_date.value = sub.start_date;
+        form.notes.value = sub.notes || "";
+      } else {
+        qs("#modalTitle").textContent = "Thêm Subscription mới";
+        form.reset();
+        form.id.value = "";
+        form.start_date.value = new Date().toISOString().split('T')[0];
+      }
+      
+      modal.show();
+    }
+
+    // Service to Category Mapping for Auto-Detection
+    const serviceMapping = {
+      // Entertainment
+      netflix: "Entertainment", spotify: "Entertainment", disney: "Entertainment", 
+      hulu: "Entertainment", prime: "Entertainment", amazon: "Entertainment",
+      hbo: "Entertainment", youtube: "Entertainment", twitch: "Entertainment",
+      tiktok: "Entertainment", instagram: "Entertainment", facebook: "Entertainment",
+      playstation: "Entertainment", xbox: "Entertainment", steam: "Entertainment",
+      blizzard: "Entertainment", discord: "Entertainment", telegram: "Entertainment",
+      
+      // Streaming
+      vimeo: "Streaming", dailymotion: "Streaming", crunchyroll: "Streaming",
+      funimation: "Streaming", animaflixs: "Streaming", wetv: "Streaming",
+      
+      // Work & Productivity
+      slack: "Work", teams: "Work", zoom: "Work", skype: "Work", discord: "Work",
+      github: "Work", gitlab: "Work", bitbucket: "Work", jira: "Work",
+      confluence: "Work", trello: "Work", asana: "Work", monday: "Work",
+      linear: "Work", clickup: "Work", basecamp: "Work", hubspot: "Work",
+      salesforce: "Work", microsoft: "Work", office: "Work", notion: "Productivity",
+      figma: "Productivity", photoshop: "Productivity", adobe: "Productivity",
+      canva: "Productivity", miro: "Productivity", mural: "Productivity",
+      
+      // Education
+      udemy: "Education", coursera: "Education", edx: "Education", skillshare: "Education",
+      duolingo: "Education", babbel: "Education", rosettastone: "Education",
+      learnpython: "Education", codecademy: "Education", pluralsight: "Education",
+      datacamp: "Education", treehouse: "Education", masterclass: "Education",
+      
+      // Vietnamese services
+      netflix: "Entertainment", spotify: "Entertainment",
+      linkedin: "Work", "co-up": "Work", topbox: "Entertainment",
+    };
+
+    function autoDetectCategory(serviceName) {
+      if (!serviceName) return "Other";
+      const name = serviceName.toLowerCase().trim();
+      
+      // Direct match
+      if (serviceMapping[name]) {
+        return serviceMapping[name];
+      }
+      
+      // Partial match - find if service name contains any keyword
+      for (const [key, category] of Object.entries(serviceMapping)) {
+        if (name.includes(key) || key.includes(name)) {
+          return category;
+        }
+      }
+      
+      return "Other";
+    }
+
+    // Auto-categorization on service name input
+    const nameInput = qs("#subForm input[name='name']");
+    nameInput?.addEventListener("input", (e) => {
+      const detectedCategory = autoDetectCategory(e.target.value);
+      qs("#categorySelect").value = detectedCategory;
+    });
+    
+    qs("#subForm")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const fd = new FormData(form);
+      const id = fd.get("id");
+      
+      const payload = {
+        name: fd.get("name"),
+        price: parseInt(fd.get("price")),
+        cycle_months: parseInt(fd.get("cycle_months")),
+        category: fd.get("category"),
+        start_date: fd.get("start_date"),
+        notes: fd.get("notes"),
+      };
+
+      try {
+        const url = id ? `${API_BASE}/subscriptions/${id}` : `${API_BASE}/subscriptions`;
+        const method = id ? "PUT" : "POST";
+        
+        const res = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json", ...AUTH },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          bootstrap.Modal.getInstance(qs("#addSubModal")).hide();
+          loadSubscriptions();
+        } else {
+          const err = await res.json();
+          alert(err.message || "Lỗi lưu dữ liệu");
+        }
+      } catch (err) {
+        alert("Lỗi: " + err.message);
+      }
+    });
+
+    // Add button
+    qs("button[data-bs-target='#addSubModal']")?.addEventListener("click", () => openModal());
+
+    // Load on init
+    loadSubscriptions();
+  })();
+</script>
+{% endblock %}
