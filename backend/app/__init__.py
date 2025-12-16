@@ -83,9 +83,35 @@ def create_app(config_class: type[Config] | None = None):
 
     mail.init_app(app)  # Initialize Flask-Mail
 
+    # ▶ JWT Error Handlers
+    from flask_jwt_extended.exceptions import JWTExtendedException
+
+    @app.errorhandler(JWTExtendedException)
+    def handle_jwt_error(error):
+        return {"success": False, "message": f"Token error: {str(error)}"}, 401
+
     # Blueprints
     register_blueprints(app)
     app.jinja_env.globals["now"] = datetime.now
+
+    # ▶ Serve uploaded files (avatars)
+    from flask import send_from_directory
+
+    # Đường dẫn uploads folder (ROOT_DIR = .../QLTC_SinhVien)
+    uploads_dir = os.path.join(ROOT_DIR, "backend", "uploads")
+    os.makedirs(uploads_dir, exist_ok=True)
+
+    print(f"[INIT] Uploads directory: {uploads_dir}")
+    print(f"[INIT] Exists: {os.path.exists(uploads_dir)}")
+
+    @app.route("/uploads/<path:filename>")
+    def serve_uploads(filename):
+        full_path = os.path.join(uploads_dir, filename)
+        print(f"[SERVE] Request: {filename}")
+        print(f"[SERVE] Directory: {uploads_dir}")
+        print(f"[SERVE] Full path: {full_path}")
+        print(f"[SERVE] Exists: {os.path.exists(full_path)}")
+        return send_from_directory(uploads_dir, filename)
 
     @app.get("/healthz")
     def health_check():

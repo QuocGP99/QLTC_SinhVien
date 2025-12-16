@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg bg-white border-bottom">
+<nav class="navbar navbar-expand-lg bg-white border-bottom" style="position: sticky; top: 0; z-index: 1030;">
   <div class="container-fluid">
     <a class="navbar-brand fw-semibold" href="{{ url_for('web.index') }}">
       SVFinance
@@ -15,12 +15,9 @@
 
     <div class="collapse navbar-collapse" id="topNav">
       <ul class="navbar-nav ms-auto align-items-center">
-        <li
-          class="nav-item me-3 d-flex align-items-center"
-          id="navThemeToggleWrapper"
-        >
+        <li class="nav-item me-3 d-flex align-items-center" id="navThemeToggleWrapper">
           <i class="bi bi-sun-fill text-muted small me-2"></i>
-
+          
           <div class="form-check form-switch p-0">
             <input
               class="form-check-input"
@@ -30,15 +27,15 @@
               onclick="ThemeManager.toggleTheme()"
             />
           </div>
-
+          
           <i class="bi bi-moon-fill text-muted small ms-2"></i>
         </li>
-
+        
         <li class="nav-item dropdown me-2">
           <button
             id="btnNoti"
             type="button"
-            class="btn btn-light border position-relative"
+            class="btn btn-outline-secondary border position-relative"
             data-bs-toggle="dropdown"
             data-bs-auto-close="outside"
             aria-expanded="false"
@@ -77,12 +74,12 @@
             aria-expanded="false"
           >
             <img
-              id="navUserAvatar"
-              src="{{ url_for('static', filename='img/avatar-placeholder.png') }}"
+              id="navUserAvatar"  
+              src="{{ url_for('static', filename='img/ai-robot-3d.png') }}"
               alt="Avatar"
               class="rounded-circle"
               style="width: 32px; height: 32px; object-fit: cover"
-              onerror="this.src='{{ url_for('static', filename='img/avatar-placeholder.png') }}'"
+              onerror="this.src='{{ url_for('static', filename='img/ai-robot-3d.png') }}'"
             />
             <i class="bi bi-caret-down-fill small"></i>
           </a>
@@ -94,12 +91,12 @@
             <li class="px-3 py-2">
               <div class="d-flex align-items-center gap-2">
                 <img
-                  id="navUserAvatarLg"
-                  src="{{ url_for('static', filename='img/avatar-placeholder.png') }}"
+                  id="navUserAvatarDropdown" 
+                  src="{{ url_for('static', filename='img/ai-robot-3d.png') }}"
                   alt="Avatar"
                   class="rounded-circle"
                   style="width: 40px; height: 40px; object-fit: cover"
-                  onerror="this.src='{{ url_for('static', filename='img/avatar-placeholder.png') }}'"
+                  onerror="this.src='{{ url_for('static', filename='img/ai-robot-3d.png') }}'"
                 />
                 <div class="min-w-0">
                   <div class="fw-semibold text-truncate" id="navUserName">
@@ -142,52 +139,98 @@
 </nav>
 
 <script>
-  (function () {
+  // Hàm khởi tạo/cập nhật navbar
+  function initNavbar() {
     try {
       const userRaw = localStorage.getItem("user") || "null";
       const user = JSON.parse(userRaw);
       const token = localStorage.getItem("access_token");
 
-      const navThemeToggleWrapper = document.getElementById(
-        "navThemeToggleWrapper"
-      );
       const navUserWrapper = document.getElementById("navUserWrapper");
       const navLoginWrapper = document.getElementById("navLoginWrapper");
       const notiItem = document.querySelector(".nav-item.dropdown.me-2");
+
+      // Lấy các thẻ Avatar theo ID đã fix
       const avatarEl = document.getElementById("navUserAvatar");
-      const avatarLgEl = document.getElementById("navUserAvatarLg");
+      const avatarDropdownEl = document.getElementById("navUserAvatarDropdown"); 
+
       const nameEl = document.getElementById("navUserName");
       const emailEl = document.getElementById("navUserEmail");
       const btnLogout = document.getElementById("btnLogout");
 
-      // nếu chưa login
+      // Nếu chưa login
       if (!user || !token) {
-        // Ẩn Theme toggle & chuông
-        navThemeToggleWrapper?.classList.add("d-none");
-        notiItem?.classList.add("d-none");
-
-        // Hiện nút Đăng nhập, ẩn dropdown user
-        navLoginWrapper?.classList.remove("d-none");
-        navUserWrapper?.classList.add("d-none");
+        if (navUserWrapper) navUserWrapper.classList.add("d-none");
+        if (navLoginWrapper) navLoginWrapper.classList.remove("d-none");
+        if (notiItem) notiItem.classList.add("d-none");
         return;
       }
 
-      // nếu đã login
-      navThemeToggleWrapper?.classList.remove("d-none");
-      notiItem?.classList.remove("d-none");
+      // Nếu đã login
+      if (navUserWrapper) navUserWrapper.classList.remove("d-none");
+      if (navLoginWrapper) navLoginWrapper.classList.add("d-none");
+      if (notiItem) notiItem.classList.remove("d-none");
 
-      navLoginWrapper?.classList.add("d-none");
-      navUserWrapper?.classList.remove("d-none");
+      // Hàm cập nhật avatar
+      const updateAvatarDisplay = (avatarUrl) => {
+        if (avatarEl) avatarEl.src = avatarUrl;
+        if (avatarDropdownEl) avatarDropdownEl.src = avatarUrl;
+      };
 
-      const avatarSrc =
-        user.avatar ||
-        user.avatar_url ||
-        user.photo_url ||
-        user.image ||
-        "{{ url_for('static', filename='img/avatar-placeholder.png') }}";
-
-      if (avatarEl) avatarEl.src = avatarSrc;
-      if (avatarLgEl) avatarLgEl.src = avatarSrc;
+      // Fetch user profile từ API để lấy avatar mới nhất từ database
+      if (token) {
+        fetch("/api/user/profile", {
+          method: "GET",
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            const userProfile = data.data || data.user; // Endpoint trả về data hoặc user
+            if (userProfile) {
+              // Cập nhật user trong localStorage
+              const updatedUser = { ...user, ...userProfile };
+              localStorage.setItem("user", JSON.stringify(updatedUser));
+              
+              // Cập nhật avatar từ database
+              let avatarUrl = "{{ url_for('static', filename='img/ai-robot-3d.png') }}";
+              if (userProfile.avatar) {
+                // avatar có thể là: /uploads/avatars/xxx hoặc avatars/xxx hoặc xxx
+                let avatarPath = userProfile.avatar;
+                if (!avatarPath.startsWith("/")) {
+                  avatarPath = "/uploads/" + avatarPath;
+                }
+                // Thêm timestamp để bypass cache
+                const separator = avatarPath.includes("?") ? "&" : "?";
+                avatarUrl = avatarPath + separator + "t=" + Date.now();
+              }
+              updateAvatarDisplay(avatarUrl);
+              
+              // Cập nhật tên và email
+              if (nameEl) nameEl.textContent = userProfile.full_name || "Sinh viên";
+              if (emailEl) emailEl.textContent = userProfile.email || "";
+            }
+          })
+          .catch((err) => {
+            console.warn("Fetch profile error:", err);
+            // Fallback: sử dụng avatar từ localStorage
+            let avatarSrc = "{{ url_for('static', filename='img/ai-robot-3d.png') }}";
+            if (user.avatar) {
+              const separator = user.avatar.includes("/") ? "?" : "";
+              avatarSrc = (user.avatar.startsWith("/") ? user.avatar : "/uploads/" + user.avatar) 
+                + separator + "t=" + Date.now();
+            }
+            
+            if (avatarEl) avatarEl.src = avatarSrc;
+            if (avatarDropdownEl) avatarDropdownEl.src = avatarSrc;
+          });
+      } else {
+        // Nếu không có token, show placeholder
+        if (avatarEl) avatarEl.src = "{{ url_for('static', filename='img/ai-robot-3d.png') }}";
+        if (avatarDropdownEl) avatarDropdownEl.src = "{{ url_for('static', filename='img/ai-robot-3d.png') }}";
+      }
+      
       if (nameEl) {
         nameEl.textContent =
           user.full_name || user.name || user.username || "Sinh viên";
@@ -202,19 +245,20 @@
       ) {
         window.BudgetNotify.init();
       }
-
-      // Khởi tạo trạng thái nút toggle (để đảm bảo trạng thái đúng sau khi login)
+      
+      // Khởi tạo trạng thái nút toggle (Theme Toggle)
       if (window.ThemeManager) {
         window.ThemeManager.applyCurrent();
       }
 
-      // Logout
+      // Logic Logout
       btnLogout?.addEventListener("click", async (e) => {
         e.preventDefault();
 
         try {
           const token = localStorage.getItem("access_token");
           if (token) {
+            // Giả định bạn có endpoint '/api/auth/logout'
             await fetch("/api/auth/logout", {
               method: "POST",
               headers: { Authorization: "Bearer " + token },
@@ -224,15 +268,25 @@
           console.warn("logout api failed (ignored)", err);
         }
 
+        // Xóa tất cả các token và thông tin user
         localStorage.removeItem("token_type");
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
         localStorage.removeItem("user");
-
-        window.location.href = "/login?logout_ok=1";
+        localStorage.removeItem("token_expire");
+        
+        // Chuyển hướng về trang đăng nhập
+        window.location.href = "{{ url_for('web.login') }}";
       });
+
     } catch (err) {
       console.warn("navbar init error:", err);
     }
-  })();
+  }
+
+  // Gọi hàm khi trang load xong
+  document.addEventListener("DOMContentLoaded", initNavbar);
+  
+  // Cũng gọi ngay (trong trường hợp script load sau content)
+  initNavbar();
 </script>

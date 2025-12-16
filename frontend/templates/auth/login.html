@@ -212,19 +212,24 @@
           localStorage.setItem("user", JSON.stringify(data.user));
         }
 
-        // Nếu không tick nhớ mật khẩu -> đi thẳng
-        if (!rememberCb.checked) {
-          showMsg("Đăng nhập thành công! Đang chuyển...", true);
-          setTimeout(
-            () => (window.location.href = "/dashboard?login_ok=1"),
-            400
-          );
-          return;
+        showMsg("Đăng nhập thành công! Đang chuyển...", true);
+        
+        // Cập nhật navbar ngay lập tức (nếu hàm tồn tại)
+        if (typeof initNavbar === "function") {
+          initNavbar();
         }
-
-        // Nếu tick -> hỏi Edge/Chrome lưu
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
+        
+        // Luôn redirect về dashboard sau khi đăng nhập thành công
+        setTimeout(
+          () => (window.location.href = "/dashboard?login_ok=1"),
+          400
+        );
+        
+        // Nếu tick nhớ mật khẩu -> yêu cầu browser lưu
+        if (rememberCb.checked) {
+          const modal = new bootstrap.Modal(modalEl);
+          modal.show();
+        }
 
         modalNoBtn.onclick = () => {
           rememberCb.checked = false;

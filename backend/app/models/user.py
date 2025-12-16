@@ -11,6 +11,7 @@ class User(BaseModel):
 
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
     full_name = db.Column(db.String(255))
+    avatar = db.Column(db.String(255), nullable=True, default=None)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(16), nullable=False, default="user")
     is_verified = db.Column(db.Boolean, nullable=False, default=False)
@@ -58,6 +59,7 @@ class User(BaseModel):
             "id": self.id,
             "email": self.email,
             "full_name": self.full_name,
+            "avatar": self.avatar,
             "role": self.role,
             "is_verified": self.is_verified,
         }

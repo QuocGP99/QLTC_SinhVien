@@ -15,6 +15,7 @@ from .analytics import bp as analytics_bp
 from .admin_users import bp as admin_users_bp
 from .ocr_api import bp as ocr_api_bp
 from .ai_api import bp as ai_bp
+from .user_profile import bp as user_bp
 
 
 def register_blueprints(app: Flask):
@@ -35,3 +36,4 @@ def register_blueprints(app: Flask):
     app.register_blueprint(analytics_bp)
     app.register_blueprint(ocr_api_bp)
     app.register_blueprint(ai_bp)
+    app.register_blueprint(user_bp)
