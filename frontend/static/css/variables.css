@@ -41,7 +41,21 @@
   --chip-bg: #1e293b;
   --chip-fg: #cbd5e1;
 }
-
+/* Xử lý btn-light */
+  .btn-light {
+    --bs-btn-bg: var(--surface-2) !important;
+    --bs-btn-color: var(--text) !important;
+    --bs-btn-border-color: var(--border) !important;
+  }
+/* Xử lý btn-outline-secondary (được dùng cho nút Toggle Sidebar, Đặt lại, Thông báo mới) */
+  .btn-outline-secondary {
+    --bs-btn-color: var(--muted) !important;
+    --bs-btn-border-color: var(--border) !important;
+    --bs-btn-hover-bg: var(--surface-2) !important;
+    --bs-btn-hover-color: var(--text) !important;
+    --bs-btn-active-bg: var(--surface-2) !important;
+    --bs-btn-active-border-color: var(--border) !important;
+  }
 /* ===== Bridge: áp các biến vào UI (toàn site) ===== */
 html,
 body {
@@ -121,4 +135,33 @@ hr {
   background: var(--surface);
   border-color: #334155;
   box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.15);
+}
+/* [1] Đảm bảo màu nền/viền cơ bản của list-group-item sử dụng biến theme */
+.list-group-item {
+  background-color: var(--side-bg);
+  color: var(--side-fg);
+  border-color: var(--border);
+}
+
+/* [2] Ghi đè hiệu ứng hover và active trong Dark Mode */
+:root[data-theme="dark"] .list-group-item-action:hover,
+:root[data-theme="dark"] .list-group-item-action:focus {
+  background-color: var(--surface-2); /* Nền hover tối hơn */
+  color: var(--text); /* Màu chữ sáng */
+}
+
+/* [3] Xử lý trạng thái active/current page */
+:root[data-theme="dark"] .list-group-item-action.active {
+  background-color: var(--brand); /* Màu xanh brand */
+  border-color: var(--brand);
+  color: white; /* Màu chữ trắng */
+}
+
+/* [4] Đảm bảo nút toggle sidebar sử dụng màu sáng */
+:root[data-theme="dark"] #btnToggleSidebar i {
+  color: var(--muted) !important;
+}
+.app-sidebar {
+  background: var(--side-bg);
+  border-right-color: var(--border) !important;
 }

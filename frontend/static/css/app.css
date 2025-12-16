@@ -62,7 +62,6 @@ body {
 #sidebar-wrapper {
   width: 250px; /* Chiều rộng mặc định */
   min-height: calc(100vh - 72px);
-  background: #fff;
   overflow-x: hidden;
 }
 
