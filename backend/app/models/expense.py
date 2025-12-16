@@ -4,6 +4,7 @@ from sqlalchemy import ForeignKey, CheckConstraint, Index
 from sqlalchemy.orm import relationship
 from . import BaseModel, db
 
+
 class Expense(BaseModel):
     __tablename__ = "expenses"
     __table_args__ = (
@@ -30,6 +31,12 @@ class Expense(BaseModel):
         nullable=True,
         index=True,
     )
+    money_source_id = db.Column(
+        db.Integer,
+        ForeignKey("money_sources.id", onupdate="CASCADE", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     amount = db.Column(db.Numeric(12, 2), nullable=False)
     spent_at = db.Column(db.Date, nullable=False, index=True)
@@ -38,3 +45,7 @@ class Expense(BaseModel):
     user = relationship("User", back_populates="expenses")
     category = relationship("Category", back_populates="expenses")
     payment_method = relationship("PaymentMethod", back_populates="expenses")
+    money_source = relationship(
+        "MoneySource",
+        backref=db.backref("expenses", lazy="dynamic", cascade="all, delete-orphan"),
+    )

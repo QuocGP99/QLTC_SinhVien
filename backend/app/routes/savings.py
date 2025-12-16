@@ -8,12 +8,14 @@ from ..models.saving import SavingsGoal, SavingsHistory, db
 
 bp = Blueprint("savings", __name__, url_prefix="/api/savings")
 
+
 # ---------- helpers ----------
 def _uid():
     uid = get_jwt_identity()
     if isinstance(uid, dict):
         uid = uid.get("id")
     return int(uid) if uid is not None else None
+
 
 def to_dict(m: SavingsGoal):
     return {
@@ -32,6 +34,7 @@ def to_dict(m: SavingsGoal):
         "contribute_interval": m.contribute_interval or "monthly",
     }
 
+
 def history_to_dict(h: SavingsHistory):
     return {
         "id": h.id,
@@ -40,11 +43,13 @@ def history_to_dict(h: SavingsHistory):
         "interval": h.interval,
         "note": h.note,
         "created_at": h.created_at.isoformat() if h.created_at else None,
-        "remaining_after": float(h.goal.current_amount or 0)
+        "remaining_after": float(h.goal.current_amount or 0),
     }
+
 
 def _is_same_month(d1: datetime, d2: datetime) -> bool:
     return d1.year == d2.year and d1.month == d2.month
+
 
 def _is_same_isoweek(d1: datetime, d2: datetime) -> bool:
     # ISO week: (year, week, weekday)
@@ -120,6 +125,7 @@ def _apply_auto_contributions(user_id: int):
 
 # ---------- ROUTES ----------
 
+
 @bp.get("")
 @jwt_required()
 def list_goals():
@@ -129,14 +135,44 @@ def list_goals():
     status = request.args.get("status")
     if status:
         q = q.filter_by(status=status)
-    items = [to_dict(x) for x in q.order_by(SavingsGoal.priority.asc(), SavingsGoal.id.desc()).all()]
+    items = [
+        to_dict(x)
+        for x in q.order_by(SavingsGoal.priority.asc(), SavingsGoal.id.desc()).all()
+    ]
     return jsonify({"items": items})
+
 
 @bp.post("")
 @jwt_required()
 def create_goal():
     data = request.get_json() or {}
     user_id = _uid()
+
+    # Validate deadline is not in the past
+    if data.get("deadline"):
+        try:
+            deadline = date.fromisoformat(data["deadline"])
+            if deadline < date.today():
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "message": "Ngày hoàn thành không thể ở trong quá khứ",
+                        }
+                    ),
+                    400,
+                )
+        except (ValueError, TypeError):
+            return (
+                jsonify({"success": False, "message": "Định dạng ngày không hợp lệ"}),
+                400,
+            )
+    else:
+        return (
+            jsonify({"success": False, "message": "Ngày hoàn thành là bắt buộc"}),
+            400,
+        )
+
     goal = SavingsGoal(
         user_id=user_id,
         name=data["name"],
@@ -146,7 +182,7 @@ def create_goal():
         target_amount=Decimal(str(data.get("target_amount", 0))),
         current_amount=Decimal(str(data.get("current_amount", 0))),
         monthly_contribution=Decimal(str(data.get("monthly_contribution", 0))),
-        deadline=date.fromisoformat(data["deadline"]) if data.get("deadline") else None,
+        deadline=deadline,
         status=data.get("status", "active"),
         auto_contribute=bool(data.get("auto_contribute", False)),
         contribute_interval=data.get("contribute_interval", "monthly"),
@@ -155,6 +191,7 @@ def create_goal():
     db.session.commit()
     return jsonify(to_dict(goal)), 201
 
+
 @bp.get("/<int:goal_id>")
 @jwt_required()
 def get_goal(goal_id):
@@ -162,6 +199,7 @@ def get_goal(goal_id):
     _apply_auto_contributions(user_id)
     m = SavingsGoal.query.filter_by(id=goal_id, user_id=user_id).first_or_404()
     return jsonify(to_dict(m))
+
 
 # NEW: chi tiết + lịch sử
 @bp.get("/<int:goal_id>/detail")
@@ -183,6 +221,7 @@ def goal_detail(goal_id):
             "history": [history_to_dict(h) for h in hist],
         }
     )
+
 
 # NEW: chỉ lấy history
 @bp.get("/<int:goal_id>/history")
@@ -211,7 +250,16 @@ def update_goal(goal_id):
         if k in data:
             setattr(m, k, Decimal(str(data[k])))
     if "deadline" in data:
-        m.deadline = date.fromisoformat(data["deadline"]) if data["deadline"] else None
+        if data["deadline"]:
+            try:
+                deadline = date.fromisoformat(data["deadline"])
+                if deadline < date.today():
+                    return jsonify({"success": False, "message": "Ngày hoàn thành không thể ở trong quá khứ"}), 400
+                m.deadline = deadline
+            except (ValueError, TypeError):
+                return jsonify({"success": False, "message": "Định dạng ngày không hợp lệ"}), 400
+        else:
+            m.deadline = None
 
     # NEW
     if "auto_contribute" in data:
@@ -223,10 +271,12 @@ def update_goal(goal_id):
     db.session.commit()
     return jsonify(to_dict(m))
 
+
 @bp.patch("/<int:goal_id>")
 @jwt_required()
 def patch_goal(goal_id):
     return update_goal(goal_id)
+
 
 @bp.delete("/<int:goal_id>")
 @jwt_required()
@@ -236,6 +286,7 @@ def delete_goal(goal_id):
     db.session.delete(m)
     db.session.commit()
     return "", 204
+
 
 # NEW: cập nhật setting (toggle + weekly/monthly) từ modal
 @bp.patch("/<int:goal_id>/settings")
@@ -258,6 +309,7 @@ def update_settings(goal_id):
 
     db.session.commit()
     return jsonify(to_dict(m))
+
 
 # góp thủ công + log history
 @bp.post("/<int:goal_id>/contribute")

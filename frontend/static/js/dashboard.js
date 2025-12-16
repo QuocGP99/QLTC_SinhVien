@@ -603,14 +603,15 @@
     };
   }
 
-  // ===== LOAD TOTAL BALANCE (Tổng thu nhập - Tổng chi tiêu) =====
+  // ===== LOAD TOTAL BALANCE (Tổng từ Money Sources) =====
   async function loadTotalBalance() {
     const elBalance = document.getElementById("kpiBalance");
     if (!elBalance) return;
 
     try {
-      const res = await apiGet("/api/dashboard/balance");
-      const balance = Number(res.balance || 0);
+      // Try to get balance from money sources first
+      const res = await apiGet("/api/dashboard/money-sources-balance");
+      const balance = Number(res.total_balance || 0);
 
       // Cập nhật cho KPI (có hỗ trợ ẩn/hiện)
       if (window.BalanceEyeFeature) {
@@ -620,6 +621,18 @@
       }
     } catch (err) {
       console.error("Lỗi loadTotalBalance:", err);
+      // Fallback to old calculation if money sources not available
+      try {
+        const res = await apiGet("/api/dashboard/balance");
+        const balance = Number(res.balance || 0);
+        if (window.BalanceEyeFeature) {
+          window.BalanceEyeFeature.setAmount(balance);
+        } else {
+          elBalance.textContent = Money.pretty(balance);
+        }
+      } catch (fallbackErr) {
+        console.error("Fallback loadTotalBalance also failed:", fallbackErr);
+      }
     }
   }
 

@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+{% block title %}Quản lý Nguồn Tiền{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<style>
+  .source-card {
+    border: 1px solid #eef1f4;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+  .source-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+  .source-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+  }
+  .icon-ewallet {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+  }
+  .icon-cash {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+  }
+  .icon-bank_account {
+    background: linear-gradient(135deg, #a855f7, #7c3aed);
+  }
+  .icon-credit_card {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+  }
+  .icon-savings {
+    background: linear-gradient(135deg, #ec4899, #be185d);
+  }
+  .icon-investment {
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+  }
+  .icon-other {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+  }
+  .status-active {
+    color: #198754;
+  }
+  .status-inactive {
+    color: #dc3545;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-0">Quản lý Nguồn Tiền</h2>
+      <p class="text-muted mb-0">Quản lý tất cả các ví, tài khoản và nguồn tiền của bạn</p>
+    </div>
+    <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#addSourceModal">
+      <i class="bi bi-plus-lg me-1"></i> Thêm Nguồn Tiền
+    </button>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-lg-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <p class="text-muted small mb-1">Tổng số dư</p>
+              <h3 class="mb-0" id="totalBalance">₫0</h3>
+            </div>
+            <i class="bi bi-wallet2 text-success" style="font-size: 1.5rem;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <p class="text-muted small mb-1">Tổng nguồn tiền</p>
+              <h3 class="mb-0" id="totalSources">0</h3>
+            </div>
+            <i class="bi bi-boxes text-info" style="font-size: 1.5rem;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-body">
+          <p class="text-muted small mb-2">Phân bổ theo loại</p>
+          <div id="typeBreakdown" class="row g-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sources List -->
+  <div class="row g-3" id="sourcesList">
+    <div class="col-12 text-center py-5">
+      <p class="text-muted">Đang tải...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="addSourceModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">Thêm Nguồn Tiền mới</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="sourceForm">
+        <div class="modal-body">
+          <input type="hidden" name="id" />
+          
+          <div class="mb-3">
+            <label class="form-label">Tên <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="name" required placeholder="vd. Ví Momo, Tài khoản Agribank...">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Loại <span class="text-danger">*</span></label>
+            <select class="form-select" name="type" required>
+              <option value="">-- Chọn loại --</option>
+              <option value="ewallet">Ví điện tử</option>
+              <option value="cash">Tiền mặt</option>
+              <option value="bank_account">Tài khoản ngân hàng</option>
+              <option value="credit_card">Thẻ tín dụng</option>
+              <option value="savings">Tiết kiệm</option>
+              <option value="investment">Đầu tư</option>
+              <option value="other">Khác</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Số dư (VND) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" name="balance" required min="0" step="1000" placeholder="0" value="0">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Mô tả</label>
+            <textarea class="form-control" name="description" rows="2" placeholder="Thêm mô tả (tùy chọn)"></textarea>
+          </div>
+
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="is_active" id="isActive" checked>
+            <label class="form-check-label" for="isActive">
+              Kích hoạt nguồn tiền này
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-primary">Lưu</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (() => {
+    const API_BASE = "/api";
+    const TOKEN = localStorage.getItem("access_token") || "";
+    const AUTH = TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {};
+    
+    const qs = (s, el = document) => el.querySelector(s);
+    const qsa = (s, el = document) => [...el.querySelectorAll(s)];
+    const fmtVND = (n) => Number(n || 0).toLocaleString('vi-VN', { 
+      style: 'currency', 
+      currency: 'VND', 
+      maximumFractionDigits: 0 
+    });
+
+    const typeInfo = {
+      ewallet: { display: 'Ví điện tử', icon: 'bi-phone', class: 'icon-ewallet' },
+      cash: { display: 'Tiền mặt', icon: 'bi-cash-coin', class: 'icon-cash' },
+      bank_account: { display: 'Tài khoản ngân hàng', icon: 'bi-bank', class: 'icon-bank_account' },
+      credit_card: { display: 'Thẻ tín dụng', icon: 'bi-credit-card', class: 'icon-credit_card' },
+      savings: { display: 'Tiết kiệm', icon: 'bi-piggy-bank', class: 'icon-savings' },
+      investment: { display: 'Đầu tư', icon: 'bi-graph-up', class: 'icon-investment' },
+      other: { display: 'Khác', icon: 'bi-wallet2', class: 'icon-other' },
+    };
+
+    let sources = [];
+
+    async function loadSources() {
+      try {
+        const res = await fetch(`${API_BASE}/money-sources`, { headers: AUTH });
+        if (!res.ok) throw new Error("Load failed");
+        const data = await res.json();
+        sources = data.items || [];
+        renderSources();
+        updateKPIs(data.stats || {});
+      } catch (err) {
+        console.error(err);
+        qs("#sourcesList").innerHTML = `<div class="col-12 alert alert-danger">Lỗi tải dữ liệu</div>`;
+      }
+    }
+
+    function updateKPIs(stats) {
+      qs("#totalBalance").textContent = fmtVND(stats.total_balance || 0);
+      qs("#totalSources").textContent = stats.total_sources || 0;
+      
+      const breakdown = qs("#typeBreakdown");
+      const types = stats.balance_by_type || [];
+      breakdown.innerHTML = types.map(t => `
+        <div class="col-6">
+          <small class="text-muted">${t.type_display}</small>
+          <div class="fw-semibold">${fmtVND(t.balance)}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderSources() {
+      const list = qs("#sourcesList");
+      if (sources.length === 0) {
+        list.innerHTML = `
+          <div class="col-12 text-center py-5">
+            <p class="text-muted">Chưa có nguồn tiền nào</p>
+          </div>
+        `;
+        return;
+      }
+
+      const html = sources.map(src => {
+        const info = typeInfo[src.type] || typeInfo.other;
+        return `
+          <div class="col-lg-6 col-xl-4">
+            <div class="card source-card">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div class="d-flex gap-2 align-items-start flex-grow-1">
+                    <div class="source-icon ${info.class}">
+                      <i class="bi ${info.icon}"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                      <h6 class="mb-1">${src.name}</h6>
+                      <small class="text-muted">${info.display}</small>
+                    </div>
+                  </div>
+                  <div class="dropdown">
+                    <button class="btn btn-sm btn-link" type="button" data-bs-toggle="dropdown">
+                      <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                      <li><a class="dropdown-item btn-edit" href="#" data-id="${src.id}"><i class="bi bi-pencil me-2"></i>Sửa</a></li>
+                      <li><a class="dropdown-item btn-delete" href="#" data-id="${src.id}"><i class="bi bi-trash me-2"></i>Xóa</a></li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <div class="d-flex justify-content-between">
+                    <span class="small">Số dư</span>
+                    <strong>${fmtVND(src.balance)}</strong>
+                  </div>
+                </div>
+
+                ${src.description ? `<p class="small text-muted mb-2">${src.description}</p>` : ''}
+
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                  <span class="status-${src.is_active ? 'active' : 'inactive'}">${src.is_active ? '✓ Hoạt động' : '✕ Tạm dừng'}</span>
+                  <small class="text-muted">${new Date(src.created_at).toLocaleDateString('vi-VN')}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+      
+      list.innerHTML = html;
+      bindEvents();
+    }
+
+    function bindEvents() {
+      qsa(".btn-edit").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          const id = parseInt(btn.dataset.id);
+          const src = sources.find(s => s.id === id);
+          if (src) openModal(src);
+        });
+      });
+
+      qsa(".btn-delete").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          const id = parseInt(btn.dataset.id);
+          if (confirm("Bạn chắc chắn muốn xóa?")) {
+            try {
+              const res = await fetch(`${API_BASE}/money-sources/${id}`, { method: "DELETE", headers: AUTH });
+              if (res.ok) loadSources();
+              else alert("Xóa thất bại");
+            } catch (err) {
+              alert("Lỗi: " + err.message);
+            }
+          }
+        });
+      });
+    }
+
+    function openModal(src = null) {
+      const form = qs("#sourceForm");
+      const modal = new bootstrap.Modal(qs("#addSourceModal"));
+      
+      if (src) {
+        qs("#modalTitle").textContent = "Sửa Nguồn Tiền";
+        form.id.value = src.id;
+        form.name.value = src.name;
+        form.type.value = src.type;
+        form.balance.value = src.balance;
+        form.description.value = src.description || "";
+        form.is_active.checked = src.is_active;
+      } else {
+        qs("#modalTitle").textContent = "Thêm Nguồn Tiền mới";
+        form.reset();
+        form.id.value = "";
+        form.is_active.checked = true;
+      }
+      
+      modal.show();
+    }
+
+    qs("#sourceForm")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const fd = new FormData(form);
+      const id = fd.get("id");
+      
+      const payload = {
+        name: fd.get("name"),
+        type: fd.get("type"),
+        balance: parseFloat(fd.get("balance")),
+        description: fd.get("description"),
+        is_active: form.is_active.checked,
+      };
+
+      try {
+        const url = id ? `${API_BASE}/money-sources/${id}` : `${API_BASE}/money-sources`;
+        const method = id ? "PUT" : "POST";
+        
+        const res = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json", ...AUTH },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          bootstrap.Modal.getInstance(qs("#addSourceModal")).hide();
+          loadSources();
+        } else {
+          const err = await res.json();
+          alert(err.message || "Lỗi lưu dữ liệu");
+        }
+      } catch (err) {
+        alert("Lỗi: " + err.message);
+      }
+    });
+
+    qs("button[data-bs-target='#addSourceModal']")?.addEventListener("click", () => openModal());
+
+    loadSources();
+  })();
+</script>
+{% endblock %}

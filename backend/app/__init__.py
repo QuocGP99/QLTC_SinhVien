@@ -10,12 +10,13 @@ from datetime import datetime
 from huggingface_hub import login
 
 # ── Paths
-APP_FILE     = Path(__file__).resolve()
-BACKEND_DIR  = APP_FILE.parents[1]       # .../backend
-ROOT_DIR     = APP_FILE.parents[2]       # .../QLTC_SinhVien
+APP_FILE = Path(__file__).resolve()
+BACKEND_DIR = APP_FILE.parents[1]  # .../backend
+ROOT_DIR = APP_FILE.parents[2]  # .../QLTC_SinhVien
 TEMPLATES_DIR = ROOT_DIR / "frontend" / "templates"
-STATIC_DIR    = ROOT_DIR / "frontend" / "static"
-INSTANCE_DIR  = BACKEND_DIR / "instance"   # .../backend/instance
+STATIC_DIR = ROOT_DIR / "frontend" / "static"
+INSTANCE_DIR = BACKEND_DIR / "instance"  # .../backend/instance
+
 
 def register_models():
     from .models.user import User
@@ -24,13 +25,15 @@ def register_models():
     from .models.budget import Budget
     from .models.saving import SavingsGoal
     from .models.otp import OTPVerification
+    from .models.subscription import Subscription
+    from .models.money_source import MoneySource
 
     return True
+
 
 def create_app(config_class: type[Config] | None = None):
     # ▶ nạp .env sớm để os.getenv(...) có giá trị
     load_dotenv()
-
 
     app = Flask(
         __name__,
@@ -63,7 +66,9 @@ def create_app(config_class: type[Config] | None = None):
     cache_type = os.getenv("CACHE_TYPE")
     if cache_type:
         app.config["CACHE_TYPE"] = cache_type
-        app.config["CACHE_DEFAULT_TIMEOUT"] = int(os.getenv("CACHE_DEFAULT_TIMEOUT", "300"))
+        app.config["CACHE_DEFAULT_TIMEOUT"] = int(
+            os.getenv("CACHE_DEFAULT_TIMEOUT", "300")
+        )
         cache.init_app(app)
 
     # Init DB/JWT
@@ -76,33 +81,33 @@ def create_app(config_class: type[Config] | None = None):
     # ▶ Cố định thư mục migrations ở backend/migrations (đỡ phải -d mỗi lần)
     migrate.init_app(app, db, directory=(BACKEND_DIR / "migrations").as_posix())
 
-    mail.init_app(app) # Initialize Flask-Mail
+    mail.init_app(app)  # Initialize Flask-Mail
 
     # Blueprints
     register_blueprints(app)
-    app.jinja_env.globals['now'] = datetime.now
+    app.jinja_env.globals["now"] = datetime.now
 
     @app.get("/healthz")
     def health_check():
         return {
             "status": "ok",
             "db": app.config.get("SQLALCHEMY_DATABASE_URI"),
-            "cache": app.config.get("CACHE_TYPE", "disabled")
+            "cache": app.config.get("CACHE_TYPE", "disabled"),
         }, 200
-    
-     # --- Jinja filters: tiền VND & hiển thị +/- ---
+
+    # --- Jinja filters: tiền VND & hiển thị +/- ---
     def format_vnd(n):
         try:
             return f"{float(n):,.0f} đ".replace(",", ".")
         except Exception:
             return f"{n} đ"
 
-    def sign_amount(amount, tx_type='expense'):
+    def sign_amount(amount, tx_type="expense"):
         # Chi tiêu -> âm, Thu nhập -> dương
         s = "-" if tx_type == "expense" else "+"
         return f"{s}{format_vnd(amount)}"
 
-    app.jinja_env.filters["vnd"]  = format_vnd
+    app.jinja_env.filters["vnd"] = format_vnd
     app.jinja_env.filters["samt"] = sign_amount
 
     # HuggingFace login (cho huggingface_hub nếu cần)

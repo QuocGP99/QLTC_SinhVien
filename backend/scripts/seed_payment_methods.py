@@ -1,6 +1,12 @@
-from backend.app import create_app
-from backend.app.extensions import db
-from backend.app.models import PaymentMethod
+import sys
+import os
+
+# Add backend directory to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from app import create_app
+from app.extensions import db
+from app.models.payment_method import PaymentMethod
 
 DEFAULT_PM = [
     "Tiền mặt",
@@ -10,6 +16,7 @@ DEFAULT_PM = [
     "Chuyển khoản",
     "Khác",
 ]
+
 
 def run():
     with create_app().app_context():
@@ -22,6 +29,7 @@ def run():
         if created:
             db.session.commit()
         print(f"Seed payment_methods: +{created} item(s).")
+
 
 if __name__ == "__main__":
     run()

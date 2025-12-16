@@ -8,8 +8,10 @@ FEATURE_FLAG_DEFAULTS = [
     f.strip() for f in os.getenv("FEATURE_FLAGS", "ai, charts").split(",") if f.strip()
 ]
 
+
 def _api_base():
     return os.getenv("BASE_API_URL", "")
+
 
 @bp.route("/")
 def index():
@@ -19,9 +21,10 @@ def index():
         BASE_API_URL=_api_base(),
         title="Trang chủ",
         hide_sidebar=True,
-        SKIP_ROLE_GUARD=True,   # tắt guard user cho trang public
+        SKIP_ROLE_GUARD=True,  # tắt guard user cho trang public
         FEATURE_FLAGS=FEATURE_FLAG_DEFAULTS,
     )
+
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -35,8 +38,9 @@ def login():
             ADMIN_MODE=False,
             SKIP_ROLE_GUARD=True,
             FEATURE_FLAGS=FEATURE_FLAG_DEFAULTS,
-            ALLOW_AUTH_JS=False
-    )
+            ALLOW_AUTH_JS=False,
+        )
+
 
 @bp.route("/logout")
 def logout():
@@ -44,6 +48,7 @@ def logout():
     session.pop("user", None)
     flash("Đăng xuất thành công", "success")
     return redirect(url_for("web.login"))
+
 
 @bp.route("/dashboard")
 def dashboard():
@@ -55,6 +60,7 @@ def dashboard():
         hide_sidebar=False,
         FEATURE_FLAGS=FEATURE_FLAG_DEFAULTS,
     )
+
 
 @bp.route("/register")
 def register():
@@ -69,6 +75,7 @@ def register():
         # nên mình không truyền ALLOW_AUTH_JS ở đây -> dùng default True trong base_auth.html
     )
 
+
 @bp.get("/forgot")
 def forgot_page():
     return render_template(
@@ -80,6 +87,7 @@ def forgot_page():
         FEATURE_FLAGS=FEATURE_FLAG_DEFAULTS,
         ALLOW_AUTH_JS=False,  # trang này dùng inline script riêng, không cần auth.js
     )
+
 
 @bp.get("/reset")
 def reset_page():
@@ -108,6 +116,7 @@ def admin_login():
         ALLOW_AUTH_JS=True,  # admin login có thể vẫn dùng flow API của bạn
     )
 
+
 @bp.get("/admin/dashboard")
 def admin_dashboard():
     return render_template(
@@ -117,6 +126,7 @@ def admin_dashboard():
         SKIP_ROLE_GUARD=True,
         FEATURE_FLAGS=FEATURE_FLAG_DEFAULTS,
     )
+
 
 @bp.get("/admin/users")
 def admin_users_page():
@@ -128,6 +138,7 @@ def admin_users_page():
         FEATURE_FLAGS=FEATURE_FLAG_DEFAULTS,
     )
 
+
 @bp.route("/transactions")
 def transactions():
     return render_template(
@@ -136,6 +147,7 @@ def transactions():
         title="Quản lý giao dịch",
         FEATURE_FLAGS=FEATURE_FLAG_DEFAULTS,
     )
+
 
 @bp.route("/transactions/expenses")
 def page_expenses():
@@ -146,6 +158,7 @@ def page_expenses():
         FEATURE_FLAGS=FEATURE_FLAG_DEFAULTS,
     )
 
+
 @bp.route("/transactions/income")
 def page_incomes():
     return render_template(
@@ -154,6 +167,7 @@ def page_incomes():
         title="Thu nhập",
         FEATURE_FLAGS=FEATURE_FLAG_DEFAULTS,
     )
+
 
 @bp.route("/budgets")
 def budgets():
@@ -164,6 +178,7 @@ def budgets():
         FEATURE_FLAGS=FEATURE_FLAG_DEFAULTS,
     )
 
+
 @bp.route("/savings")
 def savings():
     return render_template(
@@ -172,6 +187,27 @@ def savings():
         title="Mục tiêu tiết kiệm",
         FEATURE_FLAGS=FEATURE_FLAG_DEFAULTS,
     )
+
+
+@bp.route("/subscriptions")
+def subscriptions():
+    return render_template(
+        "subscriptions/index.html",
+        BASE_API_URL=_api_base(),
+        title="Quản lý Subscription",
+        FEATURE_FLAGS=FEATURE_FLAG_DEFAULTS,
+    )
+
+
+@bp.route("/money-sources")
+def money_sources():
+    return render_template(
+        "money_sources/index.html",
+        BASE_API_URL=_api_base(),
+        title="Quản lý Nguồn Tiền",
+        FEATURE_FLAGS=FEATURE_FLAG_DEFAULTS,
+    )
+
 
 @bp.route("/settings")
 def settings():
@@ -182,6 +218,7 @@ def settings():
         FEATURE_FLAGS=FEATURE_FLAG_DEFAULTS,
     )
 
+
 @bp.route("/analytics")
 def analytics():
     return render_template(
@@ -190,6 +227,7 @@ def analytics():
         title="Phân tích",
         FEATURE_FLAGS=FEATURE_FLAG_DEFAULTS,
     )
+
 
 @bp.route("/verify-otp/<email>")
 def verify_otp(email):

@@ -199,6 +199,11 @@
       const $inp = $("#deadlinePicker");
 
       if ($inp.data("datepicker")) $inp.datepicker("destroy");
+      
+      // Thiết lập startDate = hôm nay để không cho chọn ngày trong quá khứ
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
       $inp.datepicker({
         format: "dd/mm/yyyy",
         autoclose: true,
@@ -206,6 +211,7 @@
         language: "vi",
         container: "#goalModal",
         orientation: "bottom auto",
+        startDate: today,  // Chỉ cho phép chọn từ hôm nay trở đi
       });
 
       // Mở lịch khi bấm icon hoặc focus

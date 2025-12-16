@@ -5,6 +5,7 @@ from datetime import date
 from ..extensions import db
 from ..models.income import Income
 from ..models.category import Category
+from ..services.money_source_service import MoneySourceService
 
 
 bp = Blueprint("incomes_api", __name__, url_prefix="/api/incomes")
@@ -29,6 +30,7 @@ def income_to_dict(m: Income):
         "type": "income",
         "category_id": m.category_id,
         "category": getattr(m.category, "name", None),
+        "money_source_id": m.money_source_id,
         "amount": float(m.amount or 0),
         "received_at": m.received_at.isoformat() if m.received_at else None,
         "note": m.note or "",
@@ -36,6 +38,7 @@ def income_to_dict(m: Income):
 
 
 # === Routes ===
+
 
 @bp.get("/meta")
 @jwt_required()
@@ -45,11 +48,16 @@ def get_meta():
     FE dùng để đổ dropdown khi chọn 'Thu nhập'
     """
     cats = Category.query.filter_by(type="income").order_by(Category.name).all()
-    return jsonify({
-        "success": True,
-        "categories": [{"id": c.id, "name": c.name} for c in cats],
-        "methods": []  # thu nhập không có phương thức thanh toán
-    }), 200
+    return (
+        jsonify(
+            {
+                "success": True,
+                "categories": [{"id": c.id, "name": c.name} for c in cats],
+                "methods": [],  # thu nhập không có phương thức thanh toán
+            }
+        ),
+        200,
+    )
 
 
 @bp.get("")
@@ -64,10 +72,7 @@ def list_incomes():
         .order_by(Income.received_at.desc().nullslast(), Income.id.desc())
         .all()
     )
-    return jsonify({
-        "success": True,
-        "items": [income_to_dict(i) for i in items]
-    }), 200
+    return jsonify({"success": True, "items": [income_to_dict(i) for i in items]}), 200
 
 
 @bp.post("")
@@ -79,6 +84,7 @@ def create_income():
     {
       "amount": 5000000,
       "category_id": 1,
+      "money_source_id": 2,
       "date": "2025-10-21",
       "note": "Lương tháng 10"
     }
@@ -92,6 +98,7 @@ def create_income():
         return jsonify({"success": False, "message": "amount phải là số"}), 400
 
     category_id = data.get("category_id")
+    money_source_id = data.get("money_source_id")
     date_str = data.get("date") or data.get("received_at")
     note = (data.get("note") or "").strip()
 
@@ -105,14 +112,20 @@ def create_income():
         try:
             received = date.fromisoformat(date_str)
         except Exception:
-            return jsonify({
-                "success": False,
-                "message": "Ngày không hợp lệ (định dạng yyyy-mm-dd)"
-            }), 400
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "message": "Ngày không hợp lệ (định dạng yyyy-mm-dd)",
+                    }
+                ),
+                400,
+            )
 
     model = Income(
         user_id=user_id,
         category_id=category_id,
+        money_source_id=money_source_id,
         amount=amount,
         received_at=received,
         note=note,
@@ -120,10 +133,11 @@ def create_income():
     db.session.add(model)
     db.session.commit()
 
-    return jsonify({
-        "success": True,
-        "item": income_to_dict(model)
-    }), 201
+    # Sync to money source: add amount
+    if money_source_id:
+        MoneySourceService.sync_income_to_source(money_source_id, user_id, 0, amount)
+
+    return jsonify({"success": True, "item": income_to_dict(model)}), 201
 
 
 @bp.delete("/<int:income_id>")
@@ -137,8 +151,19 @@ def delete_income(income_id):
     if not item:
         return jsonify({"success": False, "message": "Không tìm thấy thu nhập"}), 404
 
+    # Capture before deleting
+    amount = float(item.amount) if item.amount else 0
+    money_source_id = item.money_source_id
+
     db.session.delete(item)
     db.session.commit()
+
+    # Sync money source: reverse addition
+    if money_source_id:
+        MoneySourceService.sync_income_to_source(
+            money_source_id, user_id, amount, 0  # Remove addition
+        )
+
     return jsonify({"success": True, "message": "Đã xoá"}), 200
 
 
@@ -154,6 +179,9 @@ def update_income(income_id):
         return jsonify({"success": False, "message": "Không tìm thấy thu nhập"}), 404
 
     data = request.get_json(silent=True) or {}
+    old_amount = float(item.amount) if item.amount else 0
+    old_money_source_id = item.money_source_id
+
     if "amount" in data:
         try:
             item.amount = float(data["amount"])
@@ -164,6 +192,8 @@ def update_income(income_id):
         item.category_id = data["category_id"]
     if "note" in data:
         item.note = (data["note"] or "").strip()
+    if "money_source_id" in data:
+        item.money_source_id = data.get("money_source_id")
 
     date_str = data.get("date") or data.get("received_at")
     if date_str:
@@ -173,4 +203,16 @@ def update_income(income_id):
             pass
 
     db.session.commit()
-    return jsonify({"success": True, "item": income_to_dict(item)}), 200
+
+    # Sync money source if amount or source changed
+    new_amount = float(item.amount) if item.amount else 0
+    if old_money_source_id and (
+        old_amount != new_amount or old_money_source_id != item.money_source_id
+    ):
+        MoneySourceService.sync_income_to_source(
+            old_money_source_id, user_id, old_amount, 0  # Remove old addition
+        )
+    if item.money_source_id:
+        MoneySourceService.sync_income_to_source(
+            item.money_source_id, user_id, 0, new_amount  # Add new addition
+        )

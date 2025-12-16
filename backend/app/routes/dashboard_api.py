@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..services.dashboard_service import get_month_summary
 from ..services.financial_health_service import compute_financial_health
+from ..services.money_source_service import MoneySourceService
 from datetime import date, datetime
 from .. import db
 from ..models.expense import Expense
@@ -12,6 +13,7 @@ from sqlalchemy import func
 import pytz
 
 bp = Blueprint("dashboard_api", __name__, url_prefix="/api/dashboard")
+
 
 @bp.get("/summary")
 @jwt_required()
@@ -36,12 +38,9 @@ def dashboard_health_score():
     user_id = get_jwt_identity()
     today = date.today()
 
-    data = compute_financial_health(
-        user_id=user_id,
-        year=today.year,
-        month=today.month
-    )
+    data = compute_financial_health(user_id=user_id, year=today.year, month=today.month)
     return jsonify(data), 200
+
 
 @bp.get("/balance")
 @jwt_required()
@@ -68,10 +67,8 @@ def get_total_balance():
 
     balance = total_income - total_expense
 
-    return jsonify({
-        "success": True,
-        "balance": balance
-    }), 200
+    return jsonify({"success": True, "balance": balance}), 200
+
 
 @bp.get("/balance_change")
 @jwt_required()
@@ -99,8 +96,8 @@ def get_balance_change():
         db.session.query(func.coalesce(func.sum(Income.amount), 0))
         .filter(
             Income.user_id == user_id,
-            func.date_trunc('month', Income.received_at)
-            == func.date_trunc('month', func.cast(this_month_date, db.Date)),
+            func.date_trunc("month", Income.received_at)
+            == func.date_trunc("month", func.cast(this_month_date, db.Date)),
         )
         .scalar()
     )
@@ -110,8 +107,8 @@ def get_balance_change():
         db.session.query(func.coalesce(func.sum(Expense.amount), 0))
         .filter(
             Expense.user_id == user_id,
-            func.date_trunc('month', Expense.spent_at)
-            == func.date_trunc('month', func.cast(this_month_date, db.Date)),
+            func.date_trunc("month", Expense.spent_at)
+            == func.date_trunc("month", func.cast(this_month_date, db.Date)),
         )
         .scalar()
     )
@@ -121,8 +118,8 @@ def get_balance_change():
         db.session.query(func.coalesce(func.sum(Income.amount), 0))
         .filter(
             Income.user_id == user_id,
-            func.date_trunc('month', Income.received_at)
-            == func.date_trunc('month', func.cast(prev_month_date, db.Date)),
+            func.date_trunc("month", Income.received_at)
+            == func.date_trunc("month", func.cast(prev_month_date, db.Date)),
         )
         .scalar()
     )
@@ -132,8 +129,8 @@ def get_balance_change():
         db.session.query(func.coalesce(func.sum(Expense.amount), 0))
         .filter(
             Expense.user_id == user_id,
-            func.date_trunc('month', Expense.spent_at)
-            == func.date_trunc('month', func.cast(prev_month_date, db.Date)),
+            func.date_trunc("month", Expense.spent_at)
+            == func.date_trunc("month", func.cast(prev_month_date, db.Date)),
         )
         .scalar()
     )
@@ -141,8 +138,31 @@ def get_balance_change():
     balance_this = income_this - expense_this
     balance_prev = income_prev - expense_prev
 
-    return jsonify({
-        "success": True,
-        "balance_this": float(balance_this),
-        "balance_prev": float(balance_prev)
-    })
+    return jsonify(
+        {
+            "success": True,
+            "balance_this": float(balance_this),
+            "balance_prev": float(balance_prev),
+        }
+    )
+
+
+@bp.get("/money-sources-balance")
+@jwt_required()
+def get_money_sources_balance():
+    """Get total balance from all money sources (replaces calculated balance)"""
+    user_id = get_jwt_identity()
+
+    stats = MoneySourceService.get_money_source_stats(user_id)
+
+    return (
+        jsonify(
+            {
+                "success": True,
+                "total_balance": stats["total_balance"],
+                "total_sources": stats["total_sources"],
+                "balance_by_type": stats["balance_by_type"],
+            }
+        ),
+        200,
+    )
